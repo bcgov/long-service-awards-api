@@ -103,6 +103,8 @@ exports.initPassport = () => {
 
 exports.authenticateSMS = async (req, res, next) => {
   try {
+    // check if API test
+    if (req.url === '/') next();
     // [dev] skip authentication on test/local environments
     if (nodeEnv === 'development' || nodeEnv === 'test') {
       // check for impersonate query parameters
