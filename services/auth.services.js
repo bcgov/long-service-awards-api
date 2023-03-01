@@ -14,7 +14,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const urlParse = require('url');
 
 const nodeEnv = process.env.NODE_ENV;
-const baseURL = process.env.PA_APPS_BASE_URL;
+const baseURL = process.env.LSA_APPS_BASE_URL;
 const superadminGUID = process.env.SUPER_ADMIN_GUID;
 const superadminIDIR = process.env.SUPER_ADMIN_IDIR;
 const superadminEmail = process.env.SUPER_ADMIN_EMAIL;
