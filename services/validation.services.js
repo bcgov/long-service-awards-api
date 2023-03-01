@@ -1,0 +1,193 @@
+/*!
+ * Data validation services/utilities
+ * File: validation.services.js
+ * Copyright(c) 2022 BC Gov
+ * MIT Licensed
+ */
+
+/**
+ * Regular expression patterns for validation checks
+ * **/
+
+const matchers = {
+    govEmail: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
+    email: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+    phone: /^(?:\+?1\s*(?:[.-]\s*)?)?(?:\(\s*([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9])\s*\)|([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9]))\s*(?:[.-]\s*)?([2-9]1[02-9]|[2-9][02-9]1|[2-9][02-9]{2})\s*(?:[.-]\s*)?([0-9]{4})(?:\s*(?:#|x\.?|ext\.?|extension)\s*(\d+))?$/,
+    guid: /^[0-9a-fA-F]{8}[0-9a-fA-F]{4}[0-9a-fA-F]{4}[0-9a-fA-F]{4}[0-9a-fA-F]{12}$/,
+    alphanumeric: /^[a-z0-9]+$/i
+}
+
+/**
+ * Check if object is empty
+ * - ignores filtered fields in input
+ * - note recursion
+ * **/
+
+const isEmpty = (obj, ignore=[]) => {
+    if (typeof obj !== 'object') return !obj;
+    return Object.keys(obj || {})
+        .filter(key => !isEmpty(obj[key]) && !ignore.includes(key)).length === 0;
+};
+
+/**
+ * convert timestamp to JS standard Date class
+ *
+ * @param date
+ * @return {Promise} [error, response]
+ */
+
+const convertDate = (date) => {
+    // parse single date stored in UTC needed on frontend
+    return date ? new Date(date.replace(' ', 'T')) : null;
+}
+
+
+/**
+ * Validate required data
+ * **/
+
+const validateRequired = (data) => {
+    console.log(data)
+    return {
+        valid: data && !!String(data),
+        code: 'missingRequired'
+    }
+};
+
+/**
+ * Validate email address
+ * Reference: https://stackoverflow.com/a/46181 (Retrieved Jan 18, 2022)
+ * **/
+
+const validateEmail = (email) => {
+    return {
+        valid: !email || !!String(email)
+            .toLowerCase()
+            .match(matchers.email),
+        code: 'invalidEmail'
+    }
+};
+
+/**
+ * Validate GUID (UUID) value
+ * Reference: https://stackoverflow.com/a/46181 (Retrieved Jan 18, 2022)
+ * **/
+
+const validateGUID = (guid) => {
+    // return {
+    //     valid: !!String(guid)
+    //         .match(patterns.guid),
+    //     code: 'invalidGUID'
+    // }
+    return {
+        valid: true,
+        code: 'invalidGUID'
+    }
+};
+
+/**
+ * Validate phone number
+ * Reference: https://stackoverflow.com/a/29767609 (Retrieved Jan 25, 2022)
+ * Valid formats:
+ (123) 456-7890
+ (123)456-7890
+ 123-456-7890
+ 123.456.7890
+ 1234567890
+ +31636363634
+ 075-63546725
+ * **/
+
+const validatePhone = (phone) => {
+    return {
+        valid: !phone || !!String(phone)
+            .toLowerCase()
+            .match(matchers.phone),
+        code: 'invalidPhone'
+    };
+};
+
+/**
+ * Validates string as alphanumeric
+ * **/
+
+const validateAlphaNumeric = (str) => {
+    return !!String(str)
+        .toLowerCase()
+        .match(matchers.alphanumeric);
+}
+
+/**
+ * Validates Canadian postal code
+ * Reference: https://stackoverflow.com/a/46761018
+ * ### ###
+ * **/
+
+const validatePostcode = (postalcode) => {
+    return {
+        valid: !postalcode || !!String(postalcode)
+            .toLowerCase()
+            .match(
+                /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ -]?\d[ABCEGHJ-NPRSTV-Z]\d$/i
+            ),
+        code: 'invalidPostalCode'
+    }
+};
+
+/**
+ * Sanitize data by PostGreSQL data type. Note for composite
+ * user-defined types (i.e. coord, camera_settings, dims) the
+ * data array is converted to a string representation of its tuple.
+ * Empty strings are converted to NULL to trigger postgres non-empty
+ * constraints.
+ *
+ * @param data
+ * @param {String} datatype
+ * @return {Object} cleanData
+ * @src public
+ */
+
+const sanitize = (data, datatype) => {
+    const sanitizers = {
+        'boolean': function() {
+            return !!data;
+        },
+        'varchar': function() {
+            // Replaces HTML tags with null string.
+            return data ? data.toString().replace( /(<([^>]+)>)/ig, '') : null;
+        },
+        'integer': function() {
+            return isNaN(parseInt(data)) ? null : parseInt(data);
+        },
+        'double': function() {
+            return isNaN(parseFloat(data)) ? null : parseFloat(data);
+        },
+        'float': function() {
+            return isNaN(parseFloat(data)) ? null : parseFloat(data);
+        },
+        'text': function() {
+            // Replaces HTML tags with null string.
+            return data ? data.toString().replace( /(<([^>]+)>)/ig, '') : '';
+        },
+        'timestamp': function() {
+            // convert timestamp to locale string
+            return data===null || data==='' ? null : data;
+        },
+        default: function() {
+            return data === '' ? null : data;
+        },
+    };
+    return (sanitizers[datatype] || sanitizers.default)();
+}
+
+module.exports = {
+    matchers: matchers,
+    isEmpty: isEmpty,
+    convertDate: convertDate,
+    sanitize: sanitize,
+    validateRequired: validateRequired,
+    validateGUID: validateGUID,
+    validateEmail: validateEmail,
+    validatePhone: validatePhone,
+    validatePostcode: validatePostcode
+}
