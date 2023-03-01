@@ -1,4 +1,4 @@
-# Premier's Awards API
+# Long Service Awards API
 
 [![Lifecycle:Maturing](https://img.shields.io/badge/Lifecycle-Maturing-007EC6)](<http://gov.bc.ca>)
 
@@ -16,18 +16,20 @@ To deploy locally:
 ```
 version: '3.7'
 services:
-  mongodb_container:
-    image: mongo
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root_password
-      MONGO_INITDB_DATABASE: premiersawards
+  postgresql:
+    image: 'docker.io/bitnami/postgresql:latest'
     ports:
-      - 27017:27017
+      - '5432:5432'
+    environment:
+      POSTGRESQL_USERNAME: lsa
+      POSTGRESQL_PASSWORD: password
+      POSTGRESQL_DATABASE: lsa_data
+      POSTGRESQL_TIMEZONE: US/Pacific
     volumes:
-      - mongodb_data_container:/data/db
-volumes:
-  mongodb_data_container:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - type: bind
+        source: ./backups
+        target: /data/backup
 ```
 
 2. Create the following `.env` file and save it to the API root directory:
@@ -36,24 +38,24 @@ volumes:
 NODE_ENV=development
 DEBUG=true
 
-COOKIE_SECRET=somesecret
+COOKIE_SECRET=cookie_secret
 
-PA_APPS_BASE_URL: "http://localhost"
-PA_APPS_API_URL: "http://localhost:3000"
-PA_APPS_API_PORT: "3000"
-PA_APPS_ADMIN_URL: "http://localhost:3001"
-PA_APPS_NOMINATIONS_URL: "http://localhost:3002"
-PA_APPS_EVENTS_URL: "http://localhost:3003"
+LSA_APPS_BASE_URL="http://localhost"
+LSA_APPS_API_URL="http://localhost:3000"
+LSA_APPS_API_PORT="3000"
+LSA_APPS_ADMIN_URL="http://localhost:5173"
+LSA_APPS_REGISTRATION_URL="http://localhost:3002"
 
 DATABASE_HOST=localhost
-DATABASE_PORT=27017
-DATABASE_USER=root
-DATABASE_PASSWORD=rootpassword
-DATABASE_NAME=premiersawards
-DATABASE_AUTH=admin
+DATABASE_PORT=5432
+DATABASE_USER=lsa
+DATABASE_PASSWORD=password
+DATABASE_NAME=lsa_data
 
 SUPER_ADMIN_GUID=1234567abcdef
-SUPER_ADMIN_USER=test_admin
+SUPER_ADMIN_IDIR=test_admin
+SUPER_ADMIN_EMAIL=test_admin@gov.bc.ca
+SUPER_ADMIN_PASSWORD=password
 ```
 Set the ports to match the client ports deployed.
 
