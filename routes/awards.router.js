@@ -15,7 +15,7 @@ const controller = require("../controllers/awards.controller");
  */
 
 router.get('/list', authorizeAdmin, controller.getAll);
-router.get('/filter/:field/:value', authorizeAdmin, controller.filter);
+router.get('/filter/:field/:value', controller.filter);
 router.post('/create', authorizeAdmin, controller.create);
 router.get('/view/:id', authorizeAdmin, controller.get);
 router.post('/update/:id', authorizeAdmin, controller.update);
