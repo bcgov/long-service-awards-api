@@ -139,6 +139,8 @@ exports.authenticateSMS = async (req, res, next) => {
     const SMSCookie = "SMSESSION=" + SMSESSION + "; " + expires + "; path=/; HttpOnly; Secure=true;";
     const SessionCookie = "session=" + session + "; " + expires + "; path=/; HttpOnly; Secure=true;";
 
+    console.log(req.cookies)
+
     // call SAML API - user data endpoint
     let response = await axios.get(`${baseURL}/user_info`, {
       headers: {
@@ -148,8 +150,6 @@ exports.authenticateSMS = async (req, res, next) => {
 
     const {data = {}} = response || {};
     const { SMGOV_GUID=[null], username=[null] } = data || {};
-
-    console.log(response)
 
     // test that tokens exist
     if ( !data || !SMGOV_GUID[0] || !username[0] )
