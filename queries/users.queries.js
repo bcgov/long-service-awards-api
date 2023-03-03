@@ -193,7 +193,5 @@ exports.update = async (data) => {
         return o;
     }, queries);
 
-    console.log(queries)
-
     return await transaction(queries);
 }

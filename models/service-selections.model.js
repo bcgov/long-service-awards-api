@@ -116,8 +116,8 @@ module.exports =  {
         ['recipient', 'cycle'], [recipient.id, serviceSelection.cycle], schema);
 
     // check for milestone changes
-    // - if different, delete attached award
-    if (current && current.milestone !== serviceSelection.milestone) console.log('Delete Award here')
+    // - if different, delete service record from db (deletes any attached awards)
+    if (current && current.milestone !== serviceSelection.milestone) await serviceSelection.delete();
 
     // use existing service record ID / or generate new ID
     serviceSelection.id = current ? current.id : uuid.v4();
@@ -142,7 +142,7 @@ module.exports =  {
   findById: async(id) => {
     return construct(await db.defaults.findById(id, schema));
   },
-  remove: async() => {
-
+  remove: async(id) => {
+    await db.defaults.removeByFields(['id'], id, schema);
   }
 }

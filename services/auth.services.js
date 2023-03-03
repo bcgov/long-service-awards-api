@@ -103,8 +103,10 @@ exports.initPassport = () => {
 
 exports.authenticateSMS = async (req, res, next) => {
   try {
+
     // check if API test
     if (req.url === '/') return next();
+
     // [dev] skip authentication on test/local environments
     if (nodeEnv === 'development' || nodeEnv === 'test') {
       // check for impersonate query parameters
@@ -143,8 +145,11 @@ exports.authenticateSMS = async (req, res, next) => {
         'Cookie': `${SessionCookie} ${SMSCookie}`
       }
     });
+
     const {data = {}} = response || {};
     const { SMGOV_GUID=[null], username=[null] } = data || {};
+
+    console.log(response)
 
     // test that tokens exist
     if ( !data || !SMGOV_GUID[0] || !username[0] )

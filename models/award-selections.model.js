@@ -33,7 +33,7 @@ const schema = {
     },
     attachments: {
         selections: {
-            model: AwardOptionSelection,
+            model: [AwardOptionSelection],
             get: AwardOptionSelection.findByService,
             attach: AwardOptionSelection.attach
         },
@@ -61,7 +61,7 @@ const construct = (init, attach=null) => {
 module.exports =  {
     schema: schema,
     create: construct,
-    attach: async(awardSelection, serviceSelection) => {
+    attach: async (awardSelection, serviceSelection) => {
 
         /**
          * Attach award selection to service selection
@@ -70,6 +70,7 @@ module.exports =  {
 
         // set reference values
         awardSelection.id = serviceSelection.id;
+        // upsert if award selected
         if (awardSelection.award) {
             // destructure award and upsert record
             const { award } = awardSelection.data;

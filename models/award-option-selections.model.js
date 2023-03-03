@@ -8,7 +8,8 @@
 const db = require('../queries/index.queries');
 const {ModelConstructor} = require("./constructor.model");
 const defaults = require("../queries/default.queries");
-const AwardOption = require("./award-options.model")
+const AwardOption = require("./award-options.model");
+const PecsfCharity = require("../models/pecsf-charities.model.js");
 const {isEmpty} = require("../services/validation.services");
 
 'use strict';
@@ -34,7 +35,8 @@ const schema = {
             dataType: 'varchar'
         },
         pecsf_charity: {
-            dataType: 'integer'
+            dataType: 'integer',
+            model: PecsfCharity
         }
     }
 };
@@ -77,8 +79,8 @@ module.exports =  {
             pecsf_charity: awardOption.pecsf_charity
         }
 
-        console.log(awardOption.data, awardOption, awardOptionData)
-        // detach if data is empty, otherwise upsert record
+        // console.log(awardOption.data, awardOption, awardOptionData)
+        // - detach if data is empty, otherwise upsert record
         if (isEmpty(awardOptionData, ['service'])) {
             await defaults.removeByFields(['service'], [awardOption.service], schema);
         }
@@ -88,10 +90,6 @@ module.exports =  {
     },
     findByService: async(serviceID) => {
         const awardOptionSelections = await db.defaults.findByField('service', serviceID, schema);
-        console.log((awardOptionSelections || []).map(awardOptionSelection => {
-            console.log(awardOptionSelection)
-            return construct(awardOptionSelection)
-        }))
         return (awardOptionSelections || []).map(awardOptionSelection => {
             return construct(awardOptionSelection)
         });

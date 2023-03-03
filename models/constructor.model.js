@@ -144,25 +144,28 @@ exports.ModelConstructor = (props) => {
      * **/
 
     const attachReferences = function (data) {
+        console.log(data)
         const { attachments=null } = schema || {};
         const currentReferences = this.attachments || null;
         return Object.keys(attachments || {})
             .reduce((o, key) => {
                 // destructure attachment model and attach function
                 const {model=null, attach=null} = attachments[key];
+                // for arrayed models, destructure
+                const useModel = Array.isArray(model) ? model[0] : model;
                 // get current attached data (db reference data)
-                const currentData = Object.assign(
-                    {},
-                    currentReferences && currentReferences.hasOwnProperty(key)
-                        ? currentReferences[key]
-                        : {}
-                );
+                // - check if attached model is in an array
+                const currentData = Array.isArray(model)
+                    ? Object.assign([], currentReferences && currentReferences.hasOwnProperty(key)
+                        ? currentReferences[key] : [])
+                    : Object.assign({}, currentReferences && currentReferences.hasOwnProperty(key)
+                        ? currentReferences[key] : {});
                 // get new attached data
                 const newData = model && data && data.hasOwnProperty(key) ? data[key] : currentData;
                 // attach reference model to current parent
                 o[key] = Array.isArray(newData)
-                    ? newData.map(itemData => { return model.create(itemData, attach) })
-                    : model.create(newData, attach);
+                    ? newData.map(itemData => { return useModel.create(itemData, attach) })
+                    : useModel.create(newData, attach);
                 return o;
             }, {});
     }
@@ -227,7 +230,8 @@ exports.ModelConstructor = (props) => {
             }));
         },
         delete: async function () {
-            this.values = await db.remove(id, schema);
+            // delete record from database (does not change instance values)
+            return await db.removeByFields(['id'], [id], schema);
         },
     };
 

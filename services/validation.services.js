@@ -47,7 +47,6 @@ const convertDate = (date) => {
  * **/
 
 const validateRequired = (data) => {
-    console.log(data)
     return {
         valid: data && !!String(data),
         code: 'missingRequired'

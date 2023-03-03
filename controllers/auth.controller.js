@@ -17,7 +17,6 @@
 
 exports.info = async (req, res, next) => {
   try {
-    console.log(res.locals.user)
     if (req.isAuthenticated()) {
       res.status(200).json({
         message: null,

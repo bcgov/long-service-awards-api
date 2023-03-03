@@ -74,8 +74,6 @@ const recipientQueries = {
                 return data[key]
             }));
 
-        console.log({sql: sql, data: filteredData})
-
         // console.log('UPDATE:', {sql: sql, data: filteredData})
 
         // apply update query
@@ -115,7 +113,6 @@ exports.insert = async (data) => {
  */
 
 const update = async (data, schema) => {
-    console.log('Update Recipient', data)
     return await transactionOne([recipientQueries.update(data, schema)]);
 }
 exports.update = update;

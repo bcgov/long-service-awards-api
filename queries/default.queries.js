@@ -90,8 +90,6 @@ const queries = {
                 return data && data.hasOwnProperty(attr) ? data[attr] : null
             });
 
-        console.log(sql, filteredData)
-
         return { sql: sql, data: filteredData }
     },
     insert: (data, schema, ignore = ['id']) => {
@@ -163,11 +161,6 @@ const queries = {
         filteredData.push(...Object.keys(schema.attributes)
             .filter(key => !ignore.includes(key) && !timestamps.includes(key))
             .map(key => {return data[key]}));
-
-        console.log({
-            sql: sql,
-            data: [filteredData],
-        })
 
         // collate data as value array
         return { sql: sql, data: [filteredData] };
