@@ -103,7 +103,7 @@ const session = {
     saveUninitialized: false,
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000,
-        secure: process.env.NODE_ENV === 'production'
+        secure: nodeENV === 'production'
     }
     // Insert express-session options here
 };
@@ -127,11 +127,11 @@ app.use(cors(corsConfig));
 // init log requests
 app.use(requestLogger);
 
-// authenticate SMS session
-app.use(authenticateSMS);
-
 // parse cookies to store session data
 app.use(cookieParser(process.env.COOKIE_SECRET));
+
+// authenticate SMS session
+app.use(authenticateSMS);
 
 // init Passport
 app.use(passport.initialize())
