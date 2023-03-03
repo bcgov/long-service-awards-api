@@ -12,6 +12,7 @@ const uuid = require("uuid");
 const {findById, queries} = require("./default.queries");
 const defaults = require("./default.queries");
 const RecipientContact = require("../models/recipients-contacts.model")
+const db = require("./index.queries");
 
 /**
  * Default queries
@@ -32,7 +33,8 @@ const recipientQueries = {
         } = data || {};
         return {
             sql: `INSERT INTO recipients (id, guid, idir, "user", employee_number, status, organization)
-              VALUES ($1::uuid, $2::varchar, $3::varchar, $4::uuid, $5::integer, $6::varchar, $7::integer) 
+              VALUES ($1::uuid, $2::varchar, $3::varchar, $4::uuid, $5::integer, $6::varchar, $7::integer)
+              ON CONFLICT DO NOTHING
               RETURNING *;`,
             data: [id, guid, idir, user, employee_number, status, organization],
         };
@@ -207,4 +209,18 @@ exports.delegate = async (data, user, schema) => {
 
     // apply update query
     return await transactionOne(q);
+}
+
+
+/**
+ * Generate query: Delete recipient record in table.
+ *
+ * @param {Object} data
+ * @param {Object} schema
+ * @return {Promise} results
+ * @public
+ */
+
+exports.remove = async (id, schema) => {
+    return await defaults.removeByFields( ['id'], [id], schema)
 }

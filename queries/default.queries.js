@@ -440,6 +440,22 @@ exports.removeByFields = async(fields, values, schema) => {
 }
 
 /**
+ * Generate query: Delete record from table selected by id.
+ *
+ * @param {Array} id
+ * @param {Object} schema
+ * @return {Promise} results
+ * @public
+ */
+
+exports.remove = async(id, schema) => {
+    return await queryOne({
+        sql: `DELETE FROM ${schema.modelName} WHERE id = $1::${schema.attributes['id'].dataType};`,
+        data: [id],
+    });
+}
+
+/**
  * Generate query: Delete all records from table.
  *
  * @param schema

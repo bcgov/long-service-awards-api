@@ -51,11 +51,12 @@ exports.register = async (req, res, next) => {
     let { guid=null, idir=null } = res.locals.user || {};
 
     // register recipient (creates stub record)
-    const recipient = await Recipient.register({
+    await Recipient.register({
       idir: idir,
       guid: guid,
       status: 'self'
     });
+    const recipient = await Recipient.findByGUID(guid);
 
     res.status(200).json({
       message: {
@@ -97,6 +98,39 @@ exports.save = async (req, res, next) => {
         detail: 'Recipient record saved.'
       },
       result: recipient.data,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
+ * Delete current recipient data.
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @src public
+ */
+
+exports.remove = async (req, res, next) => {
+  try {
+    let { guid=null } = res.locals.user || {};
+
+    // check that recipient exists
+    const recipient = await Recipient.findByGUID(guid);
+    if (!recipient) return next(Error('noRecord'));
+
+    // delete record
+    await recipient.delete();
+
+    res.status(200).json({
+      message: {
+        severity: 'success',
+        summary: 'Recipient Deleted Successfully!',
+        detail: 'Recipient record deleted.'
+      },
+      result: null,
     });
   } catch (err) {
     return next(err);

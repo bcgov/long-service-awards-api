@@ -144,7 +144,6 @@ exports.ModelConstructor = (props) => {
      * **/
 
     const attachReferences = function (data) {
-        console.log(data)
         const { attachments=null } = schema || {};
         const currentReferences = this.attachments || null;
         return Object.keys(attachments || {})
@@ -231,7 +230,7 @@ exports.ModelConstructor = (props) => {
         },
         delete: async function () {
             // delete record from database (does not change instance values)
-            return await db.removeByFields(['id'], [id], schema);
+            return await db.remove(id, schema);
         },
     };
 

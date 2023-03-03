@@ -16,5 +16,6 @@ const transactions = require('../services/log.services');
 router.get('/view', controller.get);
 router.post('/register', controller.register, transactions.log);
 router.post('/save', controller.save, transactions.log);
+router.post('/delete', controller.remove, transactions.log);
 
 module.exports = router;
