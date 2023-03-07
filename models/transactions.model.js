@@ -20,7 +20,8 @@ const schema = {
     modelName: 'transactions',
     attributes: {
         id: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         recipient: {
             dataType: 'integer'
@@ -32,13 +33,16 @@ const schema = {
             dataType: 'boolean'
         },
         code: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         description: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         details: {
-            dataType: 'text'
+            dataType: 'text',
+            required: true
         },
         created_at: {
             dataType: 'timestamp'

@@ -7,8 +7,7 @@
 
 const db = require('../queries/index.queries');
 const Address = require("../models/addresses.model.js");
-const RecipientContact = require("./recipients-contacts.model")
-const {validateEmail, isEmpty} = require("../services/validation.services");
+const {validateEmail, isEmpty, validatePhone} = require("../services/validation.services");
 const {ModelConstructor} = require("./constructor.model");
 const defaults = require("../queries/default.queries");
 const uuid = require("uuid");
@@ -27,22 +26,34 @@ const schema = {
     attributes: {
         id: {
             dataType: 'uuid',
+            editable: false,
+            required: true
+        },
+        recipient: {
+            dataType: 'uuid',
+            required: true,
             editable: false
+        },
+        type: {
+            dataType: 'varchar',
+            required: true
         },
         first_name: {
             dataType: 'varchar',
-            validate: []
+            required: true
         },
         last_name: {
             dataType: 'varchar',
-            validate: []
+            required: true
         },
         office_email: {
             dataType: 'varchar',
+            required: true,
             validate: [validateEmail]
         },
         office_phone: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            validate: [validatePhone]
         },
         personal_email: {
             dataType: 'varchar',
@@ -62,11 +73,13 @@ const schema = {
     attachments: {
         office_address: {
             model: Address,
+            required: true,
             get: async (id) => { return await Address.findByContact(id, 'office') },
             attach: async (address, contact) => { await Address.attach(address, contact, 'office') }
         },
         personal_address: {
             model: Address,
+            required: true,
             get: async (id) => { return await Address.findByContact(id, 'personal') },
             attach: async (address, contact) => { await Address.attach(address, contact, 'personal') }
         }
@@ -100,22 +113,17 @@ module.exports =  {
 
         // look up any existing recipient contact for given type
         const current = await defaults.findOneByFields(
-            ['recipient', 'type'], [recipient.id, type], RecipientContact.schema);
+            ['recipient', 'type'], [recipient.id, type], schema);
 
         // if none, create new UUID ID value for contact
-        contact.id = current ? current.contact : uuid.v4();
-        // detach if contact data is empty, otherwise upsert record
-        if (isEmpty(contact.data, ['id', 'recipient', 'type'])) {
-            // delete contact record
-            await defaults.removeByFields(['id'], [contact.id], schema);
-        }
-        else {
-            // create contact record and associate with recipient
+        contact.id = current ? current.id : uuid.v4();
+        contact.recipient = recipient.id;
+        contact.type = type;
+
+        // ignore attach contact if data is empty, otherwise upsert record
+        if (!isEmpty(contact.data, ['id', 'recipient', 'type'])) {
             await defaults.transact([
-                defaults.queries.upsert(contact.data, contact.schema),
-                defaults.queries.upsert({
-                    recipient: recipient.id, contact: contact.id, type: type
-                }, RecipientContact.schema, ['recipient', 'contact'])
+                defaults.queries.upsert(contact.data, schema)
             ]);
         }
     },
@@ -123,10 +131,8 @@ module.exports =  {
         return await db.defaults.findAll( schema, offset, order);
     },
     findByRecipient: async(id, type) => {
-        // look up any existing recipient contact
-        const current = await defaults.findOneByFields(
-            ['recipient', 'type'], [id, type], RecipientContact.schema);
-        return current ? construct(await db.defaults.findById(current.contact, schema)) : null;
+        // look up any existing recipient contact info
+        return construct(await defaults.findOneByFields(['recipient', 'type'], [id, type], schema));
     },
     findById: async(id) => {
         return construct(await db.defaults.findById(id, schema));

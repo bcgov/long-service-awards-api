@@ -20,7 +20,8 @@ const schema = {
     modelName: 'provinces',
     attributes: {
         name: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         }
     }
 };

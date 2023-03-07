@@ -21,10 +21,12 @@ const schema = {
     modelName: 'attendees',
     attributes: {
         id: {
-            dataType: 'integer'
+            dataType: 'uuid',
+            required: true
         },
         recipient: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         ceremony: {
             dataType: 'integer'

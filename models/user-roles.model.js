@@ -21,10 +21,12 @@ const schema = {
     modelName: 'user_roles',
     attributes: {
         name: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         label: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         }
     }
 };

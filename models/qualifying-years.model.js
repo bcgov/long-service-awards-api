@@ -20,10 +20,12 @@ const schema = {
     modelName: 'qualifying_years',
     attributes: {
         id: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         year: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         current: {
             dataType: 'boolean'

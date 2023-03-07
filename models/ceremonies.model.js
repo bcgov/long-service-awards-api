@@ -21,16 +21,20 @@ const schema = {
     modelName: 'ceremonies',
     attributes: {
         id: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         venue: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         address: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         datetime: {
-            dataType: 'timestamp'
+            dataType: 'timestamp',
+            required: true
         }
     }
 };

@@ -21,7 +21,8 @@ const schema = {
     modelName: 'communities',
     attributes: {
         name: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         region: {
             dataType: 'varchar'

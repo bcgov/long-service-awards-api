@@ -11,8 +11,6 @@ const {transactionOne} = require("../db");
 const uuid = require("uuid");
 const {findById, queries} = require("./default.queries");
 const defaults = require("./default.queries");
-const RecipientContact = require("../models/recipients-contacts.model")
-const db = require("./index.queries");
 
 /**
  * Default queries
@@ -174,7 +172,6 @@ exports.delegate = async (data, user, schema) => {
         const contact = { id: uuid.v4(), first_name, last_name, office_email};
         contact.type = 'contact';
         q.push(defaults.queries.upsert(contact, attachments.contact.model.schema));
-        q.push(RecipientContact.associate(recipientID, contact.id, contact.type));
 
         // include current service selection
         q.push(queries.upsert({

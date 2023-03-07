@@ -22,19 +22,23 @@ const schema = {
     attributes: {
         id: {
             dataType: 'integer',
+            required: true,
             editable: false
         },
         vendor: {
             dataType: 'varchar'
         },
         type: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         milestone: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         label: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         description: {
             dataType: 'text'

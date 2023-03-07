@@ -10,6 +10,7 @@ const Contact = require("../models/contacts.model.js");
 const ServiceSelection = require('../models/service-selections.model.js');
 const {ModelConstructor} = require("./constructor.model");
 const Organization = require("./organizations.model");
+const {validateEmployeeNumber} = require("../services/validation.services");
 
 'use strict';
 
@@ -25,14 +26,18 @@ const schema = {
     attributes: {
         id: {
             dataType: 'uuid',
-            editable: false
+            editable: false,
+            required: true
         },
         status: {
             dataType: 'varchar',
-            editable: false
+            editable: false,
+            required: true
         },
         employee_number: {
-            dataType: 'integer',
+            dataType: 'varchar',
+            validators: [validateEmployeeNumber],
+            required: true
         },
         idir: {
             dataType: 'varchar',
@@ -40,7 +45,8 @@ const schema = {
         },
         guid: {
             dataType: 'varchar',
-            editable: false
+            editable: false,
+            required: true
         },
         user: {
             dataType: 'uuid',
@@ -49,12 +55,15 @@ const schema = {
         organization: {
             dataType: 'integer',
             model: Organization,
+            required: true
         },
         division: {
             dataType: 'varchar',
+            required: true
         },
         branch: {
             dataType: 'varchar',
+            required: true
         },
         retirement: {
             dataType: 'boolean',
@@ -63,9 +72,6 @@ const schema = {
             dataType: 'timestamp',
         },
         bcgeu: {
-            dataType: 'boolean',
-        },
-        previous_registration: {
             dataType: 'boolean',
         },
         notes: {
@@ -81,16 +87,19 @@ const schema = {
     attachments: {
         contact: {
             model: Contact,
+            required: true,
             get: async (id) => { return await Contact.findByRecipient(id, 'contact') },
             attach: async (contact, recipient) => { await Contact.attach(contact, recipient, 'contact') }
         },
         supervisor: {
             model: Contact,
+            required: true,
             get: async (id) => { return await Contact.findByRecipient(id, 'supervisor') },
             attach: async (contact, recipient) => { await Contact.attach(contact, recipient, 'supervisor') }
         },
         service: {
             model: ServiceSelection,
+            required: true,
             get: ServiceSelection.findActiveByRecipient,
             attach: ServiceSelection.attach
         }

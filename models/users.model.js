@@ -23,15 +23,18 @@ const schema = {
     attributes: {
         id: {
             dataType: 'uuid',
+            required: true,
             editable: false
         },
         guid: {
             dataType: 'varchar',
+            required: true,
             validate: [validateGUID, validateRequired],
             editable: false
         },
         idir: {
             dataType: 'varchar',
+            required: true,
             validate: [validateRequired],
             editable: false
         },

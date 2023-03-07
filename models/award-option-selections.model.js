@@ -25,10 +25,12 @@ const schema = {
     modelName: 'award_option_selections',
     attributes: {
         service: {
-            dataType: 'uuid'
+            dataType: 'uuid',
+            required: true
         },
         award_option: {
             dataType: 'integer',
+            required: true,
             model: AwardOption
         },
         custom_value: {

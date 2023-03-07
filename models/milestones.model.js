@@ -20,13 +20,16 @@ const schema = {
     modelName: 'milestones',
     attributes: {
         id: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         year: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         label: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         }
     }
 };

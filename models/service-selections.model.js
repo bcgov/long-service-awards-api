@@ -11,7 +11,7 @@ const AwardSelection = require("./award-selections.model");
 const Setting = require("./settings.model");
 const defaults = require("../queries/default.queries");
 const uuid = require("uuid");
-const {isEmpty} = require("../services/validation.services");
+const {isEmpty, validateRequired} = require("../services/validation.services");
 
 'use strict';
 
@@ -27,23 +27,35 @@ const schema = {
   attributes: {
     id: {
       dataType: 'uuid',
-      editable: false
+      editable: false,
+      required: true
     },
     recipient: {
       dataType: 'uuid',
-      editable: false
+      editable: false,
+      required: true
     },
     milestone: {
-      dataType: 'integer'
+      dataType: 'integer',
+      required: true
     },
     qualifying_year: {
-      dataType: 'integer'
+      dataType: 'integer',
+      required: true
     },
     service_years: {
-      dataType: 'integer'
+      dataType: 'integer',
+      required: true
     },
     cycle: {
-      dataType: 'integer'
+      dataType: 'integer',
+      required: true
+    },
+    previous_registration: {
+      dataType: 'boolean',
+    },
+    previous_award: {
+      dataType: 'boolean',
     },
     confirmed: {
       dataType: 'boolean',
@@ -68,6 +80,7 @@ const schema = {
   attachments: {
     awards: {
       model: AwardSelection,
+      required: false,
       get: AwardSelection.findById,
       attach: AwardSelection.attach
     }

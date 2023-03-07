@@ -10,6 +10,7 @@
  * **/
 
 const matchers = {
+    employeeNumber: /^\d{6}$/i,
     govEmail: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
     email: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
     phone: /^(?:\+?1\s*(?:[.-]\s*)?)?(?:\(\s*([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9])\s*\)|([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9]))\s*(?:[.-]\s*)?([2-9]1[02-9]|[2-9][02-9]1|[2-9][02-9]{2})\s*(?:[.-]\s*)?([0-9]{4})(?:\s*(?:#|x\.?|ext\.?|extension)\s*(\d+))?$/,
@@ -48,7 +49,7 @@ const convertDate = (date) => {
 
 const validateRequired = (data) => {
     return {
-        valid: data && !!String(data),
+        valid: !!data && !!String(data),
         code: 'missingRequired'
     }
 };
@@ -83,6 +84,17 @@ const validateGUID = (guid) => {
         code: 'invalidGUID'
     }
 };
+
+/**
+ * Validate employee number
+ * **/
+
+const validateEmployeeNumber = (data) => {
+    return {
+        valid: !data || !!String(data).match(matchers.employeeNumber),
+        code: 'invalidEmployeeNumber'
+    };
+}
 
 /**
  * Validate phone number
@@ -179,12 +191,39 @@ const sanitize = (data, datatype) => {
     return (sanitizers[datatype] || sanitizers.default)();
 }
 
+/**
+ * confirm required input data against model schema
+ * **/
+
+const confirm = (schema, data) => {
+
+    // check completeness of model data
+    const isComplate = data && Object.entries(schema.attributes || {})
+        .filter(([_, field]) => field.hasOwnProperty('required') && field.required)
+        .every(([key]) => {
+            // check if required field has data
+            console.log(schema.modelName, data[key], key, validateRequired(data && data.hasOwnProperty(key) ? data[key] : null))
+            const {valid} = validateRequired(data && data.hasOwnProperty(key) ? data[key] : null);
+            return valid;
+        });
+    // check completeness of model attachment data
+    const hasCompleteAttachments = data && Object.entries(schema.attachments || [])
+        .filter(([_, attachment]) => attachment.hasOwnProperty('required') && attachment.required)
+        .every(([key, {model}]) => confirm(
+            model.schema,
+            data && data.hasOwnProperty(key) ? data[key] : null)
+        );
+    return isComplate && hasCompleteAttachments;
+}
+
 module.exports = {
     matchers: matchers,
     isEmpty: isEmpty,
+    confirm: confirm,
     convertDate: convertDate,
     sanitize: sanitize,
     validateRequired: validateRequired,
+    validateEmployeeNumber: validateEmployeeNumber,
     validateGUID: validateGUID,
     validateEmail: validateEmail,
     validatePhone: validatePhone,

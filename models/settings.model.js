@@ -20,16 +20,20 @@ const schema = {
   modelName: 'settings',
   attributes: {
     id: {
-      dataType: 'integer'
+      dataType: 'integer',
+      required: true
     },
     name: {
-      dataType: 'varchar'
+      dataType: 'varchar',
+      required: true
     },
     label: {
-      dataType: 'varchar'
+      dataType: 'varchar',
+      required: true
     },
     value: {
-      dataType: 'varchar'
+      dataType: 'varchar',
+      required: true
     }
   }
 };

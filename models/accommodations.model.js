@@ -21,19 +21,24 @@ const schema = {
     modelName: 'accommodations',
     attributes: {
         id: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         type: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         short_name: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         name: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         description: {
-            dataType: 'text'
+            dataType: 'text',
+            required: true
         }
     }
 };

@@ -144,27 +144,15 @@ const errors = {
     status: 404,
     type: 'error'
   },
-  PDFCorrupted: {
-    hint: 'PDF attachments have data corruption, encryption or other errors',
-    msg: 'Your PDF attachments are corrupted or incompatible with this system. Please save your PDFs again and resave this nomination.',
-    status: 422,
-    type: 'error'
-  },
-  maxAttachmentsExceeded: {
-    hint: 'Maximum number of attachments allowed for nomination.',
-    msg: 'You have reached the maximum number of attachments for your nomination.',
-    status: 422,
-    type: 'error'
-  },
-  maxDraftsExceeded: {
-    hint: 'Maximum number of drafts allowed for user.',
-    msg: 'You have reached the maximum number of draft nominations for your account.',
+  registrationIncomplete: {
+    hint: 'Registration does not have all of the required data for submission.',
+    msg: 'Registration is incomplete -- cannot submit.',
     status: 422,
     type: 'error'
   },
   alreadySubmitted: {
-    hint: 'Nomination has submitted status.',
-    msg: 'Cannot update a submitted nomination.',
+    hint: 'Registration has submitted status.',
+    msg: 'Cannot update a submitted registration.',
     status: 422,
     type: 'error'
   },

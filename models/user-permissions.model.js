@@ -20,10 +20,12 @@ const schema = {
     modelName: 'user_permissions',
     attributes: {
         name: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         label: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         }
     }
 };

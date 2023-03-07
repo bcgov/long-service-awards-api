@@ -22,22 +22,28 @@ const schema = {
     modelName: 'award_options',
     attributes: {
         id: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         award: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         type: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         name: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         value: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         label: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         description: {
             dataType: 'text'

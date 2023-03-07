@@ -20,19 +20,19 @@ const schema = {
     modelName: 'organizations',
     attributes: {
         id: {
-            dataType: 'integer'
+            dataType: 'integer',
+            required: true
         },
         abbreviation: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
         name: {
-            dataType: 'varchar'
+            dataType: 'varchar',
+            required: true
         },
-        created_at: {
-            dataType: 'timestamp'
-        },
-        updated_at: {
-            dataType: 'timestamp'
+        previous_service_pins: {
+            dataType: 'boolean'
         }
     }
 };

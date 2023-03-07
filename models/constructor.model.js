@@ -38,8 +38,8 @@ exports.ModelConstructor = (props) => {
         const { attributes=null } = schema || {};
         // apply data validators
         Object.keys(attributes || {})
-            .filter(key => attributes[key].hasOwnProperty('validate'))
-            .filter(key => attributes[key].validate
+            .filter(key => attributes[key].hasOwnProperty('validators'))
+            .filter(key => attributes[key].validators
                 .map(validator => {
                     const datum = data && data.hasOwnProperty(key) ? data[key] : null;
                     const {valid=false, code=''} = validator(datum);
@@ -104,7 +104,10 @@ exports.ModelConstructor = (props) => {
                 // - for model object values, set attribute to ID value
                 // - sanitize all values against data type
                 o[attKey] = editable && newData && newData.hasOwnProperty(attKey)
-                    ? model && typeof newData[attKey] === 'object' && newData[attKey].hasOwnProperty('id')
+                    ? model
+                        && newData[attKey]
+                        && typeof newData[attKey] === 'object'
+                        && newData[attKey].hasOwnProperty('id')
                         ? sanitize(newData[attKey].id, dataType)
                         : sanitize(newData[attKey], dataType)
                     : sanitize(currentValue || defaultValue, dataType);

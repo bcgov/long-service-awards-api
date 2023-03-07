@@ -24,10 +24,12 @@ const schema = {
     modelName: 'award_selections',
     attributes: {
         id: {
-            dataType: 'uuid'
+            dataType: 'uuid',
+            required: true
         },
         award: {
             dataType: 'integer',
+            required: true,
             model: Award
         }
     },

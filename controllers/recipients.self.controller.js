@@ -6,6 +6,8 @@
  */
 
 const Recipient = require("../models/recipients.model.js");
+const {sendRegistrationConfirmation} = require("../services/mail.services");
+const {confirm} = require("../services/validation.services");
 
 /**
  * Retrieve record for current recipient.
@@ -86,10 +88,29 @@ exports.save = async (req, res, next) => {
 
     // check that recipient exists
     const recipient = await Recipient.findByGUID(guid);
-    if (!recipient) return next(Error('noRecord'));
 
-    // update record
-    await recipient.save(req.body);
+    // handle exceptions
+    if (!recipient) return next(Error('noRecord'));
+    if (recipient.confirmed) return next(Error('alreadySubmitted'));
+
+    // check confirmation status of registration
+    const {service} = req.body || {};
+    const {confirmed} = service || {};
+
+    // Handle registration submissions
+    // - check confirmation status of registration
+    // - confirm submission data is complete
+    if (confirmed) {
+      // check that submission has required fields
+      if (!confirm(recipient.schema, req.body)) return next(Error('registrationIncomplete'));
+      // update record
+      await recipient.save(req.body);
+      // send confirmation email (if confirmed)
+      await sendRegistrationConfirmation(recipient.data);
+    } else {
+      // save draft registration
+      await recipient.save(req.body);
+    }
 
     res.status(200).json({
       message: {

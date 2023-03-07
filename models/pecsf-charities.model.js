@@ -20,19 +20,19 @@ const schema = {
   modelName: 'pecsf_charities',
   attributes: {
     id: {
-      dataType: 'integer'
+      dataType: 'integer',
+      required: true
     },
     vendor: {
       dataType: 'varchar'
     },
     name: {
-      dataType: 'varchar'
+      dataType: 'varchar',
+      required: true
     },
-    created_at: {
-      dataType: 'timestamp'
-    },
-    updated_at: {
-      dataType: 'timestamp'
+    region: {
+      dataType: 'varchar',
+      required: true
     }
   }
 };

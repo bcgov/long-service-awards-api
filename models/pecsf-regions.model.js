@@ -20,8 +20,9 @@ const schema = {
   modelName: 'pecsf_regions',
   attributes: {
     name: {
-      dataType: 'varchar'
-    }
+      dataType: 'varchar',
+      required: true
+    },
   }
 };
 
