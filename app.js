@@ -168,13 +168,13 @@ app.listen(apiPort, async () => {
     console.log(`\t- Node environment: ${nodeENV}`);
     console.log(`\t- Available on a web browser at: ${apiURL}`);
     console.log(`\t- Allowed origins:`, allowedOrigins.join(', '));
-    console.log(`============================================`);
-    console.log('\tMail Settings')
+    console.log('Mail Settings')
     console.log(`\t- Server: ${process.env.MAIL_SERVER}`);
     console.log(`\t- Port: ${process.env.MAIL_PORT}`);
     console.log(`\t- From Email Address: ${process.env.MAIL_FROM_ADDRESS}`);
     console.log(`\t- From Name: ${process.env.MAIL_FROM_NAME}`);
     await db.test(); // check db init
+    console.log(`============================================`);
 });
 
 // expose API

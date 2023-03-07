@@ -37,13 +37,12 @@ const queries = {
         // return null if instance is null
         if (!schema.modelName) return null;
 
-        const timestamps = ['created_at', 'updated_at'];
+        const timestamps = ['updated_at', 'created_at'];
         let offset = 1;
 
         // generate columns list to upsert
         // - sort conflict fields to front of array
         const columns = Object.keys(schema.attributes)
-            .filter(key => !timestamps.includes(key))
             .sort(function(x, y) {
                 return conflict.includes(x) ? -1 : 0;
             });
@@ -63,6 +62,7 @@ const queries = {
         // define upsert assignments on conflict
         const conflictAssignments = columns
             .filter(attr => !conflict.includes(attr))
+            .filter(attr => attr !== 'created_at')
             .map((attr, index) => {
                 // handle timestamp placeholders defined in arguments
                 // - set assignment index offset to account for conflict fields (ignore them)

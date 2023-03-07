@@ -79,7 +79,6 @@ const schema = {
         },
         personal_address: {
             model: Address,
-            required: true,
             get: async (id) => { return await Address.findByContact(id, 'personal') },
             attach: async (address, contact) => { await Address.attach(address, contact, 'personal') }
         }

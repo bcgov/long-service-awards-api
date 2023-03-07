@@ -125,11 +125,13 @@ module.exports =  {
     findAll: async(offset=0, order='asc') => {
         return await db.defaults.findAll( schema, offset, order)
     },
-    findByContact: async(contact) => {
-        return construct(await db.defaults.findOneByField('contact', contact, schema));
+    findByContact: async(contact, type) => {
+        // look up addresses for requested contact and type
+        return construct(await defaults.findOneByFields(['contact', 'type'], [contact, type], schema));
     },
-    findByCeremony: async(ceremony) => {
-        return construct(await db.defaults.findOneByField('ceremony', ceremony, schema));
+    findByCeremony: async(ceremony, type) => {
+        // look up addresses for requested ceremony and type
+        return construct(await defaults.findOneByFields(['ceremony', 'type'], [ceremony, type], schema));
     },
     remove: async(id) => {
         await db.defaults.remove(id, schema)

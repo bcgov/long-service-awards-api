@@ -200,7 +200,7 @@ const confirm = (schema, data) => {
     // check completeness of model data
     const isComplate = data && Object.entries(schema.attributes || {})
         .filter(([_, field]) => field.hasOwnProperty('required') && field.required)
-        .every(([key]) => {
+        .every(([key, field]) => {
             // check if required field has data
             const {valid} = validateRequired(data && data.hasOwnProperty(key) ? data[key] : null);
             return valid;

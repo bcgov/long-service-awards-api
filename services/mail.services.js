@@ -56,12 +56,6 @@ const sendMail = async (
     // generate html body using template file
     ejs.renderFile(templatePath, templateData, options, async (err, body) => {
       // send mail with defined transport object
-      console.log({
-        from: `"${fromName.value}" <${fromEmail.value}>`, // sender address
-        to: to.join(', '), // list of receivers
-        subject: subject, // subject line
-        html: body, // html body
-      })
       try {
         callback(await transporter.sendMail({
           from: `"${fromName}" <${fromEmail}>`, // sender address
