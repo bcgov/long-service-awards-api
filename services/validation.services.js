@@ -202,7 +202,6 @@ const confirm = (schema, data) => {
         .filter(([_, field]) => field.hasOwnProperty('required') && field.required)
         .every(([key]) => {
             // check if required field has data
-            console.log(schema.modelName, data[key], key, validateRequired(data && data.hasOwnProperty(key) ? data[key] : null))
             const {valid} = validateRequired(data && data.hasOwnProperty(key) ? data[key] : null);
             return valid;
         });

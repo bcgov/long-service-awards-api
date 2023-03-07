@@ -117,8 +117,6 @@ module.exports =  {
         address[referenceType] = reference.id;
         address.type = type;
 
-        console.log('Upsert:', address.data)
-
         // confirm address data is not empty to upsert record
         if (!isEmpty(address.data, ['id', 'contact', 'ceremony', 'type', 'pobox', 'street2'])) {
             await defaults.transact([defaults.queries.upsert(address.data, schema)]);
