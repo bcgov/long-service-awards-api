@@ -48,8 +48,8 @@ const sendMail = async (
 
   try {
     // set mail parameters
-    const fromName = process.env.MAIL_FROM_NAME || 'LSA';
-    const fromEmail = process.env.MAIL_FROM_ADDRESS || 'no-reply@gov.bc.ca';
+    const fromName = process.env.MAIL_FROM_NAME;
+    const fromEmail = process.env.MAIL_FROM_ADDRESS;
     const templatePath = path.join(__dirname, '..', dirPath, template);
     const templateData = {...{title: subject}, ...data};
 
@@ -64,7 +64,7 @@ const sendMail = async (
       })
       try {
         callback(await transporter.sendMail({
-          from: `"${fromName.value}" <${fromEmail.value}>`, // sender address
+          from: `"${fromName}" <${fromEmail}>`, // sender address
           to: to.join(', '), // list of receivers
           subject: subject, // subject line
           html: body, // html body
