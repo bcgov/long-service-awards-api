@@ -8,7 +8,6 @@
 "use strict";
 const ejs = require("ejs");
 const nodemailer = require("nodemailer");
-const Setting = require("../models/settings.model");
 const path = require("path");
 // const fs = require("fs");
 
@@ -44,19 +43,25 @@ const sendMail = async (
     template,
     data,
     attachments,
-    callback=()=>{},
+    callback=console.log,
     options={}) => {
 
   try {
     // set mail parameters
-    const fromName = await Setting.findOneByField('name', 'email-common-from-name') || 'LSA';
-    const fromEmail = await Setting.findOneByField('name', 'email-common-from-email') || 'no-reply@gov.bc.ca';
+    const fromName = process.env.MAIL_FROM_NAME || 'LSA';
+    const fromEmail = process.env.MAIL_FROM_ADDRESS || 'no-reply@gov.bc.ca';
     const templatePath = path.join(__dirname, '..', dirPath, template);
     const templateData = {...{title: subject}, ...data};
 
     // generate html body using template file
     ejs.renderFile(templatePath, templateData, options, async (err, body) => {
       // send mail with defined transport object
+      console.log({
+        from: `"${fromName.value}" <${fromEmail.value}>`, // sender address
+        to: to.join(', '), // list of receivers
+        subject: subject, // subject line
+        html: body, // html body
+      })
       try {
         callback(await transporter.sendMail({
           from: `"${fromName.value}" <${fromEmail.value}>`, // sender address
