@@ -1,6 +1,6 @@
 /*!
- * Award Selections model
- * File: award-selections.model.js
+ * User-Organizations Selections model
+ * File: user-organization-selections.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -8,8 +8,7 @@
 const db = require('../queries/index.queries');
 const {ModelConstructor} = require("./constructor.model");
 const defaults = require("../queries/default.queries");
-const Award = require("../models/awards.model.js");
-const AwardOptionSelection = require("../models/award-option-selections.model.js");
+const Organization = require("./organizations.model");
 
 'use strict';
 
@@ -21,24 +20,17 @@ const AwardOptionSelection = require("../models/award-option-selections.model.js
  */
 
 const schema = {
-    modelName: 'award_selections',
+    modelName: 'user_organization_selections',
     attributes: {
-        id: {
+        user: {
             dataType: 'uuid',
             required: true
         },
-        award: {
+        organization: {
             dataType: 'integer',
             required: true,
-            model: Award
+            model: Organization
         }
-    },
-    attachments: {
-        selections: {
-            model: [AwardOptionSelection],
-            get: AwardOptionSelection.findByService,
-            attach: AwardOptionSelection.attach
-        },
     }
 };
 
@@ -63,24 +55,24 @@ const construct = (init, attach=null) => {
 module.exports =  {
     schema: schema,
     create: construct,
-    attach: async (awardSelection, serviceSelection) => {
+    attach: async(organization, user) => {
 
         /**
-         * Attach award selection to service selection
+         * Attach organization to user
          * @public
          */
 
-        // set reference values
-        awardSelection.id = serviceSelection.id;
-        // upsert if award selected
-        if (awardSelection.award) {
-            // destructure award and upsert record
-            const { award } = awardSelection.data;
-            return await defaults.upsert({ id: awardSelection.id, award: award.id }, schema);
-        }
+        // detach existing award options
+        await defaults.removeByFields(['user'], [user.id], schema);
+        // upsert new options
+        return await defaults.upsert(organization, schema, ['user', 'organization']);
+
     },
-    findById: async(id) => {
-        return construct(await db.defaults.findById(id, schema));
+    findByUser: async(userID) => {
+        const organizations = await db.defaults.findByField('user', userID, schema);
+        return (organizations || []).map(organization => {
+            return construct(organization)
+        });
     },
     remove: async(id) => {
         await db.defaults.removeByFields(['id'], [id], schema);

@@ -7,17 +7,90 @@
 
 'use strict';
 
-const {transactionOne} = require("../db");
+const {transactionOne, query} = require("../db");
 const uuid = require("uuid");
-const {findById, queries} = require("./default.queries");
+const {findById, queries, attachReferences } = require("./default.queries");
 const defaults = require("./default.queries");
 
 /**
- * Default queries
+ * Recipient column query statements
+ * @param {Object} data
+ * @return {Array}
  * @public
  */
 
+const getFilters = (data) => {
+    // list of filter options for recipients
+    const filters = {
+        first_name: (index) => `(contacts.first_name LIKE '%' || $${index}::varchar || '%')`,
+        last_name: (index) => `(contacts.last_name LIKE '%' || $${index}::varchar || '%')`,
+        organization: (range, index) => `(organizations.id IN (${
+            (range || []).map(() => `$${index++}::integer`).join(',')
+        }))`,
+    }
+    let values = [];
+    let index = 1;
+    // match filter with input data
+    const statements = Object.keys(data)
+        .filter(key => filters.hasOwnProperty(key))
+        .reduce((o, key)=>{
+            // explode comma-separated values into array
+            const datum = data[key].split(',');
+            console.log(key, datum)
+            datum.length > 1
+                ? o.push(filters[key](datum, index))
+                : o.push(filters[key](index++));
+            values.push.apply(values, datum);
+            return o;
+        }, [])
+        .join(' AND \n');
+
+    // return filter statements and values
+    return [statements, values];
+}
+
 const recipientQueries = {
+    findAll: (filter, schema) => {
+
+        /**
+         * Generate query: Find all filtered records in table.
+         *
+         * @param schema
+         * @param {int} offset
+         * @param {String} order
+         * @return {Promise} results
+         * @public
+         */
+
+            // destructure filter for sort/order/offset/limit
+        const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
+        // (optional) order by attribute
+        const orderClause = order && orderby ? `ORDER BY ${schema.modelName}.${orderby} ${order}` : '';
+        const limitClause = limit ? `LIMIT ${limit}` : '';
+
+        // get column filters
+        const [filterStatements, filterValues] = getFilters(filter);
+        const selections = Object.keys(schema.attributes)
+            .map(field => schema.modelName + '.' + field).join(', ')
+
+        const result = {
+            sql: `SELECT ${selections},
+                         COUNT(*) as total_filtered_records,
+                         (SELECT COUNT(*) FROM ${schema.modelName}) as total_records
+                  FROM ${schema.modelName} 
+                      JOIN contacts ON contacts.recipient = ${schema.modelName}.id
+                      JOIN organizations ON organizations.id = ${schema.modelName}.organization
+                  WHERE contacts.type = 'contact' ${filterStatements && ' AND ' + filterStatements}
+                  GROUP BY ${schema.modelName + '.id'}
+                               ${orderClause}
+                               ${limitClause}
+                  OFFSET ${offset};`,
+            data: filterValues,
+        }
+        console.log(result)
+        return result;
+
+    },
     insert: (data)=>{
         // destructure user stub data
         const {
@@ -31,9 +104,9 @@ const recipientQueries = {
         } = data || {};
         return {
             sql: `INSERT INTO recipients (id, guid, idir, "user", employee_number, status, organization)
-              VALUES ($1::uuid, $2::varchar, $3::varchar, $4::uuid, $5::integer, $6::varchar, $7::integer)
-              ON CONFLICT DO NOTHING
-              RETURNING *;`,
+                  VALUES ($1::uuid, $2::varchar, $3::varchar, $4::uuid, $5::integer, $6::varchar, $7::integer)
+                  ON CONFLICT DO NOTHING
+                  RETURNING *;`,
             data: [id, guid, idir, user, employee_number, status, organization],
         };
     },
@@ -81,6 +154,24 @@ const recipientQueries = {
     }
 }
 exports.queries = recipientQueries;
+
+/**
+ * Generate query: Find filtered results
+ *
+ * @param {Object} data
+ * @parem {Object} user
+ * @return {Promise} results
+ * @public
+ */
+
+exports.findAll = async (filter, schema) => {
+    const result = await query(recipientQueries.findAll(filter, schema));
+    console.log(result)
+    // attach linked records to results
+    return await Promise.all((result || []).map(async(item) => {
+        return await attachReferences(item, schema);
+    }));
+}
 
 /**
  * Default transactions
@@ -191,16 +282,16 @@ exports.delegate = async (data, user, schema) => {
         (prior_milestones || [])
             .filter(mstone => mstone !== milestone)
             .map(mstone => {
-            q.push(queries.upsert({
-                id: uuid.v4(),
-                recipient: recipientID,
-                milestone: mstone,
-                qualifying_year: default_qualifying_year,
-                service_years: default_service_years,
-                delegated: true,
-                awards: null
-            }, attachments.service.model.schema));
-        });
+                q.push(queries.upsert({
+                    id: uuid.v4(),
+                    recipient: recipientID,
+                    milestone: mstone,
+                    qualifying_year: default_qualifying_year,
+                    service_years: default_service_years,
+                    delegated: true,
+                    awards: null
+                }, attachments.service.model.schema));
+            });
 
     });
 

@@ -50,8 +50,8 @@ const construct = (init) => {
 
 module.exports =  {
     schema: schema,
-    findAll: async(offset=0, order='asc') => {
-        return await db.defaults.findAll( schema, offset, order)
+    findAll: async(filter) => {
+        return await db.defaults.findAll(filter, schema)
     },
     findById: async(id) => {
         return construct(await db.defaults.findById(id, schema))

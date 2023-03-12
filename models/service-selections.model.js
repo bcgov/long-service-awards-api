@@ -11,7 +11,7 @@ const AwardSelection = require("./award-selections.model");
 const Setting = require("./settings.model");
 const defaults = require("../queries/default.queries");
 const uuid = require("uuid");
-const {isEmpty, validateRequired} = require("../services/validation.services");
+const {isEmpty} = require("../services/validation.services");
 
 'use strict';
 
@@ -137,20 +137,27 @@ module.exports =  {
     // upsert record
     return await defaults.upsert(serviceSelection.data, serviceSelection.schema);
   },
-  findAll: async(offset=0, order='asc') => {
-    return await db.defaults.findAll( schema, offset, order);
-  },
   findActiveByRecipient: async(recipientID) => {
 
     /**
      * Finds active service record for current LSA cycle (e.g., 2023)
-     * @type {*}
      */
 
     const cycle = await Setting.findOneByField('name', 'cycle');
     const serviceSelection = await db.defaults.findOneByFields(
         ['recipient', 'cycle'], [recipientID, cycle && cycle.value], schema);
     return construct(serviceSelection)
+  },
+  findByRecipient: async(recipientID) => {
+
+    /**
+     * Finds all service records for recipient
+     */
+
+    const services = await db.defaults.findByField('recipient', recipientID, schema);
+    return (services || []).map(service => {
+      return construct(service)
+    });
   },
   findById: async(id) => {
     return construct(await db.defaults.findById(id, schema));

@@ -122,9 +122,6 @@ module.exports =  {
             await defaults.transact([defaults.queries.upsert(address.data, schema)]);
         }
     },
-    findAll: async(offset=0, order='asc') => {
-        return await db.defaults.findAll( schema, offset, order)
-    },
     findByContact: async(contact, type) => {
         // look up addresses for requested contact and type
         return construct(await defaults.findOneByFields(['contact', 'type'], [contact, type], schema));

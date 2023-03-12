@@ -66,7 +66,7 @@ const construct = (init, attach) => {
 
 module.exports =  {
     schema: schema,
-    findAll: async(offset=0, order='asc') => { await db.defaults.findAll( schema, offset, order) },
+    findAll: async(filter) => {return await db.defaults.findAll(filter, schema)},
     findById: async(id) => { await db.defaults.findById(id, schema) },
     findByCeremony: async(ceremony_id) => { await db.defaults.findByField('ceremony', ceremony_id, schema) },
     create: async(data) => { await db.defaults.insert(data, schema) },

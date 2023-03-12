@@ -7,7 +7,6 @@
 
 const Recipient = require("../models/recipients.model.js");
 const uuid = require("uuid");
-const User = require("../models/users.model");
 
 /**
  * Retrieve all records.
@@ -21,10 +20,20 @@ const User = require("../models/users.model");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await Recipient.findAll();
-    return res.status(200).json(results);
+
+    // apply query filter to results
+    const recipients = await Recipient.findAll(req.query, res.locals.user);
+
+    // send response
+    res.status(200).json({
+      message: {
+        severity: 'success',
+        summary: 'Recipient Record(s) Found',
+        detail: 'Recipient records found.'
+      },
+      result: recipients,
+    });
   } catch (err) {
-    console.error(err);
     return next(err);
   }
 };

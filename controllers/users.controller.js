@@ -110,7 +110,7 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const user = await User.findByID(id);
+    const user = await User.find(id);
     await user.save(req.body);
     res.status(200).json({
       message: {severity: 'success', summary: 'New User', detail: `Added new admin user.`},

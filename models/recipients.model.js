@@ -102,6 +102,11 @@ const schema = {
             required: true,
             get: ServiceSelection.findActiveByRecipient,
             attach: ServiceSelection.attach
+        },
+        services: {
+            model: [ServiceSelection],
+            required: false,
+            get: ServiceSelection.findByRecipient,
         }
     }
 };
@@ -126,8 +131,9 @@ const construct = (init) => {
 module.exports =  {
     schema: schema,
     create: construct,
-    findAll: async(offset=0, order='asc') => {
-        return await db.defaults.findAll( schema, offset, order);
+    findAll: async(filter, user) => {
+        console.log(filter, user)
+        return await db.recipients.findAll(filter, schema);
     },
     findById: async(id) => {
         return construct(await db.defaults.findById(id, schema));

@@ -10,7 +10,6 @@ const {ModelConstructor} = require("./constructor.model");
 const defaults = require("../queries/default.queries");
 const AwardOption = require("./award-options.model");
 const PecsfCharity = require("../models/pecsf-charities.model.js");
-const {isEmpty} = require("../services/validation.services");
 
 'use strict';
 
@@ -92,8 +91,8 @@ module.exports =  {
             return construct(awardOptionSelection)
         });
     },
-    findAll: async(offset=0, order='asc') => {
-        return await db.defaults.findAll( schema, offset, order);
+    findAll: async(filter) => {
+        return await db.defaults.findAll(filter, schema);
     },
     findById: async(id) => {
         return construct(await db.defaults.findById(id, schema));

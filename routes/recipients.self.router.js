@@ -7,15 +7,14 @@
 
 const router = require('express').Router();
 const controller = require('../controllers/recipients.self.controller');
-const transactions = require('../services/log.services');
 
 /**
  * Recipient self-registration endpoints
  */
 
 router.get('/view', controller.get);
-router.post('/register', controller.register, transactions.log);
-router.post('/save', controller.save, transactions.log);
-router.post('/delete', controller.remove, transactions.log);
+router.post('/register', controller.register);
+router.post('/save', controller.save);
+router.post('/delete', controller.remove);
 
 module.exports = router;

@@ -21,7 +21,12 @@ const { sanitize } = require("../services/validation.services");
 
 // initialize base model instance
 exports.ModelConstructor = (props) => {
-    const{init=null, schema=null, db=null, attach=async()=>{}} = props || {};
+    const{
+        init=null,
+        schema=null,
+        db=null,
+        attach=async()=>{}
+    } = props || {};
     if (!init) return null;
     const {id=null} = init || {};
     const {modelName=''} = schema || {};
@@ -212,8 +217,8 @@ exports.ModelConstructor = (props) => {
         attachTo: async function (parent) {
             // attach reference if database attachment method is defined
             const dependent = this;
-            // attach to parent model
-            await attach(dependent, parent);
+            // attach to parent model (if attach method exists)
+            if (!!attach) await attach(dependent, parent);
             // attach dependent reference models
             const updatedReferences = this.attachments;
             await Promise.all((Object.keys(updatedReferences || {}).map(async(refKey) => {

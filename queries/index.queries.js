@@ -19,6 +19,7 @@ const recipients = require('./recipients.queries.js');
 
 /**
  * Index of query module exports.
+ * - Note that the 'generate' function creates default database handlers for a given model schema
  * @public
  */
 
@@ -30,9 +31,7 @@ module.exports = {
     generate: (schema) => {
         return {
             schema: schema,
-            findAll: async(orderby=null, order='ASC', offset=0, limit=null) => {
-                return await defaults.findAll( orderby, order, limit, offset, schema)
-            },
+            findAll: async(filter) => {return await defaults.findAll( filter, schema)},
             findById: async(id) => { return await defaults.findById(id, schema) },
             findByField: async(field, value) => { return await defaults.findByField(field, value, schema) },
             findOneByField: async(field, value) => { return await defaults.findOneByField(field, value, schema) },

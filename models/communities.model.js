@@ -6,7 +6,6 @@
  */
 
 const db = require('../queries/index.queries');
-const {ModelConstructor} = require("./constructor.model");
 
 'use strict';
 

@@ -156,6 +156,24 @@ const errors = {
     status: 422,
     type: 'error'
   },
+  ESOCKET: {
+    hint: 'Socket connection failure: Check if the port is available.',
+    msg: 'Connection Refused. Please contact the site administrator for assistance.',
+    status: 500,
+    type: 'error'
+  },
+  failedMailSend: {
+    hint: 'Mail service failed to deliver email to recipient.',
+    msg: 'Mail delivery failed.',
+    status: 500,
+    type: 'error'
+  },
+  badMailTemplate: {
+    hint: 'Email template has an error that caused a mail delivery failure.',
+    msg: 'The requested email template has errors.',
+    status: 422,
+    type: 'error'
+  },
   EEXIST: {
     hint: 'NodeJS Filesystem Error: file already exists, createWriteStream / copyfile failed.',
     msg: 'The attached file already exists in the library. Please rename the file before uploading.',
@@ -190,7 +208,7 @@ const errors = {
  * @param {Error} err
  */
 
-function decodeError(err = null) {
+const decodeError = (err = null) => {
 
   // dereference error data
   const { message='', code='' } = err || {};
@@ -200,6 +218,7 @@ function decodeError(err = null) {
 
   return errors.hasOwnProperty(key) ? errors[key] : errors.default;
 }
+exports.decodeError = decodeError;
 
 /**
  * Global error handler.
@@ -212,7 +231,7 @@ function decodeError(err = null) {
  * @param next
  */
 
-exports.globalHandler = function (err, req, res, next) {
+exports.globalHandler = function (err, req, res, _) {
 
   const e = decodeError(err);
   console.error(err)
@@ -229,8 +248,7 @@ exports.globalHandler = function (err, req, res, next) {
       }
   );
   const timestamp = new Date();
-  logger.error(`[ERROR] ${e.status} | ${e.msg} ${err.message} 
-        URL: ${req.originalUrl} - ${req.method} - ${req.ip} ${timestamp}
+  logger.error(`[ERROR] ${e.status} | ${e.msg} \n-\t${err.message || ''} \n-\tURL: ${req.originalUrl} - ${req.method} - ${req.ip} ${timestamp}
         `);
   logger.error(`Details:\n\n${err}\n\n`);
 

@@ -10,8 +10,6 @@
 const {query, queryOne, transaction} = require("../db");
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
-const {update} = require("./default.queries");
-const {ignore} = require("nodemon/lib/rules");
 
 /**
  * Generate query: Find roles for user by ID value.
@@ -66,9 +64,9 @@ exports.findById = async (id) => {
  * @public
  */
 
-exports.findByField = async (field, value, schema) => {
+exports.findAuthByField = async (field, value, schema) => {
     const users = await query({
-        sql: `SELECT id, guid, idir, first_name, last_name, email
+        sql: `SELECT id, guid, idir, first_name, last_name, email, password
               FROM users
               WHERE ${field} = $1::${schema.attributes[field].dataType};`,
         data: [value],
@@ -94,7 +92,7 @@ exports.findByField = async (field, value, schema) => {
 
 exports.findOneByField = async (field, value, schema) => {
     const user = await queryOne({
-        sql: `SELECT id, guid, idir, first_name, last_name, email
+        sql: `SELECT id, guid, idir, first_name, last_name, email, password
               FROM users
               WHERE ${field} = $1::${schema.attributes[field].dataType};`,
         data: [value],

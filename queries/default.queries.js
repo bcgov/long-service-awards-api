@@ -10,12 +10,6 @@
 const {query, queryOne, transactionOne} = require("../db");
 
 /**
- * Database rows limit.
- */
-
-// const limit = 50;
-
-/**
  * Default queries
  */
 
@@ -43,7 +37,7 @@ const queries = {
         // generate columns list to upsert
         // - sort conflict fields to front of array
         const columns = Object.keys(schema.attributes)
-            .sort(function(x, y) {
+            .sort(function(x, _) {
                 return conflict.includes(x) ? -1 : 0;
             });
 
@@ -214,6 +208,7 @@ const attachReferences = async (result, schema, idKey='id') => {
 
     return result;
 }
+exports.attachReferences = attachReferences;
 
 /**
  * Generate query: Find all records in table.
@@ -225,12 +220,15 @@ const attachReferences = async (result, schema, idKey='id') => {
  * @public
  */
 
-exports.findAll = async (orderby=null, order=null, limit=null, offset = 0, schema) => {
+exports.findAll = async (filter, schema) => {
+    // destructure filter
+    const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
     // (optional) order by attribute
     const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : '';
     const limitClause = limit ? `LIMIT ${limit}` : '';
+    // get query results
     const result = await query({
-        sql: `SELECT *
+        sql: `SELECT *, (SELECT COUNT(*) FROM ${schema.modelName}) as total_records
               FROM ${schema.modelName} ${orderClause} ${limitClause}
               OFFSET ${offset};`,
         data: [],

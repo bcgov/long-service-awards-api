@@ -31,7 +31,7 @@ const schema = {
 };
 
 module.exports =  {
-    findAll: async(offset=0, order='asc') => { await db.defaults.findAll( schema, offset, order) },
+    findAll: async(filter) => {return await db.defaults.findAll(filter, schema)},
     findById: async(id) => { await db.defaults.findById(id, schema) },
     create: async(data) => { await db.defaults.insert(data, schema) },
     update: async(data) => { await db.defaults.update(data, schema) },

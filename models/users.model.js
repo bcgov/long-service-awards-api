@@ -1,5 +1,5 @@
 /*!
- * Users model
+ * User model
  * File: users.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
@@ -8,6 +8,7 @@
 const db = require('../queries/index.queries');
 const {validateGUID, validateEmail, validateRequired} = require("../services/validation.services");
 const {ModelConstructor} = require("./constructor.model");
+const OrganizationSelection = require("./user-organization-selections.model");
 
 'use strict';
 
@@ -48,10 +49,21 @@ const schema = {
             dataType: 'varchar',
             validate: [validateEmail]
         },
+        password: {
+            dataType: 'varchar',
+            restricted: true
+        },
         roles: {
             dataType: Array
         }
     },
+    attachments: {
+        organizations: {
+            model: [OrganizationSelection],
+            attach: OrganizationSelection.attach,
+            get: OrganizationSelection.findByUser
+        }
+    }
 };
 
 /**
@@ -72,8 +84,8 @@ const construct = (init) => {
 
 module.exports =  {
     schema: schema,
-    findAll: async(offset=0, order='asc') => {
-        return await db.defaults.findAll( schema, offset, order)
+    findAll: async(filter) => {
+        return await db.defaults.findAll(filter, schema);
     },
     find: async(id) => {
         return construct(await db.users.findById(id, schema));
@@ -82,6 +94,7 @@ module.exports =  {
         return construct(await db.users.findOneByField('guid', guid, schema));
     },
     findByEmail: async(email) => {
+        // note: includes password
         return construct(await db.users.findOneByField('email', email, schema));
     },
     create: async(data) => {

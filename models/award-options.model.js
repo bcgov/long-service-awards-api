@@ -87,8 +87,8 @@ module.exports =  {
         // upsert record
         return await defaults.upsert(awardOptions.data, awardOptions.schema);
     },
-    findAll: async(offset=0, order='asc') => {
-        return await db.defaults.findAll( schema, offset, order);
+    findAll: async({offset = 0, limit = 200, orderby = 'id', order = 'asc'}) => {
+        return await db.defaults.findAll({offset, limit, orderby, order}, schema);
     },
     findByAward: async(awardID) => {
         const awardOptions = await db.defaults.findByField('award', awardID, schema);

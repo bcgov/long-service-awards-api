@@ -126,9 +126,6 @@ module.exports =  {
             ]);
         }
     },
-    findAll: async(offset=0, order='asc') => {
-        return await db.defaults.findAll( schema, offset, order);
-    },
     findByRecipient: async(id, type) => {
         // look up any existing recipient contact info
         return construct(await defaults.findOneByFields(['recipient', 'type'], [id, type], schema));

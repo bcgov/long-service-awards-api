@@ -65,10 +65,11 @@ exports.initPassport = () => {
           if (!user) {
             return done(null, false)
           }
+
           // Always use hashed passwords and fixed time comparison
           bcrypt.compare(password, user.password, (err, isValid) => {
             if (err) {
-              return done(err)
+              return done({ message: err, code:'invalidCredentials' })
             }
             if (!isValid) {
               return done(null, false)
@@ -80,7 +81,9 @@ exports.initPassport = () => {
               email: user.email,
               first_name: user.first_name,
               last_name: user.last_name,
-              roles: user.roles
+              roles: user.roles,
+              organizations: user.organizations,
+              authenticated: true
             })
           })
         })
@@ -103,10 +106,8 @@ exports.initPassport = () => {
 
 exports.authenticateSMS = async (req, res, next) => {
   try {
-
     // check if API test
     if (req.url === '/') return next();
-
     // [dev] skip authentication on test/local environments
     if (nodeEnv === 'development' || nodeEnv === 'test') {
       // check for impersonate query parameters
@@ -260,6 +261,7 @@ exports.initAuth = async() => {
     const user = await User.findByGUID(superadminGUID);
     if (!user) {
       // create default super-admin user
+      // - note that administrators do not have associated organizations
       await User.create({
         idir: superadminIDIR,
         guid: superadminGUID,

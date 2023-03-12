@@ -10,21 +10,37 @@ const ejs = require("ejs");
 const nodemailer = require("nodemailer");
 const path = require("path");
 // const fs = require("fs");
+const Transaction = require('../models/transactions.model')
+const {decodeError} = require("../error");
 
 // template directory
 const dirPath = '/resources/email_templates/';
 
+
 /**
- * Configure Nodemailer:
- * - create reusable transporter object using the default SMTP transport
+ * Log mail event
+ * @param error
+ * @param recipient
+ * @param response
+ * @private
  */
 
-let transporter = nodemailer.createTransport({
-  host: process.env.MAIL_SERVER,
-  port: process.env.MAIL_PORT,
-  secure: false, // true for 465, false for other ports
-  pool: true
-});
+const _logMail = async (error, response, recipient) => {
+
+      const parsedError = decodeError(error);
+      const {hint, msg} = parsedError || {};
+      const {id, user} = recipient || {};
+
+      // log event in transaction table
+      await Transaction.save({
+        user: user || null,
+        recipient: id,
+        error: !!error,
+        code: 'failedMailSend',
+        description: `${msg ? msg : 'Error not indexed'} (${hint ? hint : 'N/A'})`.slice(0, 256),
+        details: `[${JSON.stringify(error)}, ${JSON.stringify(response)}]`
+      })
+    }
 
 /**
  * Send mail
@@ -32,7 +48,6 @@ let transporter = nodemailer.createTransport({
  * @param to
  * @param template
  * @param data
- * @param callback
  * @param attachments
  * @param options
  */
@@ -43,10 +58,22 @@ const sendMail = async (
     template,
     data,
     attachments,
-    callback=console.log,
     options={}) => {
 
   try {
+
+    /**
+     * Configure Nodemailer:
+     * - create reusable transporter object using the default SMTP transport
+     */
+
+    let transporter = nodemailer.createTransport({
+      host: process.env.MAIL_SERVER,
+      port: process.env.MAIL_PORT,
+      secure: false, // true for 465, false for other ports
+      pool: true
+    });
+
     // set mail parameters
     const fromName = process.env.MAIL_FROM_NAME;
     const fromEmail = process.env.MAIL_FROM_ADDRESS;
@@ -57,20 +84,24 @@ const sendMail = async (
     ejs.renderFile(templatePath, templateData, options, async (err, body) => {
       // send mail with defined transport object
       try {
-        callback(await transporter.sendMail({
+        const response = await transporter.sendMail({
           from: `"${fromName}" <${fromEmail}>`, // sender address
           to: to.join(', '), // list of receivers
           subject: subject, // subject line
           html: body, // html body
-        }))
+        });
+        // log send event
+        await _logMail(null, response, data);
       }  catch (e) {
-        console.error(e)
-        throw new Error('emailTemplateError');
+        // log send error
+        _logMail(e, {
+          from: `"${fromName}" <${fromEmail}>`, to: to.join(', '), subject: subject
+        }, data).catch(console.error);
       }
     });
   }  catch (e) {
     console.error(e)
-    throw new Error('emailTemplateError');
+    throw new Error('badMailTemplate');
   }
 
 }

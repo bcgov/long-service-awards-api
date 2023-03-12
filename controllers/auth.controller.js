@@ -18,6 +18,7 @@
 exports.info = async (req, res, next) => {
   try {
     if (req.isAuthenticated()) {
+      // admin or org-contact authorization
       res.status(200).json({
         message: null,
         result: {
@@ -27,10 +28,13 @@ exports.info = async (req, res, next) => {
           email: res.locals.user.email,
           first_name: res.locals.user.first_name,
           last_name: res.locals.user.last_name,
-          roles: res.locals.user.roles
+          roles: res.locals.user.roles,
+          organizations: res.locals.user.organizations,
+          authenticated: true
         }
       });
     }
+    // restricted user authorization
     else if (res.locals.user) {
       res.status(200).json({
         message: null,
@@ -38,7 +42,8 @@ exports.info = async (req, res, next) => {
           id: res.locals.user.id,
           guid: res.locals.user.guid,
           idir: res.locals.user.idir,
-          roles: res.locals.user.roles
+          roles: res.locals.user.roles,
+          authenticated: false
         }
       });
     }
@@ -63,7 +68,11 @@ exports.info = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   if (req.isAuthenticated()) {
     res.status(200).json({
-      message: {severity: 'success', summary: 'Login', detail: 'User has signed in.'},
+      message: {
+        severity: 'success',
+        summary: 'Login',
+        detail: 'User has signed in.'
+      },
       result: req.user,
     });
   }
@@ -103,7 +112,7 @@ exports.logout = async (req, res, next) => {
       if (err) { return next(err); }
       res.status(200).json({
         message: {severity: 'success', summary: 'Logout', detail: 'User has signed out.'},
-        data: {},
+        result: {},
       });
     });
   } catch (err) {
