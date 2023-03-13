@@ -27,7 +27,7 @@ const dirPath = '/resources/email_templates/';
 
 const _logMail = async (error, response, recipient) => {
 
-      const parsedError = decodeError(error);
+      const parsedError = error ? decodeError(error) : {hint: 'N/A', msg: 'Mail delivered successfully'};
       const {hint, msg} = parsedError || {};
       const {id, user} = recipient || {};
 
@@ -36,7 +36,7 @@ const _logMail = async (error, response, recipient) => {
         user: user || null,
         recipient: id,
         error: !!error,
-        code: 'failedMailSend',
+        code: error ? 'failedMailSend' : 'successMailSend',
         description: `${msg ? msg : 'Error not indexed'} (${hint ? hint : 'N/A'})`.slice(0, 256),
         details: `[${JSON.stringify(error)}, ${JSON.stringify(response)}]`
       })
