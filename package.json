@@ -1,0 +1,49 @@
+{
+  "name": "long-service-awards-web-api",
+  "license": "MIT",
+  "main": "app.js",
+  "version": "2.0.0",
+  "author": "BC Gov, PSA",
+  "description": "Long Service Awards Web API",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon --trace-warnings app.js",
+    "cy:run": "cypress run",
+    "cy:open": "cypress open"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "bcrypt": "^5.1.0",
+    "connect-history-api-fallback": "^1.6.0",
+    "connect-pg-simple": "^8.0.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "ejs": "^3.1.8",
+    "express": "^4.17.1",
+    "express-session": "^1.17.3",
+    "file-saver": "^2.0.5",
+    "helmet": "^5.0.1",
+    "jwt-decode": "^3.1.2",
+    "nodemailer": "^6.9.1",
+    "passport": "^0.6.0",
+    "passport-local": "^1.0.0",
+    "pg": "^8.8.0",
+    "uuid": "^9.0.0",
+    "winston": "^3.8.2"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "cypress": "^11.1.0",
+    "dotenv": "^16.0.3",
+    "nodemon": "^2.0.20",
+    "supertest": "^6.3.1"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "rules": {}
+  }
+}
