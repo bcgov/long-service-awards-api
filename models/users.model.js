@@ -9,6 +9,7 @@ const db = require('../queries/index.queries');
 const {validateGUID, validateEmail, validateRequired} = require("../services/validation.services");
 const {ModelConstructor} = require("./constructor.model");
 const OrganizationSelection = require("./user-organization-selections.model");
+const UserRole = require("./user-roles.model");
 
 'use strict';
 
@@ -39,6 +40,11 @@ const schema = {
             validate: [validateRequired],
             editable: false
         },
+        role: {
+            dataType: 'varchar',
+            required: true,
+            model: UserRole
+        },
         first_name: {
             dataType: 'varchar'
         },
@@ -52,9 +58,6 @@ const schema = {
         password: {
             dataType: 'varchar',
             restricted: true
-        },
-        roles: {
-            dataType: Array
         }
     },
     attachments: {
@@ -84,10 +87,14 @@ const construct = (init) => {
 
 module.exports =  {
     schema: schema,
+    create: construct,
     findAll: async(filter) => {
         return await db.defaults.findAll(filter, schema);
     },
     find: async(id) => {
+        return construct(await db.users.findById(id, schema));
+    },
+    findById: async(id) => {
         return construct(await db.users.findById(id, schema));
     },
     findByGUID: async(guid) => {
@@ -97,7 +104,7 @@ module.exports =  {
         // note: includes password
         return construct(await db.users.findOneByField('email', email, schema));
     },
-    create: async(data) => {
+    register: async(data) => {
         return construct(await db.users.insert(data));
     },
     remove: async(id) => {

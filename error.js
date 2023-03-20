@@ -66,6 +66,12 @@ const errors = {
     status: 422,
     type: 'error'
   },
+  selfDelete: {
+    hint: 'User cannot delete their own record.',
+    msg: 'You cannot delete yourself.',
+    status: 401,
+    type: 'error'
+  },
   missingRequired: {
     hint: 'Input data is missing required value.',
     msg: 'Input data is missing required value.',

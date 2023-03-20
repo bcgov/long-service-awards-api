@@ -7,7 +7,7 @@
 
 'use strict';
 
-const {transactionOne, query} = require("../db");
+const {transactionOne, query, queryOne} = require("../db");
 const uuid = require("uuid");
 const {findById, queries, attachReferences } = require("./default.queries");
 const defaults = require("./default.queries");
@@ -20,27 +20,49 @@ const defaults = require("./default.queries");
  */
 
 const getFilters = (data) => {
-    // list of filter options for recipients
-    const filters = {
-        first_name: (index) => `(contacts.first_name LIKE '%' || $${index}::varchar || '%')`,
-        last_name: (index) => `(contacts.last_name LIKE '%' || $${index}::varchar || '%')`,
-        organization: (range, index) => `(organizations.id IN (${
-            (range || []).map(() => `$${index++}::integer`).join(',')
-        }))`,
-    }
+    // init
     let values = [];
     let index = 1;
+
+    /**
+     * List of filter options for recipients
+     * - Recipient first name
+     * - Recipient last name
+     * - Recipient Employee Number
+     * - Organization
+     * - Milestones
+     * - Confirmed
+     * */
+
+    const filters = {
+        first_name: () => `(contacts.first_name LIKE '%' || $${index++}::varchar || '%')`,
+        last_name: () => `(contacts.last_name LIKE '%' || $${index++}::varchar || '%')`,
+        employee_number: () => `(recipients.employee_number LIKE '%' || $${index++}::varchar || '%')`,
+        organization: (range) => `(organizations.id IN (${
+            (range || []).map(() => `$${index++}::integer`).join(',')
+        }))`,
+        milestones: (range) => `(service_selections.milestone IN (${
+            (range || []).map(() => `$${index++}::integer`).join(',')
+        }))`,
+        cycle: (range) => `(service_selections.cycle IN (${
+            (range || []).map(() => `$${index++}::integer`).join(',')
+        }))`,
+        confirmed: (value) => `(
+        service_selections.confirmed = $${index++}::boolean 
+        ${value[0] === 'false' ? 'OR service_selections.confirmed IS NULL' : '' } )`,
+    }
     // match filter with input data
-    const statements = Object.keys(data)
+    let statements = "";
+    statements += Object.keys(data)
         .filter(key => filters.hasOwnProperty(key))
         .reduce((o, key)=>{
-            // explode comma-separated values into array
-            const datum = data[key].split(',');
-            console.log(key, datum)
-            datum.length > 1
-                ? o.push(filters[key](datum, index))
-                : o.push(filters[key](index++));
-            values.push.apply(values, datum);
+            // explode comma-separated query array parameters into array
+            const datum = !!data[key] && data[key].split(',');
+            // ignore null/empty filter values
+            if (datum) {
+                o.push(filters[key](datum));
+                values.push.apply(values, datum);
+            }
             return o;
         }, [])
         .join(' AND \n');
@@ -48,6 +70,14 @@ const getFilters = (data) => {
     // return filter statements and values
     return [statements, values];
 }
+
+/**
+ * Recipient custom queries
+ * - findall
+ * - insert (stub)
+ * - update
+ * - stats (recipients aggregate stats)
+ * */
 
 const recipientQueries = {
     findAll: (filter, schema) => {
@@ -71,24 +101,46 @@ const recipientQueries = {
         // get column filters
         const [filterStatements, filterValues] = getFilters(filter);
         const selections = Object.keys(schema.attributes)
-            .map(field => schema.modelName + '.' + field).join(', ')
+            .map(field => schema.modelName + '.' + field).join(', ');
 
-        const result = {
-            sql: `SELECT ${selections},
-                         COUNT(*) as total_filtered_records,
-                         (SELECT COUNT(*) FROM ${schema.modelName}) as total_records
-                  FROM ${schema.modelName} 
-                      JOIN contacts ON contacts.recipient = ${schema.modelName}.id
-                      JOIN organizations ON organizations.id = ${schema.modelName}.organization
-                  WHERE contacts.type = 'contact' ${filterStatements && ' AND ' + filterStatements}
+        return {
+            sql: `SELECT ${selections}, COUNT(${schema.modelName + '.id'}) as total_filtered_records
+                  FROM ${schema.modelName}
+                           LEFT JOIN contacts ON contacts.recipient = ${schema.modelName}.id AND contacts.type = 'personal'
+                           LEFT JOIN organizations ON organizations.id = ${schema.modelName}.organization
+                           LEFT JOIN service_selections ON service_selections.recipient = ${schema.modelName}.id
+                      ${filterStatements && ' WHERE ' + filterStatements}
                   GROUP BY ${schema.modelName + '.id'}
                                ${orderClause}
                                ${limitClause}
                   OFFSET ${offset};`,
             data: filterValues,
-        }
-        console.log(result)
-        return result;
+        };
+
+    },
+    count: (filter, schema) => {
+
+        /**
+         * Generate query: Count total filtered records in table.
+         *
+         * @param schema
+         * @param {int} offset
+         * @param {String} order
+         * @return {Promise} results
+         * @public
+         */
+
+        // get column filters
+        const [filterStatements, filterValues] = getFilters(filter);
+        return {
+            sql: `SELECT COUNT(*) as total_filtered_records
+                  FROM ${schema.modelName}
+                           LEFT JOIN contacts ON contacts.recipient = ${schema.modelName}.id AND contacts.type = 'personal'
+                           LEFT JOIN organizations ON organizations.id = ${schema.modelName}.organization
+                           LEFT JOIN service_selections ON service_selections.recipient = ${schema.modelName}.id
+                      ${filterStatements && ' WHERE ' + filterStatements};`,
+            data: filterValues,
+        };
 
     },
     insert: (data)=>{
@@ -151,6 +203,25 @@ const recipientQueries = {
 
         // apply update query
         return {sql: sql, data: filteredData};
+    },
+
+    stats: (schema, currentCycle) => {
+        if (!schema.modelName) return null;
+        return [
+            {sql: 'SELECT COUNT(*) as total_count FROM recipients;', data: []},
+            {sql: `SELECT COUNT(*) as lsa_current_count FROM  recipients
+                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                   WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
+            {sql: `SELECT COUNT(*) as lsa_previous_count FROM  recipients
+                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                   WHERE service_selections.cycle != ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
+            {sql: `SELECT COUNT(*) as service_pins_count FROM recipients
+                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                   WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone IS NOT NULL ;`, data: []},
+            {sql: `SELECT COUNT(*) as other_count FROM recipients
+                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                   WHERE service_selections.milestone IS NULL;`, data: []}
+        ];
     }
 }
 exports.queries = recipientQueries;
@@ -166,7 +237,6 @@ exports.queries = recipientQueries;
 
 exports.findAll = async (filter, schema) => {
     const result = await query(recipientQueries.findAll(filter, schema));
-    console.log(result)
     // attach linked records to results
     return await Promise.all((result || []).map(async(item) => {
         return await attachReferences(item, schema);
@@ -299,6 +369,37 @@ exports.delegate = async (data, user, schema) => {
     return await transactionOne(q);
 }
 
+/**
+ * Generate query: Find result count for filtered query
+ *
+ * @param {Object} filter
+ * @parem {Object} user
+ * @return {Promise} results
+ * @public
+ */
+
+exports.count = async (filter, user, schema) => {
+    return await queryOne(recipientQueries.count(filter, schema));
+}
+
+/**
+ * Generate query: Get recipients stats
+ *
+ * @param {Object} schema
+ * @return {Promise} results
+ * @public
+ */
+
+exports.stats = async (schema, cycle) => {
+    let result = {};
+    await Promise.all((recipientQueries.stats(schema, cycle) || []).map(async(q) => {
+        const res = await query(q);
+        const item = res.length > 0 ? res[0] : null;
+        result = {...result, ...item};
+        return item;
+    }));
+    return result;
+}
 
 /**
  * Generate query: Delete recipient record in table.

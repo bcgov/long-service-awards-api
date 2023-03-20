@@ -1,5 +1,5 @@
 /*!
- * User Roles model
+ * User Role model
  * File: user-roles.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
@@ -22,6 +22,7 @@ const schema = {
     attributes: {
         name: {
             dataType: 'varchar',
+            primary: true,
             required: true
         },
         label: {
@@ -36,33 +37,27 @@ const schema = {
  * Model constructor
  *
  * @param {Object} init initial data
+ * @param attach
  * @return {Object} model instance
  * @public
  */
 
-const construct = (init) => {
+const construct = (init, attach=null) => {
     return ModelConstructor({
         init: init,
         schema: schema,
-        db: db.defaults
+        db: db.defaults,
+        attach: attach
     });
 }
 
 module.exports =  {
     schema: schema,
+    create: construct,
     findAll: async(filter) => {
         return await db.defaults.findAll(filter, schema)
     },
-    findById: async(id) => {
-        return construct(await db.defaults.findById(id, schema))
-    },
-    create: async(data) => {
-        return construct(await db.defaults.insert(data, schema, true));
-    },
-    remove: async(id) => {
-        await db.defaults.remove(id, schema)
-    },
-    removeAll: async() => {
-        await db.defaults.removeAll(schema)
+    findById: async(name) => {
+        return await db.defaults.findOneByField('name', name, schema)
     }
 }

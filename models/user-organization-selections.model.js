@@ -20,7 +20,7 @@ const Organization = require("./organizations.model");
  */
 
 const schema = {
-    modelName: 'user_organization_selections',
+    modelName: 'user_organizations_selections',
     attributes: {
         user: {
             dataType: 'uuid',
@@ -58,15 +58,21 @@ module.exports =  {
     attach: async(organization, user) => {
 
         /**
-         * Attach organization to user
-         * @public
+         * Attach/Detach organization(s) to/from user
+         * @private
          */
 
-        // detach existing award options
-        await defaults.removeByFields(['user'], [user.id], schema);
-        // upsert new options
-        return await defaults.upsert(organization, schema, ['user', 'organization']);
-
+        // remove organizations for administrators
+        const { role } = user.data || {};
+        const isAdmin = ['super-administrator', 'administrator'].includes(role.name);
+        if (isAdmin) {
+            const {id} = user || {};
+            await defaults.removeByFields(['user'], [id], schema);
+        }
+        else {
+            // upsert user-organization selections
+            return await defaults.upsert(organization.data, schema, ['user', 'organization']);
+        }
     },
     findByUser: async(userID) => {
         const organizations = await db.defaults.findByField('user', userID, schema);

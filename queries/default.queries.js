@@ -65,10 +65,15 @@ const queries = {
                 return [`"${attr}"`, `${placeholder}::${schema.attributes[attr].dataType}`].join('=');
             });
 
+        // check if any fields remain for update on conflict
+        const updateAction = conflictAssignments.length === 0
+            ? 'NOTHING'
+            : `UPDATE SET ${conflictAssignments.join(', ')}`
+
         // construct prepared statement (insertion or merge)
         let sql = `
             INSERT INTO ${schema.modelName} ("${columns.join('", "')}") VALUES (${values.join(', ')})
-            ON CONFLICT ("${conflict.join('", "')}") DO UPDATE SET ${conflictAssignments.join(', ')}
+            ON CONFLICT ("${conflict.join('", "')}") DO ${updateAction}
             RETURNING *;`
 
         // filter input data to match insert parameters
@@ -129,48 +134,42 @@ const queries = {
         // timestamp fields
         const timestamps = ['created_at', 'updated_at'];
 
-        // filter ignored columns:
-        const cols = Object.keys(schema.attributes).filter(key => !ignore.includes(key));
+        // generate columns list to upsert
+        // - sort id field to front of array
+        // - filter ignored columns
+        const columns = Object.keys(schema.attributes)
+            .sort(function(x, _) {
+                return idKey === x ? -1 : 0;
+            })
+            .filter(key => !ignore.includes(key));
 
         // generate prepared statement value placeholders
         // - NOTE: index shift to account for ID and created datetime values
-        let index = ignore.length;
-        const assignments = cols.map(attr => {
+        let index = 2;
+        const assignments = columns.map(attr => {
             // handle timestamp placeholder defined in arguments
             const placeholder = timestamps.includes(attr) ? `NOW()` : `$${index++}`;
 
             // map returns conjoined prepared parameters in order
-            return [attr, `${placeholder}::${schema.attributes[attr].type}`].join('=');
+            return [attr, `${placeholder}::${schema.attributes[attr].dataType}`].join('=');
         });
 
         let sql = `UPDATE "${schema.modelName}"
                SET ${assignments.join(',')}
-               WHERE ${idKey} = $1::integer
+               WHERE "${idKey}" = $1::integer
                RETURNING *;`;
 
-        // position ID, creation datetime values at front of array
-        let filteredData = [data.id];
+        // init filtered Data
+        let filteredData = [data.hasOwnProperty(idKey) ? data[idKey] : null];
 
         // filter input data to match update parameters
         filteredData.push(...Object.keys(schema.attributes)
             .filter(key => !ignore.includes(key) && !timestamps.includes(key))
-            .map(key => {return data[key]}));
+            .map(key => {return data[key] || null}));
 
         // collate data as value array
-        return { sql: sql, data: [filteredData] };
-    },
-    // prune: (parent, dependent) => {
-    //     if (!parent || !parent.hasOwnProperty('model') || !dependent || !dependent.hasOwnProperty('model'))
-    //         return null;
-    //     // construct prepared statement (deletion)
-    //     const sql = `
-    //         WITH (SELECT * FROM ${parent.model}_${dependent.model}
-    //         WHERE ${parent.model}=$1::uuid AND ${dependent.model}=$2::uuid;) AS associations,
-    //         DELETE FROM ${dependent.model}
-    //         WHERE (SELECT ${parent.model}=NULL AND ${dependent.model}=$2::uuid;`
-    //
-    //     return {sql, data: [parent.id, dependent.id]};
-    // }
+        return { sql: sql, data: filteredData };
+    }
 }
 exports.queries = queries;
 
@@ -190,11 +189,17 @@ const attachReferences = async (result, schema, idKey='id') => {
     // get parent ID value from result data
     const parentID = result.hasOwnProperty(idKey) ? result[idKey] : null;
 
-    // expand attribute data
+    // expand attributes that have a data model
     await Promise.all(Object.keys(schema.attributes || {}).map(async (attKey) => {
         const { model=null } = schema.attributes[attKey];
         // find attribute value record for given ID and attach to result
-        if (model && result.hasOwnProperty(attKey)) result[attKey] = await model.findById(result[attKey]);
+        if (model && result.hasOwnProperty(attKey)) {
+            // return item as model instance and expand data
+            const item = await model.findById(result[attKey]);
+            // data may be returned as either model instance or data object
+            const {data} = item || {};
+            result[attKey] = data || item;
+        }
     }));
 
     // attach reference data
@@ -228,7 +233,7 @@ exports.findAll = async (filter, schema) => {
     const limitClause = limit ? `LIMIT ${limit}` : '';
     // get query results
     const result = await query({
-        sql: `SELECT *, (SELECT COUNT(*) FROM ${schema.modelName}) as total_records
+        sql: `SELECT *
               FROM ${schema.modelName} ${orderClause} ${limitClause}
               OFFSET ${offset};`,
         data: [],
@@ -257,6 +262,23 @@ exports.findById = async (id, schema) => {
     });
     // attach linked records to results
     return await attachReferences(result, schema);
+}
+
+/**
+ * Generate query: Get total record count
+ *
+ * @param id
+ * @param {Object} schema
+ * @return {Promise} results
+ * @public
+ */
+
+exports.count = async (schema) => {
+    const {modelName=null} = schema || {};
+    return await queryOne({
+        sql: `SELECT COUNT(*) as total_count FROM ${modelName};`,
+        data: [],
+    });
 }
 
 
@@ -386,6 +408,8 @@ exports.upsert = async(data, schema, conflict=['id']) => {
  */
 
 exports.update = async (data, schema, ignore=['id', 'created_at'], idKey='id') => {
+    console.log(queries.update(data, schema, ignore, idKey))
+
     return await query(queries.update(data, schema, ignore, idKey));
 }
 

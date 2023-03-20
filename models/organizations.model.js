@@ -6,6 +6,7 @@
  */
 
 const db = require('../queries/index.queries');
+const {ModelConstructor} = require("./constructor.model");
 
 'use strict';
 
@@ -37,4 +38,40 @@ const schema = {
     }
 };
 
-module.exports = db.generate(schema);
+/**
+ * Model constructor
+ *
+ * @param {Object} init initial data
+ * @param {Function} attach attachment method
+ * @return {Object} model instance
+ * @public
+ */
+
+const construct = (init, attach=null) => {
+    return ModelConstructor({
+        init: init,
+        schema: schema,
+        db: db.defaults,
+        attach: attach
+    });
+}
+
+module.exports = {
+    schema: schema,
+    create: construct,
+    findById: async(id) => {
+        return construct(await db.defaults.findById(id, schema));
+    },
+    findAll: async(filter={}, user=null) => {
+        // restrict available orgs for organizational (ministry) contacts
+        const {organizations} = user || {};
+        filter.organizations = (organizations || []).map(({organization}) => organization.id);
+        return await db.organizations.findAll({...filter || {}, ...{orderby: 'name', order: 'ASC'}}, schema);
+    },
+    remove: async(id) => {
+        await db.defaults.removeByFields(['id'], [id], schema);
+    },
+    removeAll: async() => {
+        await db.defaults.removeAll(schema);
+    }
+}

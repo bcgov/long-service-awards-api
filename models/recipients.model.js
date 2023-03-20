@@ -11,6 +11,8 @@ const ServiceSelection = require('../models/service-selections.model.js');
 const {ModelConstructor} = require("./constructor.model");
 const Organization = require("./organizations.model");
 const {validateEmployeeNumber} = require("../services/validation.services");
+const Setting = require("./settings.model");
+const User = require("./users.model");
 
 'use strict';
 
@@ -50,6 +52,7 @@ const schema = {
         },
         user: {
             dataType: 'uuid',
+            model: User,
             editable: false
         },
         organization: {
@@ -132,7 +135,29 @@ module.exports =  {
     schema: schema,
     create: construct,
     findAll: async(filter, user) => {
-        console.log(filter, user)
+
+        // check if user is administrator (skip user-org filtering)
+        const { role } = user || {};
+        const isAdmin = ['super-administrator', 'administrator'].includes(role.name);
+        if (isAdmin) {
+            return await db.recipients.findAll(filter, schema);
+        }
+
+        // restrict available orgs to user assignment
+        // - check filter overlap with assigned orgs
+        const { organizations = [] } = user || {};
+        const userFilter = (organizations || []).map(({organization}) => organization.id);
+        if (userFilter.length > 0) {
+            // explode existing organization filter params
+            const orgFilter = filter.hasOwnProperty('organization')
+                && filter.organization.split(',').map(id => parseInt(id));
+            // filter org params to be contained in user filter
+            const intersection = userFilter.filter(id => (orgFilter || []).includes(parseInt(id)));
+            // ensure org filter is not empty
+            filter.organization = intersection.length === 0
+                ? userFilter.join(',')
+                : intersection.join(',');
+        }
         return await db.recipients.findAll(filter, schema);
     },
     findById: async(id) => {
@@ -149,6 +174,13 @@ module.exports =  {
     },
     delegate: async(data, user) => {
         return await db.recipients.delegate(data, user, schema);
+    },
+    count: async(filter, user) => {
+        return await db.recipients.count(filter, user, schema);
+    },
+    stats: async () => {
+        const {value} = await Setting.findOneByField('name', 'cycle');
+        return await db.recipients.stats(schema, value) || {};
     },
     remove: async(id) => {
         return await db.defaults.removeByFields( ['id'], [id], schema)

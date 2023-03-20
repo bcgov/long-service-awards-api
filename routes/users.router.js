@@ -14,14 +14,15 @@ const {authorizeAdmin, authorizeSuperAdmin } = require('../services/auth.service
  * Users endpoints.
  */
 
-router.get('/', authorizeAdmin, usersController.getAll);
-router.get('/permissions', authorizeSuperAdmin, usersController.roles);
-router.get('/permissions/:role', authorizeSuperAdmin, usersController.roles);
-router.post('/permissions/update', authorizeSuperAdmin, usersController.roles);
-router.post('/roles/:id', authorizeAdmin, usersController.roles);
-router.post('/create', authorizeAdmin, usersController.create);
+router.post('/register', usersController.register);
+router.get('/list', authorizeAdmin, usersController.getAll);
+router.get('/view/:id', authorizeAdmin, usersController.get);
 router.post('/update/:id', authorizeAdmin, usersController.update);
 router.get('/delete/:id', authorizeSuperAdmin, usersController.remove);
-router.get('/:id', authorizeAdmin, usersController.get);
+// router.get('/permissions', authorizeSuperAdmin, usersController.roles);
+// router.get('/permissions/:role', authorizeSuperAdmin, usersController.roles);
+// router.post('/permissions/update', authorizeSuperAdmin, usersController.roles);
+router.get('/roles/list', authorizeAdmin, usersController.getRoles);
+// router.post('/roles/:id', authorizeAdmin, usersController.roles);
 
 module.exports = router;

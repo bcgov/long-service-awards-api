@@ -17,15 +17,46 @@
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await res.locals.model.findAll();
+
+    // apply query filter to results
+    const items = await res.locals.model.findAll(req.query);
+
+    // send response
     res.status(200).json({
-      message: null,
-      result: results,
+      message: {},
+      result: items,
     });
   } catch (err) {
     return next(err);
   }
 };
+
+/**
+ * Retrieve all records.
+ *
+ * @param req
+ * @param res
+ * @param {Function} next
+ * @method get
+ * @src public
+ */
+
+exports.getAllByUser = async (req, res, next) => {
+  try {
+
+    // apply query filter to results
+    const items = await res.locals.model.findAll(req.query, res.locals.user);
+
+    // send response
+    res.status(200).json({
+      message: {},
+      result: items,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
 
 /**
  * Retrieve record by ID.
@@ -39,9 +70,19 @@ exports.getAll = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
+
+    // retrieve item by ID
     const {id} = req.params || {};
-    const results = await res.locals.model.findById(id);
-    res.status(200).json(results);
+    const item = await res.locals.model.findById(id);
+
+    // handle exception
+    if (!item) return next(Error('noRecord'));
+
+    // send response
+    res.status(200).json({
+      message: {},
+      result: item,
+    });
   } catch (err) {
     return next(err);
   }
@@ -78,9 +119,18 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
+
     const data = req.body;
-    const results = await res.locals.model.update(data);
-    res.status(200).json(results);
+    const item = await res.locals.model.save(data);
+
+    // handle exception
+    if (!item) return next(Error('noRecord'));
+
+    // send response
+    res.status(200).json({
+      message: {},
+      result: item,
+    });
   } catch (err) {
     return next(err);
   }

@@ -74,17 +74,7 @@ exports.initPassport = () => {
             if (!isValid) {
               return done(null, false)
             }
-            return done(null, {
-              id: user.id,
-              guid: user.guid,
-              idir: user.idir,
-              email: user.email,
-              first_name: user.first_name,
-              last_name: user.last_name,
-              roles: user.roles,
-              organizations: user.organizations,
-              authenticated: true
-            })
+            return done(null, {...user.data, ...{authenticated: true}, ...{password: null} })
           })
         })
             .catch(done)
@@ -184,6 +174,20 @@ exports.authorizeUser = async (req, res, next) => {
   }
 }
 
+/**
+ * Authorize user by role.
+ *
+ * @param {Object} user
+ * @param {Array} authorizedRoles
+ * @return {boolean} authorization
+ * @src public
+ */
+
+const _checkAuthorization = (user, authorizedRoles) => {
+  const { role } = user || {};
+  return authorizedRoles.includes(role.name);
+};
+
 
 /**
  * Authorize organizational contact user.
@@ -195,15 +199,9 @@ exports.authorizeUser = async (req, res, next) => {
  */
 
 exports.authorizeOrgContact = async (req, res, next) => {
-  if (!res.locals.user) return next(new Error("noAuth"));
-  const { roles = [] } = res.locals.user || {};
-  if (
-      roles.includes('administrator') ||
-      roles.includes('super-administrator') ||
-      roles.includes('org-contact')) next();
-  else {
-    return next(new Error("noAuth"));
-  }
+  const isAuthorized = req.isAuthenticated()
+      && _checkAuthorization(res.locals.user, ['administrator', 'super-administrator', 'org-contact']);
+  return isAuthorized ? next() : next(new Error("noAuth"));
 };
 
 /**
@@ -216,14 +214,9 @@ exports.authorizeOrgContact = async (req, res, next) => {
  */
 
 exports.authorizeAdmin = async (req, res, next) => {
-  if (!res.locals.user) return next(new Error('noAuth'));
-  const {roles=[]} = res.locals.user || {};
-  if (roles.includes('administrator') || roles.includes('super-administrator')) {
-    next();
-  }
-  else {
-    return next(new Error('noAuth'));
-  }
+  const isAuthorized = req.isAuthenticated()
+      && _checkAuthorization(res.locals.user, ['administrator', 'super-administrator']);
+  return isAuthorized ? next() : next(new Error("noAuth"));
 }
 
 /**
@@ -236,14 +229,9 @@ exports.authorizeAdmin = async (req, res, next) => {
  */
 
 exports.authorizeSuperAdmin = async (req, res, next) => {
-  if (!res.locals.user) return next(new Error('noAuth'));
-  const {roles=[]} = res.locals.user || {};
-  if (roles.includes('super-administrator')) {
-    next();
-  }
-  else {
-    return next(new Error('noAuth'));
-  }
+  const isAuthorized = req.isAuthenticated()
+      && _checkAuthorization(res.locals.user, ['super-administrator']);
+  return isAuthorized ? next() : next(new Error("noAuth"));
 }
 
 /**
@@ -262,14 +250,14 @@ exports.initAuth = async() => {
     if (!user) {
       // create default super-admin user
       // - note that administrators do not have associated organizations
-      await User.create({
+      await User.register({
         idir: superadminIDIR,
         guid: superadminGUID,
         first_name: 'ADMIN',
         last_name: 'USER',
         email: superadminEmail,
         password: superadminPassword,
-        roles: ['super-administrator']
+        role: 'super-administrator'
       });
       console.log(`[${nodeEnv}] Default super-administrator '${superadminIDIR}' created.`);
     } else {

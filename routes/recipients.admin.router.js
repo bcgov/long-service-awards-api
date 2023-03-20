@@ -7,18 +7,19 @@
 
 const router = require('express').Router();
 const controller = require('../controllers/recipients.admin.controller');
-const { authorizeAdmin } = require('../services/auth.services')
+const { authorizeOrgContact } = require('../services/auth.services')
 
 /**
  * Recipient admin endpoints
  */
 
-router.get('/list', authorizeAdmin, controller.getAll);
-router.post('/create', authorizeAdmin, controller.create);
-router.get('/view/:id', authorizeAdmin, controller.get);
-router.get('/employee_number/{employee_number}', authorizeAdmin, controller.get);
-router.post('/update/:id', authorizeAdmin, controller.update);
-router.get('/delete/:id', authorizeAdmin, controller.remove);
-router.post('/assign/:id', authorizeAdmin, controller.assign);
+router.get('/list', authorizeOrgContact, controller.getAll);
+router.post('/create', authorizeOrgContact, controller.create);
+router.get('/view/:id', authorizeOrgContact, controller.get);
+router.get('/employee_number/{employee_number}', authorizeOrgContact, controller.get);
+router.post('/update/:id', authorizeOrgContact, controller.save);
+router.get('/delete/:id', authorizeOrgContact, controller.remove);
+router.post('/assign/:id', authorizeOrgContact, controller.assign);
+router.get('/stats', authorizeOrgContact, controller.stats);
 
 module.exports = router;

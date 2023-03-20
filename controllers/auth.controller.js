@@ -28,7 +28,7 @@ exports.info = async (req, res, next) => {
           email: res.locals.user.email,
           first_name: res.locals.user.first_name,
           last_name: res.locals.user.last_name,
-          roles: res.locals.user.roles,
+          role: res.locals.user.role,
           organizations: res.locals.user.organizations,
           authenticated: true
         }
@@ -42,7 +42,7 @@ exports.info = async (req, res, next) => {
           id: res.locals.user.id,
           guid: res.locals.user.guid,
           idir: res.locals.user.idir,
-          roles: res.locals.user.roles,
+          role: res.locals.user.role,
           authenticated: false
         }
       });
@@ -70,8 +70,8 @@ exports.login = async (req, res, next) => {
     res.status(200).json({
       message: {
         severity: 'success',
-        summary: 'Login',
-        detail: 'User has signed in.'
+        summary: 'Welcome',
+        detail: 'You are now signed in.'
       },
       result: req.user,
     });
@@ -111,7 +111,11 @@ exports.logout = async (req, res, next) => {
     req.logout(function(err) {
       if (err) { return next(err); }
       res.status(200).json({
-        message: {severity: 'success', summary: 'Logout', detail: 'User has signed out.'},
+        message: {
+          severity: 'success',
+          summary: 'Goodbye!',
+          detail: 'You are now signed out.'
+        },
         result: {},
       });
     });

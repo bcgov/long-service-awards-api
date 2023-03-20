@@ -13,6 +13,7 @@ const controller = require('../controllers/recipients.delegated.controller');
  */
 
 router.get('/view', controller.get);
+router.post('/create/', controller.create);
 router.post('/save/', controller.save);
 
 module.exports = router;

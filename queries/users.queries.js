@@ -10,29 +10,7 @@
 const {query, queryOne, transaction} = require("../db");
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
-
-/**
- * Generate query: Find roles for user by ID value.
- *
- * @param {String} id
- * @return {Promise} results
- * @public
- */
-
-const findRoles = async (id) => {
-    const result = await query({
-        sql: `
-            SELECT name, label FROM user_roles_selections
-                                        JOIN user_roles ON user_roles.name = user_roles_selections.role
-            WHERE "user"=$1::uuid;`,
-        data: [id],
-    });
-    return (result || []).map(item => {
-        const {name=null} = item || {};
-        return name
-    });
-};
-exports.findRoles = findRoles;
+const {attachReferences} = require("./default.queries");
 
 /**
  * Generate query: Find records by field value.
@@ -44,14 +22,12 @@ exports.findRoles = findRoles;
  * @public
  */
 
-exports.findById = async (id) => {
+exports.findById = async (id, schema) => {
     const user = await queryOne({
-        sql: `SELECT id, guid, idir, first_name, last_name, email FROM users WHERE id = $1::uuid;`,
+        sql: `SELECT id, guid, role, idir, first_name, last_name, email FROM users WHERE id = $1::uuid;`,
         data: [id],
     });
-    // include user roles
-    if (user) user.roles = await findRoles(id);
-    return user;
+    return await attachReferences(user, schema);
 };
 
 /**
@@ -66,18 +42,15 @@ exports.findById = async (id) => {
 
 exports.findAuthByField = async (field, value, schema) => {
     const users = await query({
-        sql: `SELECT id, guid, idir, first_name, last_name, email, password
+        sql: `SELECT id, guid, role, idir, first_name, last_name, email, password
               FROM users
               WHERE ${field} = $1::${schema.attributes[field].dataType};`,
         data: [value],
     });
-    // include user roles
-    await Promise.all(
-        users.map( async (user) => {
-            user.roles = await findRoles(user.id);
-        })
-    );
-    return users;
+    // attach linked records to results
+    return await Promise.all((users || []).map(async(user) => {
+        return await attachReferences(user, schema);
+    }));
 };
 
 /**
@@ -92,15 +65,13 @@ exports.findAuthByField = async (field, value, schema) => {
 
 exports.findOneByField = async (field, value, schema) => {
     const user = await queryOne({
-        sql: `SELECT id, guid, idir, first_name, last_name, email, password
+        sql: `SELECT id, guid, role, idir, first_name, last_name, email, password
               FROM users
               WHERE ${field} = $1::${schema.attributes[field].dataType};`,
         data: [value],
     });
 
-    // include user roles
-    if (user) user.roles = await findRoles(user.id);
-    return user;
+    return await attachReferences(user, schema);
 };
 
 /**
@@ -122,7 +93,7 @@ exports.insert = async (data) => {
         last_name=null,
         email=null,
         password=null,
-        roles=[]
+        role
     } = data || {};
 
     // encrypt password for admin users
@@ -131,25 +102,18 @@ exports.insert = async (data) => {
     // create user record
     let queries = [{
         sql: `
-            INSERT INTO users (id, guid, idir, first_name, last_name, email, password)
-            VALUES ($1::uuid, $2::varchar, $3::varchar, $4::varchar, $5::varchar, $6::varchar, $7::varchar);
+            INSERT INTO users (id, guid, role, idir, first_name, last_name, email, password)
+            VALUES ($1::uuid, $2::varchar, $3::varchar, $4::varchar, $5::varchar, $6::varchar, $7::varchar, $8::varchar);
         `,
-        data: [id, guid, idir, first_name, last_name, email, encryptedPassword],
+        data: [id, guid, role, idir, first_name, last_name, email, encryptedPassword],
     }];
-
-    // set roles for user
-    queries.push.apply(queries, roles.map(role => {
-        return {
-            sql: `INSERT INTO user_roles_selections ("user", role) VALUES ($1::uuid, $2::varchar);`,
-            data: [id, role],
-        };
-    }));
 
     return await transaction(queries);
 }
 
 /**
  * Generate query: Update record in table.
+ * - clear out the user roles and organizations to reset attached
  *
  * @param {Object} data
  * @param {Object} schema
@@ -159,37 +123,19 @@ exports.insert = async (data) => {
 
 exports.update = async (data) => {
 
-    const {
-        id=null,
-        first_name=null,
-        last_name=null,
-        email=null,
-        roles=[]
-    } = data || {};
+    const {id, first_name, last_name, email, role} = data || {};
+    console.log(data)
 
     // update user record
     let queries = [{
-        sql: `
-            UPDATE users
-            SET first_name=$2::varchar, last_name=$3::varchar, email=$4::varchar
-            WHERE id = $1::uuid
+            sql: `
+                UPDATE users
+                SET first_name=$2::varchar, last_name=$3::varchar, email=$4::varchar, role=$5::varchar
+                WHERE id = $1::uuid
                 RETURNING *;
-        `,
-        data: [id, first_name, last_name, email],
-    }];
-
-    // set roles for user
-    queries = roles.reduce((o, role) => {
-        o.push({
-            sql: `DELETE FROM user_roles_selections WHERE "user" = $1::uuid;`,
-            data: [id],
-        });
-        o.push({
-            sql: `INSERT INTO user_roles_selections ("user", role) VALUES ($1::uuid, $2::varchar);`,
-            data: [id, role],
-        });
-        return o;
-    }, queries);
-
+            `,
+            data: [id, first_name, last_name, email, role],
+        }
+    ];
     return await transaction(queries);
 }

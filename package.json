@@ -7,7 +7,7 @@
   "description": "Long Service Awards Web API",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js",
+    "dev": "nodemon --trace-warnings app.js",
     "cy:run": "cypress run",
     "cy:open": "cypress open"
   },

@@ -7,7 +7,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { authorizeSuperAdmin } = require("../services/auth.services");
+const { authorizeSuperAdmin, authorizeOrgContact} = require("../services/auth.services");
 const controller = require("../controllers/settings.controller")
 const models = {
     accommodations: require("../models/accommodations.model.js"),
@@ -41,6 +41,7 @@ const selectModel = async (req, res, next) => {
  */
 
 router.get('/:model/list', selectModel, controller.getAll);
+router.get('/:model/list/user', authorizeOrgContact, selectModel, controller.getAllByUser);
 router.post('/:model/create', authorizeSuperAdmin, selectModel, controller.create);
 router.post('/:model/update/:id', authorizeSuperAdmin, selectModel, controller.update);
 router.get('/:model/delete/:id', authorizeSuperAdmin, selectModel, controller.remove);

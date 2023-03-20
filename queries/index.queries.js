@@ -16,6 +16,7 @@ const defaults = require('./default.queries.js');
 const awards = require('./awards.queries.js');
 const users = require('./users.queries.js');
 const recipients = require('./recipients.queries.js');
+const organizations = require('./organizations.queries')
 
 /**
  * Index of query module exports.
@@ -28,6 +29,7 @@ module.exports = {
     users: users,
     recipients: recipients,
     awards: awards,
+    organizations: organizations,
     generate: (schema) => {
         return {
             schema: schema,

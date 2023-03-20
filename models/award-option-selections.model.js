@@ -79,8 +79,7 @@ module.exports =  {
             custom_value: awardOption.custom_value,
             pecsf_charity: awardOption.pecsf_charity
         }
-        // detach existing award options
-        await defaults.removeByFields(['service'], [awardOption.service], schema);
+
         // upsert new options
         return await defaults.upsert(awardOptionData, awardOption.schema, ['award_option', 'service']);
 

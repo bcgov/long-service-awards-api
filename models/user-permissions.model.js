@@ -30,11 +30,4 @@ const schema = {
     }
 };
 
-module.exports =  {
-    findAll: async(filter) => {return await db.defaults.findAll(filter, schema)},
-    findById: async(id) => { await db.defaults.findById(id, schema) },
-    create: async(data) => { await db.defaults.insert(data, schema) },
-    update: async(data) => { await db.defaults.update(data, schema) },
-    remove: async(id) => { await db.defaults.remove(id, schema) },
-    removeAll: async() => { await db.defaults.removeAll(schema) }
-}
+module.exports = db.generate(schema);

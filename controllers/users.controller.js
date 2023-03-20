@@ -6,6 +6,8 @@
  */
 
 const User = require("../models/users.model.js");
+const UserRole = require("../models/user-roles.model");
+const Recipient = require("../models/recipients.model");
 
 /**
  * Find user by ID
@@ -77,7 +79,7 @@ exports.getAll = async (req, res, next) => {
 
 
 /**
- * Create new user
+ * Register new user
  *
  * @param req
  * @param res
@@ -86,11 +88,38 @@ exports.getAll = async (req, res, next) => {
  * @src public
  */
 
-exports.create = async (req, res, next) => {
+exports.register = async (req, res, next) => {
   try {
-    const user = await User.create(req.body);
+
+    const {
+      guid=null,
+      idir=null
+    } = res.locals.user || {};
+
+    const {
+      first_name='',
+      last_name='',
+      email=''
+    } = req.body || {};
+
+    // check if user is already registered
+    if (await User.findByGUID(guid)) return next(Error('userExists'));
+
+    // register user
+    await User.register(
+        { first_name, last_name, email, guid, idir, role: 'inactive'}
+    );
+
+    // confirm user exists
+    const user = await User.findByGUID(guid);
+    if (!user && user.hasOwnProperty(id)) return next(Error('noRecord'));
+
     res.status(200).json({
-      message: {severity: 'success', summary: 'New User', detail: `Added new admin user.`},
+      message: {
+        severity: 'success',
+        summary: 'New User',
+        detail: `Added new admin user.`
+      },
       result: user.data,
     });
   } catch (err) {
@@ -110,10 +139,23 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
+    const {id=''} = req.params || {};
     const user = await User.find(id);
+
+    console.log(req.body, user.data)
+
+    // handle exception
+    if (!user) return next(Error('noRecord'));
+
+    // update record
     await user.save(req.body);
+
     res.status(200).json({
-      message: {severity: 'success', summary: 'New User', detail: `Added new admin user.`},
+      message: {
+        severity: 'success',
+        summary: 'Updated User Data',
+        detail: `Updated admin user.`
+      },
       result: user.data,
     });
   } catch (err) {
@@ -138,10 +180,18 @@ exports.remove = async (req, res, next) => {
     // check that user exists
     const user = await User.find(id);
     if (!user) return next(Error('noRecord'));
+
+    // check that user is not deleting themselves
+    if (res.locals.user.id === id) return next(Error('selfDelete'));
+
     // delete user
     await User.remove(id);
     res.status(200).json({
-      message: {severity: 'success', summary: 'Remove User', detail: 'User record has been deleted.'},
+      message: {
+        severity: 'success',
+        summary: 'Remove User',
+        detail: 'User record has been deleted.'
+      },
       result: user,
     });
   } catch (err) {
@@ -159,9 +209,12 @@ exports.remove = async (req, res, next) => {
  * @src public
  */
 
-exports.roles = async (req, res, next) => {
+exports.getRoles = async (req, res, next) => {
   try {
-    res.status(200).json(res.locals.user);
+    res.status(200).json({
+      message: {},
+      result: await UserRole.findAll(),
+    });
   } catch (err) {
     return next(err);
   }

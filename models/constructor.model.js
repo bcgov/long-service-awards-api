@@ -1,5 +1,5 @@
 /*!
- * Default model constructor
+ * Base model constructor
  * File: constructor.model.js
  * Copyright(c) 2023 BC Gov
  * MIT Licensed
@@ -10,11 +10,15 @@ const { sanitize } = require("../services/validation.services");
 'use strict';
 
 /**
- * Default model
- * - Defines basic prototype for model class objects
+ * Base model prototype constructor
+ * - instantiates model class objects
+ * - props{init}: initialization data
+ * - props{schema}: model schema
+ * - props{db}: database methods
+ * - props{attach}: model attachments method
  *
  * @param {Object} props
- * @return {Array} results
+ * @return {Object} model instance
  * @public
  */
 
@@ -105,15 +109,20 @@ exports.ModelConstructor = (props) => {
                 // update any editable model data
                 const {dataType='', editable=true, model, defaultValue} = attributes[attKey] || {};
                 const currentValue = currentData && currentData.hasOwnProperty(attKey) ? currentData[attKey] : null;
+
+                // find primary key attribute
+                const primaryKey = model && Object.keys(model.schema.attributes || [])
+                    .find(attKey => model.schema.attributes[attKey].primary) || 'id';
+
                 // set the attribute value
-                // - for model object values, set attribute to ID value
+                // - for model object values, set attribute to index key value (default: 'id')
                 // - sanitize all values against data type
                 o[attKey] = editable && newData && newData.hasOwnProperty(attKey)
                     ? model
                         && newData[attKey]
                         && typeof newData[attKey] === 'object'
-                        && newData[attKey].hasOwnProperty('id')
-                        ? sanitize(newData[attKey].id, dataType)
+                        && newData[attKey].hasOwnProperty(primaryKey)
+                        ? sanitize(newData[attKey][primaryKey], dataType)
                         : sanitize(newData[attKey], dataType)
                     : sanitize(currentValue || defaultValue, dataType);
                 return o;
@@ -123,22 +132,25 @@ exports.ModelConstructor = (props) => {
 
     /**
      * Index model input data for expanded values
-     * - creates lookup data for indexed record
+     * - creates lookup index for referenced model data (e.g., organization details attached to a user record)
      *
-     * @param {Object} data
+     * @param {Object} indexData
      * @return {Object} indexed data
      * **/
 
-    const indexValues = function (data) {
+    const indexValues = function (indexData) {
+
         const { attributes=null } = schema || {};
         // index model attribute values
         // - only index attributes with attached models
+
         return Object.keys(attributes || {})
-            .filter(attKey => data
-                && data.hasOwnProperty(attKey) && typeof data[attKey] === 'object'
+            .filter(attKey => indexData
+                && indexData.hasOwnProperty(attKey) && typeof indexData[attKey] === 'object'
                 && attributes[attKey].hasOwnProperty('model') && attributes[attKey].model)
             .reduce((o, attKey) => {
-                o[attKey] = validate(data[attKey]);
+                const {data} = indexData[attKey] || {};
+                o[attKey] = validate(data || indexData[attKey]);
                 return o;
             }, {});
     }
@@ -251,6 +263,7 @@ exports.ModelConstructor = (props) => {
             const refs = this.attachments;
             const vals = this.values;
             const idx = this.index;
+            // expand on referenced attributes
             const expandedValues = Object.keys(vals || {}).reduce((o, attKey) => {
                 // replace id with indexed data (if exists)
                 if (idx && idx.hasOwnProperty(attKey)) o[attKey] = idx[attKey]
@@ -264,7 +277,10 @@ exports.ModelConstructor = (props) => {
                 if (!ref) o[refKey] = null;
                 // check if array or single reference(s)
                 else o[refKey] = Array.isArray(ref)
-                    ? ref.map(refModelItem => { return refModelItem.data })
+                    ? ref.map(refModelItem => {
+
+                        return refModelItem.data
+                    })
                     : ref.data;
                 return o;
             }, expandedValues);
@@ -278,7 +294,6 @@ exports.ModelConstructor = (props) => {
                 get() {
                     return this.values[attribute];
                 },
-
                 set(value) {
                     this.values[attribute] = value;
                 }

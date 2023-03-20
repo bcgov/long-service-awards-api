@@ -74,9 +74,17 @@ module.exports =  {
         awardSelection.id = serviceSelection.id;
         // upsert if award selected
         if (awardSelection.award) {
-            // destructure award and upsert record
+            // destructure award
             const { award } = awardSelection.data;
+            // detach existing award options
+            await defaults.removeByFields(['service'], [awardSelection.id], AwardOptionSelection.schema);
+            // upsert record
             return await defaults.upsert({ id: awardSelection.id, award: award.id }, schema);
+        }
+        // otherwise detach award
+        else {
+            // detach existing award options
+            await defaults.remove(awardSelection.id, schema);
         }
     },
     findById: async(id) => {

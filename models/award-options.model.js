@@ -97,7 +97,7 @@ module.exports =  {
         });
     },
     findById: async(id) => {
-        return await db.defaults.findById(id, schema);
+        return construct(await db.defaults.findById(id, schema));
     },
     remove: async() => {
 
