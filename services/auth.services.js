@@ -41,7 +41,7 @@ exports.initPassport = () => {
 
   passport.deserializeUser(function (email, done) {
     User.findByEmail(email)
-        .then((user) => {done(null, user)})
+        .then((user) => {done(null, user.data)})
         .catch((err) => {done(err, done)})
   });
 
