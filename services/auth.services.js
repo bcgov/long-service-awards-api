@@ -56,7 +56,7 @@ exports.initPassport = () => {
         usernameField: 'email',
         passwordField: 'password',
         passReqToCallback: true,
-        session: false
+        session: true
       },
       function verify(req, email, password, done) {
         console.log('Authenticate User:', email)
@@ -76,8 +76,7 @@ exports.initPassport = () => {
             }
             return done(null, {...user.data, ...{authenticated: true}, ...{password: null} })
           })
-        })
-            .catch(done)
+        }).catch(done)
       })
   );
   return passport;
