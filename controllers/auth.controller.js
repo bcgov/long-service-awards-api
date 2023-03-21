@@ -66,19 +66,23 @@ exports.info = async (req, res, next) => {
  */
 
 exports.login = async (req, res, next) => {
-  if (req.isAuthenticated()) {
-    res.status(200).json({
-      message: {
-        severity: 'success',
-        summary: 'Welcome',
-        detail: 'You are now signed in.'
-      },
-      result: req.user,
+
+    // Explicitly save the session before returning
+    req.session.save(() => {
+      if (req.isAuthenticated()) {
+        res.status(200).json({
+          message: {
+            severity: 'success',
+            summary: 'Welcome',
+            detail: 'You are now signed in.'
+          },
+          result: req.user,
+        });
+      }
+      else {
+        next(new Error('noAuth'));
+      }
     });
-  }
-  else {
-    next(new Error('noAuth'));
-  }
 }
 
 /**
