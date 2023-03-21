@@ -42,9 +42,8 @@ exports.initPassport = (passport) => {
     console.log(email)
     User.findByEmail(email)
         .then((user) => {
-
               const {id, email, guid, idir} = user.data || {};
-              console.log({id, email, guid, idir}, user, data)
+              console.log('Deserialize', {id, email, guid, idir})
               done(null, {id, email, guid, idir});
             }
         )
