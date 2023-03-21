@@ -140,13 +140,16 @@ exports.authenticateSMS = async (req, res, next) => {
     const {data = {}} = response || {};
     const { SMGOV_GUID=[null], username=[null] } = data || {};
 
+    console.log('!!!', await User.findByGUID(SMGOV_GUID[0]), SMGOV_GUID[0], username[0])
+
     // test that tokens exist
-    if ( !data || !SMGOV_GUID[0] || !username[0] )
+    if (response,  !data || !SMGOV_GUID[0] || !username[0] )
       return next(new Error('noAuth'));
 
     // store user data in response for downstream middleware
     const user = await User.findByGUID(SMGOV_GUID[0]);
-    res.locals.user = (user && user.data) || {guid:SMGOV_GUID[0], idir: username[0]};
+
+    res.locals.user = user ? user.data : {guid:SMGOV_GUID[0], idir: username[0]};
 
     return next();
 
