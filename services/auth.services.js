@@ -41,8 +41,12 @@ exports.initPassport = () => {
 
   passport.deserializeUser(function (email, done) {
     User.findByEmail(email)
-        .then((user) => {done(null, user.data)})
-        .catch((err) => {done(err, done)})
+        .then((user) => {
+              const {id, email, guid, idir} = user || {};
+              done(null, {id, email, guid, idir});
+            }
+        )
+        .catch((err) => done(err, done))
   });
 
   /**
@@ -51,14 +55,23 @@ exports.initPassport = () => {
    * the password is valid and the user is authenticated.
    * */
 
+  // passport.use(new LocalStrategy(
+  //     function(username, password, done) {
+  //       User.findOne({ username: username }, function (err, user) {
+  //         if (err) { return done(err); }
+  //         if (!user) { return done(null, false); }
+  //         if (!user.verifyPassword(password)) { return done(null, false); }
+  //         return done(null, user);
+  //       });
+  //     }
+  // ));
+
   passport.use(new LocalStrategy(
       {
         usernameField: 'email',
-        passwordField: 'password',
-        passReqToCallback: true,
-        session: true
+        passwordField: 'password'
       },
-      function verify(req, email, password, done) {
+      function verify(email, password, done) {
         console.log('Authenticate User:', email)
         User.findByEmail(email).then(user => {
           // User not found
@@ -69,11 +82,12 @@ exports.initPassport = () => {
           // Always use hashed passwords and fixed time comparison
           bcrypt.compare(password, user.password, (err, isValid) => {
             if (err) {
-              return done({ message: err, code:'invalidCredentials' })
+              return done({ message: err, code:'invalidCredentials' }, false)
             }
             if (!isValid) {
               return done(null, false)
             }
+            console.log({...user.data, ...{authenticated: true}, ...{password: null} })
             return done(null, {...user.data, ...{authenticated: true}, ...{password: null} })
           })
         }).catch(done)
