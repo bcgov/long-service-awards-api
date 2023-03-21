@@ -113,8 +113,8 @@ exports.authenticateSMS = async (req, res, next) => {
       }
       // default super-admin user
       else {
-        const user = await User.findByGUID(superadminGUID) || {guid: superadminGUID, idir: superadminIDIR};
-        res.locals.user = user.data;
+        const user = await User.findByGUID(superadminGUID);
+        res.locals.user = (user && user.data) || {guid: superadminGUID, idir: superadminIDIR};
         // check that test super admin user has been initialized
         if ( !superadminGUID || !superadminIDIR || !res.locals.user) return next(new Error('noTestInit'));
       }
