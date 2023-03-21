@@ -140,10 +140,8 @@ exports.authenticateSMS = async (req, res, next) => {
     const {data = {}} = response || {};
     const { SMGOV_GUID=[null], username=[null] } = data || {};
 
-    console.log('!!!', await User.findByGUID(SMGOV_GUID[0]), SMGOV_GUID[0], username[0])
-
     // test that tokens exist
-    if (response,  !data || !SMGOV_GUID[0] || !username[0] )
+    if (!data || !SMGOV_GUID[0] || !username[0] )
       return next(new Error('noAuth'));
 
     // store user data in response for downstream middleware
@@ -204,6 +202,8 @@ const _checkAuthorization = (user, authorizedRoles) => {
  */
 
 exports.authorizeOrgContact = async (req, res, next) => {
+  console.log('!!!', req.isAuthenticated(), res.locals.user)
+
   const isAuthorized = req.isAuthenticated()
       && _checkAuthorization(res.locals.user, ['administrator', 'super-administrator', 'org-contact']);
   return isAuthorized ? next() : next(new Error("noAuth"));
