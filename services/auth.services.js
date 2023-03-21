@@ -145,7 +145,9 @@ exports.authenticateSMS = async (req, res, next) => {
       return next(new Error('noAuth'));
 
     // store user data in response for downstream middleware
-    res.locals.user = { guid: SMGOV_GUID[0], idir: username[0] };
+    const user = await User.findByGUID(SMGOV_GUID[0]);
+    res.locals.user = (user && user.data) || {guid:SMGOV_GUID[0], idir: username[0]};
+
     return next();
 
   } catch (err) {
