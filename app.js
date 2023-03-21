@@ -104,9 +104,8 @@ const session = {
     resave: false,
     saveUninitialized: true,
     cookie: {
-        maxAge: 30 * 24 * 60 * 60 * 1000,
+        maxAge: 14 * 24 * 60 * 60 * 1000,
         secure: nodeENV === 'production',
-        httpOnly: true,
         sameSite: 'none',
     }
     // Insert express-session options here
