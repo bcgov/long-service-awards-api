@@ -86,7 +86,6 @@ const corsConfig = {
         }
         return callback(null, true);
     },
-
     methods: ["GET", "POST"],
     credentials: true,
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
@@ -122,6 +121,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // init user sessions
+app.set('trust proxy', 1);
 app.use(expressSession(session));
 
 // init CORS config
