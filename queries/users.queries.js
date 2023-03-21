@@ -124,7 +124,6 @@ exports.insert = async (data) => {
 exports.update = async (data) => {
 
     const {id, first_name, last_name, email, role} = data || {};
-    console.log(data)
 
     // update user record
     let queries = [{

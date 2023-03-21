@@ -99,7 +99,8 @@ exports.register = async (req, res, next) => {
     const {
       first_name='',
       last_name='',
-      email=''
+      email='',
+      password='',
     } = req.body || {};
 
     // check if user is already registered
@@ -107,7 +108,7 @@ exports.register = async (req, res, next) => {
 
     // register user
     await User.register(
-        { first_name, last_name, email, guid, idir, role: 'inactive'}
+        { first_name, last_name, email, guid, idir, password, role: 'inactive'}
     );
 
     // confirm user exists
