@@ -99,8 +99,8 @@ const session = {
         // Insert connect-pg-simple options here
     }),
     secret: process.env.COOKIE_SECRET,
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         secure: nodeENV === 'production'
@@ -130,19 +130,12 @@ app.use(requestLogger);
 // parse cookies to store session data
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
-// authenticate SMS session
-app.use(authenticateSMS);
-
 // init Passport
 app.use(passport.initialize())
 app.use(passport.session());
-// app.use(function(req, res, next) {
-//     var msgs = req.session.messages || [];
-//     res.locals.messages = msgs;
-//     res.locals.hasMessages = !! msgs.length;
-//     req.session.messages = [];
-//     next();
-// });
+
+// authenticate SMS session
+app.use(authenticateSMS);
 
 // init default super-admin users
 initAuth().catch(console.error);
