@@ -9,7 +9,6 @@ require('dotenv').config();
 const axios = require('axios');
 const User = require('../models/users.model');
 const bcrypt = require('bcrypt')
-const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const urlParse = require('url');
 
@@ -26,7 +25,7 @@ const superadminPassword = process.env.SUPER_ADMIN_PASSWORD;
  * Initialize Passport config.
  */
 
-exports.initPassport = () => {
+exports.initPassport = (passport) => {
 
   /**
    * Passport does not impose any restrictions on how user records are stored.

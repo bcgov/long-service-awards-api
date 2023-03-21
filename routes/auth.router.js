@@ -8,8 +8,6 @@
 const express = require('express')
 const authController = require("../controllers/auth.controller");
 const router = express.Router();
-const { initPassport} = require("../services/auth.services");
-const passport = initPassport();
 
 /**
  * Main API router
@@ -23,11 +21,7 @@ router.get('/', function (req, res) {
  * Admin user authentication endpoints.
  */
 
-// log into admin dashboard
-router.post('/login',
-    passport.authenticate('local', {}, null),
-    authController.login
-);
+
 // log out of admin dashboard
 router.post('/logout', authController.logout);
 

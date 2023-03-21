@@ -13,6 +13,7 @@ const expressSession = require("express-session");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const passport = require('passport');
+const { initPassport} = require("./services/auth.services");
 require('dotenv').config();
 
 // logging
@@ -56,6 +57,7 @@ const nodeENV = process.env.NODE_ENV;
 
 // init API routes
 const indexRouter = require("./routes/auth.router");
+const authController = require("./controllers/auth.controller");
 const apiRouters = [
     {path: '/users', router: require("./routes/users.router")},
     {path: '/recipients/admin', router: require("./routes/recipients.admin.router")},
@@ -134,6 +136,12 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(passport.initialize())
 app.use(passport.session());
 
+// log into admin dashboard
+app.post('/login',
+    initPassport(passport).authenticate('local', {}, null),
+    authController.login
+);
+
 // authenticate SMS session
 app.use(authenticateSMS);
 
@@ -157,7 +165,7 @@ app.use(notFoundHandler);
 // Run API server
 app.listen(apiPort, async () => {
     console.log(`============================================`);
-    console.log(`API running on port ${apiPort}.`);
+    console.log(`API running on port ${apiPort}`);
     console.log(`\t- Node environment: ${nodeENV}`);
     console.log(`\t- Available on a web browser at: ${apiURL}`);
     console.log(`\t- Allowed origins:`, allowedOrigins.join(', '));
