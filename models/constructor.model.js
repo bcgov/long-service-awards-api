@@ -240,6 +240,7 @@ exports.ModelConstructor = (props) => {
             // attach dependent reference models
             const updatedReferences = this.attachments;
             await Promise.all((Object.keys(updatedReferences || {}).map(async(refKey) => {
+                if (!updatedReferences[refKey]) return;
                 Array.isArray(updatedReferences[refKey])
                     ? await this.attachMultiple(updatedReferences[refKey])
                     : await updatedReferences[refKey].attachTo(dependent);
