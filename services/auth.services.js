@@ -39,12 +39,10 @@ exports.initPassport = (passport) => {
   });
 
   passport.deserializeUser(function (email, done) {
-    console.log(email)
     User.findByEmail(email)
         .then((user) => {
-              const {id, email, guid, idir} = user.data || {};
-              console.log('Deserialize', {id, email, guid, idir})
-              done(null, {id, email, guid, idir});
+              const {id, email, guid, idir, role} = user.data || {};
+              done(null, {id, email, guid, idir, role});
             }
         )
         .catch((err) => done(err, done))
@@ -77,7 +75,6 @@ exports.initPassport = (passport) => {
             if (!isValid) {
               return done(null, false)
             }
-            console.log({...user.data, ...{authenticated: true}, ...{password: null} })
             return done(null, {...user.data, ...{authenticated: true}, ...{password: null} })
           })
         }).catch(done)
@@ -205,8 +202,6 @@ const _checkAuthorization = (user, authorizedRoles) => {
  */
 
 exports.authorizeOrgContact = async (req, res, next) => {
-  console.log('!!!', req.isAuthenticated(), res.locals.user)
-
   const isAuthorized = req.isAuthenticated()
       && _checkAuthorization(res.locals.user, ['administrator', 'super-administrator', 'org-contact']);
   return isAuthorized ? next() : next(new Error("noAuth"));

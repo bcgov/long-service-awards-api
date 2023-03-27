@@ -28,20 +28,6 @@ const schema = {
             editable: false,
             required: true
         },
-        contact: {
-            dataType: 'uuid',
-            required: false,
-            editable: false
-        },
-        ceremony: {
-            dataType: 'uuid',
-            required: false,
-            editable: false
-        },
-        type: {
-            dataType: 'varchar',
-            required: true
-        },
         pobox: {
             dataType: 'varchar'
         },
@@ -103,32 +89,21 @@ module.exports =  {
 
         if (!address || !reference || !type) return null;
 
-        // set reference key
-        const referenceType = reference.schema.modelName === 'contacts' ? 'contact' : 'ceremony';
+        // if no address ID, create new UUID ID value and set recipient attribute
+        address.id = reference.hasOwnProperty(type) && reference[type] ? reference[type] : uuid.v4();
+        reference[type] = address.id;
 
-        // look up any existing referenced address for given type
-        const current = await defaults.findOneByFields(
-            [referenceType, 'type'], [reference.id, type], schema);
-
-        // if none, create new UUID ID value for address
-        address.id = current ? current.id : uuid.v4();
-
-        // update address references
-        address[referenceType] = reference.id;
-        address.type = type;
-
-        // confirm address data is not empty to upsert record
-        if (!isEmpty(address.data, ['id', 'contact', 'ceremony', 'type', 'pobox', 'street2'])) {
-            await defaults.transact([defaults.queries.upsert(address.data, schema)]);
+        // ignore attach if data is empty, otherwise upsert record
+        if (!isEmpty(address.data, ['id', 'pobox', 'street2'])) {
+            await defaults.transact([
+                defaults.queries.upsert(address.data, schema),
+                defaults.queries.updateAttachment(reference.id, address.id, type, reference.schema)
+            ]);
         }
     },
-    findByContact: async(contact, type) => {
-        // look up addresses for requested contact and type
-        return construct(await defaults.findOneByFields(['contact', 'type'], [contact, type], schema));
-    },
-    findByCeremony: async(ceremony, type) => {
-        // look up addresses for requested ceremony and type
-        return construct(await defaults.findOneByFields(['ceremony', 'type'], [ceremony, type], schema));
+    findAttachment: async(parentID, parentField, parentschema) => {
+        // look up addresses for requested reference and type
+        return construct(await defaults.findAttachment(parentID, parentField, parentschema, schema));
     },
     remove: async(id) => {
         await db.defaults.remove(id, schema)

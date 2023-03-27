@@ -7,7 +7,6 @@
 
 const User = require("../models/users.model.js");
 const UserRole = require("../models/user-roles.model");
-const Recipient = require("../models/recipients.model");
 
 /**
  * Find user by ID
@@ -142,8 +141,6 @@ exports.update = async (req, res, next) => {
   try {
     const {id=''} = req.params || {};
     const user = await User.find(id);
-
-    console.log(req.body, user.data)
 
     // handle exception
     if (!user) return next(Error('noRecord'));

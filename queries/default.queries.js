@@ -27,6 +27,15 @@ const queries = {
             data: values,
         };
     },
+    findAttachment: (parentID, parentField, parentSchema, dependentSchema)=>{
+        return {
+            sql: `SELECT ${dependentSchema.modelName}.* FROM ${dependentSchema.modelName} 
+                  JOIN ${parentSchema.modelName} 
+                      ON ${dependentSchema.modelName}.id = ${parentSchema.modelName}.${parentField}
+                  WHERE ${parentSchema.modelName}.id = $1::uuid;`,
+            data: [parentID],
+        };
+    },
     upsert: (data, schema, conflict = ['id']) => {
         // return null if instance is null
         if (!schema.modelName) return null;
@@ -37,25 +46,27 @@ const queries = {
         // generate columns list to upsert
         // - sort conflict fields to front of array
         const columns = Object.keys(schema.attributes)
+            .filter(attr => !schema.attributes[attr].serial)
             .sort(function(x, _) {
                 return conflict.includes(x) ? -1 : 0;
             });
 
         // generate values array to insert/upsert
+        // - filter serial fields (e.g., serial IDs)
         const values = columns
+            .filter(attr => !schema.attributes[attr].serial)
             .map((attr, index) => {
-                // handle serial identifiers
-                if (attr === 'id' && schema.attributes[attr].dataType === 'integer') {
-                    offset = 0;
-                    return 'DEFAULT'
-                }
                 const placeholder = timestamps.includes(attr) ? `NOW()` : `$${index + offset}`;
                 return `${placeholder}::${schema.attributes[attr].dataType}`;
             });
 
         // define upsert assignments on conflict
+        // - filter conflict fields
+        // - filter serial fields (e.g., serial IDs)
+        // - filter created timestamps
         const conflictAssignments = columns
             .filter(attr => !conflict.includes(attr))
+            .filter(attr => !schema.attributes[attr].serial)
             .filter(attr => attr !== 'created_at')
             .map((attr, index) => {
                 // handle timestamp placeholders defined in arguments
@@ -80,7 +91,7 @@ const queries = {
         // - filters: ignored, timestamp, null ID attributes
         // - sort data by conflict fields (put to front of array)
         let filteredData = Object.keys(schema.attributes)
-            .filter(attr => !(attr === 'id' && schema.attributes[attr].dataType === 'integer'))
+            .filter(attr => !schema.attributes[attr].serial)
             .filter(attr => !timestamps.includes(attr))
             .sort(function(x) {
                 return conflict.includes(x) ? -1 : 0;
@@ -91,15 +102,30 @@ const queries = {
 
         return { sql: sql, data: filteredData }
     },
+    updateAttachment: (parentID, dependentID, field, schema)=>{
+        return {
+            sql: `UPDATE ${schema.modelName}
+                  SET ${field} = $2::uuid
+                  WHERE ${schema.modelName}.id = $1::uuid
+                  RETURNING *;`,
+            data: [parentID, dependentID],
+        };
+    },
     insert: (data, schema, ignore = ['id']) => {
-
-        const timestamps = ['created_at', 'updated_at'];
 
         // return null if instance is null
         if (!schema.modelName) return null;
 
+        // define timestamp columns
+        const timestamps = ['created_at', 'updated_at'];
+
         // generate columns list (filter out non-attributes)
+        // - filter ignored fields (e.g., ID)
+        // - ignore fields not in model schema
+        // - ignore timestamps
         const columns = Object.keys(data)
+            .sort()
+            .filter(key => !ignore.includes(key))
             .filter(attr => schema.attributes.hasOwnProperty(attr))
             .filter(attr => !timestamps.includes(attr));
 
@@ -113,18 +139,18 @@ const queries = {
             });
 
         // construct prepared statement (insertion or merge)
-        let sql = `INSERT INTO ${schema.modelName} (${columns.join(',')})
+        let sql = `INSERT INTO ${schema.modelName} ("${columns.join('", "')}")
                VALUES (${values.join(',')})
                RETURNING *;`;
 
-        // filter input data to match insert parameters
+        // filter input data to match insert columns
         // filters: ignored, timestamp, ID attributes
-        let filteredData = Object.keys(schema.attributes)
-            .filter(key => !ignore.includes(key) && !timestamps.includes(key))
+        let filteredData = columns
+            .filter(key => !ignore.includes(key))
             .map(key => {return data[key]});
 
         // collate data as value array
-        return { sql: sql, data: [filteredData] };
+        return { sql: sql, data: filteredData };
     },
     update: (data, schema, ignore=['id', 'created_at'], idKey='id') => {
 
@@ -165,7 +191,7 @@ const queries = {
         // filter input data to match update parameters
         filteredData.push(...Object.keys(schema.attributes)
             .filter(key => !ignore.includes(key) && !timestamps.includes(key))
-            .map(key => {return data[key] || null}));
+            .map(key => {return data[key] == null ? null : data[key]}));
 
         // collate data as value array
         return { sql: sql, data: filteredData };
@@ -288,15 +314,24 @@ exports.count = async (schema) => {
  * @param {String} field
  * @param {any} value
  * @param {Object} schema
+ * @param {String} orderby
+ * @param {String} order
  * @return {Promise} results
  * @public
  */
 
-exports.findByField = async (field, value, schema) => {
+exports.findByField = async (field, value, schema, sort) => {
+
+    // (optional) order by attribute
+    const {orderby = null, order = 'ASC'} = sort || {};
+    const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : '';
+
     const result = await query({
         sql: `SELECT *
               FROM ${schema.modelName}
-              WHERE "${field}" = $1::${schema.attributes[field].dataType};`,
+              WHERE "${field}" = $1::${schema.attributes[field].dataType}
+              ${orderClause}
+        ;`,
         data: [value],
     });
 
@@ -371,6 +406,20 @@ exports.findOneByField = async (field, value, schema) => {
 };
 
 /**
+ * Generate query: Find attachment for parent
+ *
+ * @param {String} parentID
+ * @return {Promise} results
+ * @public
+ */
+
+exports.findAttachment = async (parentID, parentField, parentSchema, dependentSchema) => {
+    return await transactionOne([
+        queries.findAttachment(parentID, parentField, parentSchema, dependentSchema)
+    ]);
+}
+
+/**
  * Generate query: Insert new record into database.
  *
  * @param {Object} data
@@ -381,7 +430,8 @@ exports.findOneByField = async (field, value, schema) => {
  */
 
 exports.insert = async (data, schema, ignore = ['id']) => {
-    await query(queries.insert(data, schema, ignore));
+    // console.log(queries.insert(data, schema, ignore))
+    return await query(queries.insert(data, schema, ignore));
 }
 
 /**
@@ -389,7 +439,7 @@ exports.insert = async (data, schema, ignore = ['id']) => {
  *
  * @param {Object} data
  * @param {Object} schema
- * @param {Boolean} upsert
+ * @param {Array} conflict
  * @return {Promise} results
  * @public
  */
@@ -407,10 +457,23 @@ exports.upsert = async(data, schema, conflict=['id']) => {
  * @public
  */
 
-exports.update = async (data, schema, ignore=['id', 'created_at'], idKey='id') => {
-    console.log(queries.update(data, schema, ignore, idKey))
-
+exports.update = async (data, schema, ignore, idKey) => {
+    // console.log('Update Record', queries.update(data, schema, ignore, idKey))
     return await query(queries.update(data, schema, ignore, idKey));
+}
+
+/**
+ * Generate query: Update attachment record in table.
+ *
+ * @param {String} parentID
+ * @return {Promise} results
+ * @public
+ */
+
+exports.updateAttachment = async (parentID, dependentID, field, schema) => {
+    return await transactionOne([
+        queries.updateAttachment(parentID, dependentID, field, schema)
+    ]);
 }
 
 /**

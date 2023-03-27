@@ -38,6 +38,9 @@ const schema = {
         description: {
             dataType: 'text',
             required: true
+        },
+        active: {
+            dataType: 'boolean'
         }
     }
 };

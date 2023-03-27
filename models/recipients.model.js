@@ -9,10 +9,10 @@ const db = require('../queries/index.queries');
 const Contact = require("../models/contacts.model.js");
 const ServiceSelection = require('../models/service-selections.model.js');
 const {ModelConstructor} = require("./constructor.model");
-const Organization = require("./organizations.model");
 const {validateEmployeeNumber} = require("../services/validation.services");
-const Setting = require("./settings.model");
+const Organization = require("./organizations.model");
 const User = require("./users.model");
+const QualifyingYear = require("./qualifying-years.model");
 
 'use strict';
 
@@ -140,14 +140,15 @@ module.exports =  {
         const { role } = user || {};
         const isAdmin = ['super-administrator', 'administrator'].includes(role.name);
         if (isAdmin) {
-            return await db.recipients.findAll(filter, schema);
+            return await db.recipients.findAll(filter, [], schema);
         }
 
         // restrict available orgs to user assignment
         // - check filter overlap with assigned orgs
         const { organizations = [] } = user || {};
         const userFilter = (organizations || []).map(({organization}) => organization.id);
-        if (userFilter.length > 0) {
+        // if org-contact has no assigned organizations, return empty results
+        if (['org-contact'].includes(role.name) && organizations.length > 0) {
             // explode existing organization filter params
             const orgFilter = filter.hasOwnProperty('organization')
                 && filter.organization.split(',').map(id => parseInt(id));
@@ -157,11 +158,29 @@ module.exports =  {
             filter.organization = intersection.length === 0
                 ? userFilter.join(',')
                 : intersection.join(',');
+            return await db.recipients.findAll(filter, ['notes'], schema);
         }
-        return await db.recipients.findAll(filter, schema);
+        return [];
     },
-    findById: async(id) => {
-        return construct(await db.defaults.findById(id, schema));
+    findById: async(id, user) => {
+        // get recipient data
+        const recipient = await db.defaults.findById(id, schema);
+        // check if user is administrator (skip user-org filtering)
+        const { role } = user || {};
+
+        if (['super-administrator', 'administrator'].includes(role.name)) return construct(recipient);
+
+        // restrict available orgs to user assignment
+        // - check filter overlap with assigned orgs
+        const { organizations=[] } = user || {};
+        const orgFilter = (organizations || []).map(({organization}) => organization.id);
+        const {organization} = recipient || {};
+        // if org-contact has no assigned organizations, return empty results
+        if (['org-contact'].includes(role.name) && organization && orgFilter.includes(organization.id)) {
+            return construct(recipient);
+        }
+        return null;
+
     },
     findByGUID: async(guid) => {
         return construct(await db.defaults.findOneByField('guid', guid, schema));
@@ -173,14 +192,15 @@ module.exports =  {
         return construct(await db.recipients.insert(data));
     },
     delegate: async(data, user) => {
-        return await db.recipients.delegate(data, user, schema);
+        const cycle = await QualifyingYear.findCurrent();
+        return await db.recipients.delegate(data, user, cycle && cycle.name, schema);
     },
     count: async(filter, user) => {
         return await db.recipients.count(filter, user, schema);
     },
     stats: async () => {
-        const {value} = await Setting.findOneByField('name', 'cycle');
-        return await db.recipients.stats(schema, value) || {};
+        const cycle = await QualifyingYear.findCurrent();
+        return await db.recipients.stats(schema, cycle && cycle.name) || {};
     },
     remove: async(id) => {
         return await db.defaults.removeByFields( ['id'], [id], schema)

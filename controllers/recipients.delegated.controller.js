@@ -21,7 +21,6 @@ const User = require("../models/users.model");
 exports.get = async (req, res, next) => {
   try {
     const {id=null} = res.locals.user || {};
-
     // for delegated users / self-registrations
     const results = await Recipient.findByUser(id);
     // no records found
@@ -87,7 +86,7 @@ exports.save = async (req, res, next) => {
 
     // create delegated user if one does not exist
     let { id=null, guid=null, idir=null} = res.locals.user || {};
-    if (!id) await User.create({guid: guid, idir: idir, role: 'delegate'});
+    if (!id) await User.register({guid: guid, idir: idir, role: 'delegate'});
 
     // confirm user exists
     const user = await User.findByGUID(guid);

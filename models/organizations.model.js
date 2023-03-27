@@ -7,6 +7,7 @@
 
 const db = require('../queries/index.queries');
 const {ModelConstructor} = require("./constructor.model");
+const defaults = require("../queries/default.queries");
 
 'use strict';
 
@@ -34,6 +35,9 @@ const schema = {
         },
         previous_service_pins: {
             dataType: 'boolean'
+        },
+        active: {
+            dataType: 'boolean'
         }
     }
 };
@@ -58,15 +62,30 @@ const construct = (init, attach=null) => {
 
 module.exports = {
     schema: schema,
-    create: construct,
+    findAll: async(filter={}, user=null) => {
+        // restrict list of orgs for organizational/ministry contacts to assigned values
+        const {organizations, role} = user || {};
+        if (role && ['org-contact'].includes(role.name)) {
+            filter.organizations = (organizations || []).map(({organization}) => organization.id);
+            // return empty results if no organizations are assigned
+            return filter.organizations.length > 0
+                ? await db.organizations.findAll({...filter || {}, ...{orderby: 'name', order: 'ASC'}}, schema)
+                : [];
+        }
+        // return unfiltered results
+        return await db.organizations.findAll({...filter || {}, ...{orderby: 'name', order: 'ASC'}}, schema);
+    },
+    findByField: async(field, value) => {
+        return await defaults.findByField(field, value, schema, {orderby: 'name', order: 'ASC'})
+    },
     findById: async(id) => {
         return construct(await db.defaults.findById(id, schema));
     },
-    findAll: async(filter={}, user=null) => {
-        // restrict available orgs for organizational (ministry) contacts
-        const {organizations} = user || {};
-        filter.organizations = (organizations || []).map(({organization}) => organization.id);
-        return await db.organizations.findAll({...filter || {}, ...{orderby: 'name', order: 'ASC'}}, schema);
+    create: async(data) => {
+        return construct(await db.defaults.insert(data, schema, ['id']));
+    },
+    update: async(data) => {
+        return construct(await defaults.update(data, schema));
     },
     remove: async(id) => {
         await db.defaults.removeByFields(['id'], [id], schema);

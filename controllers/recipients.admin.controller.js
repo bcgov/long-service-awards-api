@@ -54,7 +54,7 @@ exports.get = async (req, res, next) => {
 
     // check that recipient exists
     const {id} = req.params || {};
-    const recipient = await Recipient.findById(id);
+    const recipient = await Recipient.findById(id, res.locals.user);
 
     // handle exception
     if (!recipient) return next(Error('noRecord'));
@@ -123,7 +123,7 @@ exports.save = async (req, res, next) => {
 
     // check that recipient exists
     const {id} = req.params || {};
-    const recipient = await Recipient.findById(id);
+    const recipient = await Recipient.findById(id, res.locals.user);
 
     // handle exception
     if (!recipient) return next(Error('noRecord'));

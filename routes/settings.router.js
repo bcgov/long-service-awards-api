@@ -16,7 +16,7 @@ const models = {
     qualifying_years: require("../models/qualifying-years.model.js"),
     communities: require("../models/communities.model"),
     provinces: require("../models/provinces.model"),
-    settings: require("../models/settings.model.js"),
+    global: require("../models/settings.model.js"),
     "pecsf-charities": require("../models/pecsf-charities.model.js"),
     "pecsf-regions": require("../models/pecsf-regions.model.js")
 }
@@ -42,9 +42,10 @@ const selectModel = async (req, res, next) => {
 
 router.get('/:model/list', selectModel, controller.getAll);
 router.get('/:model/list/user', authorizeOrgContact, selectModel, controller.getAllByUser);
+router.get('/:model/filter/:field/:value', selectModel, controller.filter);
 router.post('/:model/create', authorizeSuperAdmin, selectModel, controller.create);
 router.post('/:model/update/:id', authorizeSuperAdmin, selectModel, controller.update);
 router.get('/:model/delete/:id', authorizeSuperAdmin, selectModel, controller.remove);
-router.get('/:model/:id', authorizeSuperAdmin, selectModel, controller.get);
+router.get('/:model/:id', selectModel, controller.get);
 
 module.exports = router;

@@ -33,6 +33,9 @@ const schema = {
     region: {
       dataType: 'varchar',
       required: true
+    },
+    active: {
+      dataType: 'boolean'
     }
   }
 };

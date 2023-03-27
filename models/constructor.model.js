@@ -119,9 +119,9 @@ exports.ModelConstructor = (props) => {
                 // - sanitize all values against data type
                 o[attKey] = editable && newData && newData.hasOwnProperty(attKey)
                     ? model
-                        && newData[attKey]
-                        && typeof newData[attKey] === 'object'
-                        && newData[attKey].hasOwnProperty(primaryKey)
+                    && newData[attKey]
+                    && typeof newData[attKey] === 'object'
+                    && newData[attKey].hasOwnProperty(primaryKey)
                         ? sanitize(newData[attKey][primaryKey], dataType)
                         : sanitize(newData[attKey], dataType)
                     : sanitize(currentValue || defaultValue, dataType);
@@ -166,23 +166,27 @@ exports.ModelConstructor = (props) => {
     const attachReferences = function (data) {
         const { attachments=null } = schema || {};
         const currentReferences = this.attachments || null;
+        // Update model instance attachments (attached model data)
+        // - filter out attachments not in new data
+        // - for the remaining attachments, overwrite with new data
         return Object.keys(attachments || {})
-            .reduce((o, key) => {
+            .filter(atchKey => data && data.hasOwnProperty(atchKey))
+            .reduce((o, atchKey) => {
                 // destructure attachment model and attach function
-                const {model=null, attach=null} = attachments[key];
+                const {model=null, attach=null} = attachments[atchKey];
                 // for arrayed models, destructure
                 const useModel = Array.isArray(model) ? model[0] : model;
                 // get current attached data (db reference data)
                 // - check if attached model is in an array
                 const currentData = Array.isArray(model)
-                    ? Object.assign([], currentReferences && currentReferences.hasOwnProperty(key)
-                        ? currentReferences[key] : [])
-                    : Object.assign({}, currentReferences && currentReferences.hasOwnProperty(key)
-                        ? currentReferences[key] : {});
+                    ? Object.assign([], currentReferences && currentReferences.hasOwnProperty(atchKey)
+                        ? currentReferences[atchKey] : [])
+                    : Object.assign({}, currentReferences && currentReferences.hasOwnProperty(atchKey)
+                        ? currentReferences[atchKey] : {});
                 // get new attached data
-                const newData = model && data && data.hasOwnProperty(key) ? data[key] : currentData;
+                const newData = model ? data[atchKey] : currentData;
                 // attach reference model to current parent
-                o[key] = Array.isArray(newData)
+                o[atchKey] = Array.isArray(newData)
                     ? newData.map(itemData => { return useModel.create(itemData, attach) })
                     : useModel.create(newData, attach);
                 return o;
@@ -219,8 +223,10 @@ exports.ModelConstructor = (props) => {
             this.index = indexValues(syncData);
         },
         save: async function (data=null) {
-            // update model values with input values
-            await db.update(updateValues(data, this.values), schema);
+            // update database record with parameter values or stored values
+            await data
+                ? db.update(updateValues(data, this.values), schema)
+                : db.update(this.values, schema);
             // attach updated reference data to instance
             await this.attachMultiple(Object.values(data ? attachReferences(data) : this.attachments));
             // update current model values
@@ -243,6 +249,8 @@ exports.ModelConstructor = (props) => {
         attachMultiple: async function (attachments) {
             // attach multiple attachments to current parent
             await Promise.all((attachments || []).map( async (attachment) => {
+                // ignore null attachments
+                if (!attachment) return;
                 Array.isArray(attachment)
                     ? await this.attachMultiple(attachment)
                     : await attachment.attachTo(this);
@@ -260,30 +268,32 @@ exports.ModelConstructor = (props) => {
     // get merged (values + attachments) data
     Object.defineProperty(model, "data", {
         get : function () {
-            const refs = this.attachments;
+            const attached = this.attachments;
             const vals = this.values;
             const idx = this.index;
             // expand on referenced attributes
-            const expandedValues = Object.keys(vals || {}).reduce((o, attKey) => {
-                // replace id with indexed data (if exists)
-                if (idx && idx.hasOwnProperty(attKey)) o[attKey] = idx[attKey]
-                // otherwise, set to value (check if array or single object)
-                else o[attKey] = vals[attKey];
-                return o;
-            }, {});
-            return Object.keys(refs || {}).reduce((o, refKey) => {
-                const ref = refs[refKey];
-                // ignore null attachments
-                if (!ref) o[refKey] = null;
-                // check if array or single reference(s)
-                else o[refKey] = Array.isArray(ref)
-                    ? ref.map(refModelItem => {
-
-                        return refModelItem.data
-                    })
-                    : ref.data;
-                return o;
-            }, expandedValues);
+            const expandedValues = Object.keys(vals || {})
+                .reduce((o, attKey) => {
+                    // replace id with indexed data (if exists)
+                    if (idx && idx.hasOwnProperty(attKey)) o[attKey] = idx[attKey]
+                    // otherwise, set to value (check if array or single object)
+                    else o[attKey] = vals[attKey];
+                    return o;
+                }, {});
+            // include attached model data
+            return Object.keys(attached || {})
+                .reduce((o, atchKey) => {
+                    const ref = attached[atchKey];
+                    // ignore null attachments
+                    if (!ref) o[atchKey] = null;
+                    // check if array or single reference(s)
+                    else o[atchKey] = Array.isArray(ref)
+                        ? ref.map(refModelItem => {
+                            return refModelItem.data
+                        })
+                        : ref.data;
+                    return o;
+                }, expandedValues);
         }
     });
 

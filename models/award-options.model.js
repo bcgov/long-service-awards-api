@@ -8,6 +8,7 @@
 const db = require('../queries/index.queries');
 const {ModelConstructor} = require("./constructor.model");
 const defaults = require("../queries/default.queries");
+const {removeNull} = require("../services/validation.services");
 
 'use strict';
 
@@ -23,6 +24,8 @@ const schema = {
     attributes: {
         id: {
             dataType: 'integer',
+            serial: true,
+            editable: false,
             required: true
         },
         award: {
@@ -84,8 +87,9 @@ module.exports =  {
 
         // set reference values
         awardOptions.award = award.id;
+
         // upsert record
-        return await defaults.upsert(awardOptions.data, awardOptions.schema);
+        return await defaults.upsert(awardOptions.data, schema, ['type', 'award', 'name', 'value']);
     },
     findAll: async({offset = 0, limit = 200, orderby = 'id', order = 'asc'}) => {
         return await db.defaults.findAll({offset, limit, orderby, order}, schema);
