@@ -68,7 +68,7 @@ const apiRouters = [
     {path: '/attendees', router: require("./routes/attendees.router")},
     {path: '/accommodations', router: require("./routes/accommodations.router")},
     {path: '/ceremonies', router: require("./routes/ceremonies.router")},
-    {path: '/email', router: require("./routes/email.router")},
+    {path: '/mail', router: require("./routes/mail.router")},
     {path: '/settings', router: require("./routes/settings.router")},
 ];
 
@@ -105,7 +105,6 @@ const session = {
     cookie: {
         maxAge: 14 * 24 * 60 * 60 * 1000,
         secure: nodeENV === 'production',
-        sameSite: 'none',
     }
     // Insert express-session options here
 };
@@ -121,6 +120,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // init user sessions
+// 'trust proxy' = true, the client’s IP address is understood as the
+// left-most entry in the X-Forwarded-For header.
+// ref: https://expressjs.com/en/guide/behind-proxies.html
 app.set('trust proxy', 1);
 app.use(expressSession(session));
 
@@ -138,6 +140,7 @@ app.use(passport.initialize())
 app.use(passport.session());
 
 // log into admin dashboard
+// - initialize passport serializer/deserializer
 app.post('/login',
     initPassport(passport).authenticate('local', {}, null),
     authController.login

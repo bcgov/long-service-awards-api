@@ -27,20 +27,34 @@ const organizationsQueries = {
          * @public
          */
 
-        // destructure filter for sort/order/offset/limit
-        const {orderby = null, order = 'ASC', offset = 0, limit = null, organizations=[]} = filter || {};
+            // destructure filter for sort/order/offset/limit
+        const {
+                orderby = null,
+                order = 'ASC',
+                offset = 0,
+                limit = null,
+                organizations,
+                active
+            } = filter || {};
         // (optional) order by attribute
         const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : '';
         const limitClause = limit ? `LIMIT ${limit}` : '';
 
-        // get ID filter
-        const filterIDs = organizations.map((org, index) => `$${++index}::integer`).join(',')
+        // build filter clause array
+        const filterClauses = [];
+        // include organizations filter
+        if (organizations) {
+            const filterIDs = organizations.map((org, index) => `$${++index}::integer`).join(',');
+            if (organizations.length > 0) filterClauses.push('id IN (' + filterIDs + ')');
+        }
+        // include active (organizaton is active) filter
+        if (active) filterClauses.push('active = true');
 
         return {
             sql: `SELECT * FROM organizations 
-                  ${organizations.length > 0 ? 'WHERE id IN (' + filterIDs + ')' : ''}
-                  ${orderClause}
-                  ${limitClause}
+                ${filterClauses.length > 0 ? ' WHERE ' + filterClauses.join(' AND ') : ''}
+                ${orderClause}
+                ${limitClause}
                   OFFSET ${offset};`,
             data: organizations,
         };

@@ -80,7 +80,7 @@ const getFilters = (data) => {
  * */
 
 const recipientQueries = {
-    findAll: (filter, schema) => {
+    findAll: (filter, ignore=[], schema) => {
 
         /**
          * Generate query: Find all filtered records in table.
@@ -95,30 +95,32 @@ const recipientQueries = {
             // destructure filter for sort/order/offset/limit
         const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
         // (optional) order by attribute
-        const orderClause = order && orderby ? `ORDER BY ${schema.modelName}.${orderby} ${order}` : '';
+        const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
         const limitClause = limit ? `LIMIT ${limit}` : '';
 
         // get column filters
         const [filterStatements, filterValues] = getFilters(filter);
         const selections = Object.keys(schema.attributes)
-            .map(field => schema.modelName + '.' + field).join(', ');
+            .filter(field => !ignore.includes(field))
+            .map(field => 'recipients.' + field).join(', ');
+
 
         return {
-            sql: `SELECT ${selections}, COUNT(${schema.modelName + '.id'}) as total_filtered_records
-                  FROM ${schema.modelName}
-                           LEFT JOIN contacts ON contacts.recipient = ${schema.modelName}.id AND contacts.type = 'personal'
-                           LEFT JOIN organizations ON organizations.id = ${schema.modelName}.organization
-                           LEFT JOIN service_selections ON service_selections.recipient = ${schema.modelName}.id
+            sql: `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
+                  FROM recipients 
+                           LEFT JOIN contacts ON contacts.id = recipients.contact
+                           LEFT JOIN organizations ON organizations.id = recipients.organization
+                           LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && ' WHERE ' + filterStatements}
-                  GROUP BY ${schema.modelName + '.id'}
+                  GROUP BY recipients.id
                                ${orderClause}
                                ${limitClause}
                   OFFSET ${offset};`,
-            data: filterValues,
+            data: filterValues
         };
 
     },
-    count: (filter, schema) => {
+    count: (filter) => {
 
         /**
          * Generate query: Count total filtered records in table.
@@ -134,14 +136,32 @@ const recipientQueries = {
         const [filterStatements, filterValues] = getFilters(filter);
         return {
             sql: `SELECT COUNT(*) as total_filtered_records
-                  FROM ${schema.modelName}
-                           LEFT JOIN contacts ON contacts.recipient = ${schema.modelName}.id AND contacts.type = 'personal'
-                           LEFT JOIN organizations ON organizations.id = ${schema.modelName}.organization
-                           LEFT JOIN service_selections ON service_selections.recipient = ${schema.modelName}.id
+                  FROM recipients
+                           LEFT JOIN contacts ON contacts.id = recipients.contact
+                           LEFT JOIN organizations ON organizations.id = recipients.organization
+                           LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && ' WHERE ' + filterStatements};`,
             data: filterValues,
         };
 
+    },
+    findContact: (id, type)=>{
+        const contactRef = type === 'contact' ? 'recipients.contact' : 'recipients.supervisor'
+        return {
+            sql: `SELECT contacts.* FROM contacts 
+                  JOIN recipients ON contacts.id = ${contactRef}
+                  WHERE recipients.id = $1::uuid;`,
+            data: [id],
+        };
+    },
+    updateContact: (recipientID, contactID, type)=>{
+        return {
+            sql: `UPDATE recipients
+                  SET ${type} = $2::uuid
+                  WHERE recipients.id = $1::uuid
+                  RETURNING *;`,
+            data: [recipientID, contactID],
+        };
     },
     insert: (data)=>{
         // destructure user stub data
@@ -152,14 +172,28 @@ const recipientQueries = {
             user=null,
             employee_number=null,
             status=null,
-            organization=null
+            organization=null,
+            contact=null,
+            supervisor=null
         } = data || {};
         return {
-            sql: `INSERT INTO recipients (id, guid, idir, "user", employee_number, status, organization)
-                  VALUES ($1::uuid, $2::varchar, $3::varchar, $4::uuid, $5::integer, $6::varchar, $7::integer)
+            sql: `INSERT INTO recipients (
+                        id, guid, idir, "user", employee_number, status, organization, contact, supervisor
+                        )
+                  VALUES (
+                          $1::uuid, 
+                          $2::varchar, 
+                          $3::varchar, 
+                          $4::uuid, 
+                          $5::integer, 
+                          $6::varchar, 
+                          $7::integer, 
+                          $8::uuid, 
+                          $9::uuid
+                          )
                   ON CONFLICT DO NOTHING
                   RETURNING *;`,
-            data: [id, guid, idir, user, employee_number, status, organization],
+            data: [id, guid, idir, user, employee_number, status, organization, contact, supervisor],
         };
     },
     update: (data, schema) => {
@@ -184,10 +218,10 @@ const recipientQueries = {
             return [attr, `${placeholder}::${schema.attributes[attr].dataType}`].join('=');
         });
 
-        let sql = `UPDATE recipients
-                   SET ${assignments.join(',')}
-                   WHERE id = $1::${schema.attributes.id.dataType}
-                   RETURNING *;`;
+        let sql = `        UPDATE recipients
+                           SET ${assignments.join(',')}
+                           WHERE id = $1::${schema.attributes.id.dataType}
+                           RETURNING *;`;
 
         // position ID, creation datetime values at front of array
         let filteredData = [data.id];
@@ -204,7 +238,6 @@ const recipientQueries = {
         // apply update query
         return {sql: sql, data: filteredData};
     },
-
     stats: (schema, currentCycle) => {
         if (!schema.modelName) return null;
         return [
@@ -229,14 +262,18 @@ exports.queries = recipientQueries;
 /**
  * Generate query: Find filtered results
  *
- * @param {Object} data
- * @parem {Object} user
+ * @param {Object} filter
+ * @param {Array} ignore
+ * @param {Object} schema
  * @return {Promise} results
  * @public
  */
 
-exports.findAll = async (filter, schema) => {
-    const result = await query(recipientQueries.findAll(filter, schema));
+exports.findAll = async (filter, ignore, schema) => {
+    const result = await query(recipientQueries.findAll(filter, ignore, schema));
+
+    // console.log(recipientQueries.findAll(filter, ignore, schema))
+
     // attach linked records to results
     return await Promise.all((result || []).map(async(item) => {
         return await attachReferences(item, schema);
@@ -249,6 +286,19 @@ exports.findAll = async (filter, schema) => {
  */
 
 exports.findById = findById;
+
+/**
+ * Generate query: Insert new record into database.
+ *
+ * @param {Object} data
+ * @return {Promise} results
+ * @public
+ */
+
+exports.findContact = async (id, type, schema) => {
+    const result = await queryOne(recipientQueries.findContact(id, type));
+    return await attachReferences(result, schema);
+}
 
 /**
  * Generate query: Insert new record into database.
@@ -274,9 +324,23 @@ exports.insert = async (data) => {
  */
 
 const update = async (data, schema) => {
+    // console.log(recipientQueries.update(data, schema))
     return await transactionOne([recipientQueries.update(data, schema)]);
 }
 exports.update = update;
+
+/**
+ * Generate query: Update recipient record in table.
+ *
+ * @param {Object} data
+ * @param {Object} schema
+ * @return {Promise} results
+ * @public
+ */
+
+exports.updateContact = async (recipientID, contactID) => {
+    return await transactionOne([recipientQueries.updateContact(recipientID, contactID)]);
+}
 
 /**
  * Generate query: Create delegated recipient records
@@ -287,37 +351,51 @@ exports.update = update;
  * @public
  */
 
-exports.delegate = async (data, user, schema) => {
+exports.delegate = async (data, user, cycle, schema) => {
 
     const { attachments=null } = schema || {};
     const { employees=[], supervisor={} } = data || {};
     const q = [];
 
-    // update delegated user info with supervisor info
-    const {first_name = null, last_name = null, office_email = null} = supervisor || {};
-    await user.save({first_name, last_name, email: office_email});
+    console.log(data)
 
-    // save supervisor contact data
-    supervisor.id = uuid.v4();
-    supervisor.type = 'supervisor';
-    q.push(queries.upsert(supervisor, attachments.supervisor.model.schema));
+    // DISABLED: Note delegate may not be the employees' supervisor
+    // // update delegated user info with supervisor info
+    // const {first_name = null, last_name = null, office_email = null} = supervisor || {};
+    // await user.save({first_name, last_name, email: office_email, role: 'delegate'});
 
     // register and save delegated recipient records
     employees.map( recipientData => {
         const {
-            first_name,
-            last_name,
-            office_email,
             employee_number,
             organization,
-            service_years,
-            milestone,
-            qualifying_year,
-            prior_milestones,
+            contact,
+            service,
+            prior_milestones=[],
         } = recipientData || {};
 
         // generate UUID for recipient
         const recipientID = uuid.v4();
+        const contactID = uuid.v4();
+        const supervisorID = uuid.v4();
+
+        // save recipient contact data
+        q.push(defaults.queries.upsert({
+            id: contactID,
+            first_name: contact.first_name,
+            last_name: contact.last_name,
+            office_email: contact.office_email
+        }, attachments.contact.model.schema));
+
+        // save supervisor contact data
+        q.push(defaults.queries.upsert({
+            id: supervisorID,
+            first_name: supervisor.first_name,
+            last_name: supervisor.last_name,
+            office_email: supervisor.office_email
+        }, attachments.supervisor.model.schema));
+
+        console.log('Delegated service pins:', contactID, supervisorID)
 
         // create new recipient record (NOTE: generate UUID for GUID)
         q.push(recipientQueries.insert({
@@ -326,43 +404,53 @@ exports.delegate = async (data, user, schema) => {
             user: user.id,
             employee_number,
             status: 'delegated',
-            organization
+            organization: organization.id,
+            contact: contactID,
+            supervisor: supervisorID
         }));
-
-        // include recipient contact data
-        const contact = { id: uuid.v4(), first_name, last_name, office_email};
-        contact.type = 'contact';
-        q.push(defaults.queries.upsert(contact, attachments.contact.model.schema));
 
         // include current service selection
         q.push(queries.upsert({
             id: uuid.v4(),
             recipient: recipientID,
-            milestone,
-            qualifying_year,
-            service_years,
+            milestone: service.milestone,
+            qualifying_year: service.qualifying_year,
+            service_years: service.service_years,
+            cycle,
+            previous_registration: false,
+            previous_award: false,
             delegated: true,
+            confirmed: true,
+            ceremony_opt_out: true,
+            survey_opt_in: false,
             awards: null
         }, attachments.service.model.schema));
 
+
         // include prior services selections (prior milestones)
         // - filter out milestones that conflict with current selection
-        const default_qualifying_year = qualifying_year;
-        const default_service_years = service_years;
         (prior_milestones || [])
-            .filter(mstone => mstone !== milestone)
+            .filter(mstone => mstone !== contact.milestone)
             .map(mstone => {
+                // estimate previous cycle
+                const previousCycle = parseInt(cycle) - (parseInt(service.milestone) - parseInt(mstone));
+
                 q.push(queries.upsert({
                     id: uuid.v4(),
                     recipient: recipientID,
                     milestone: mstone,
-                    qualifying_year: default_qualifying_year,
-                    service_years: default_service_years,
+                    qualifying_year: service.qualifying_year,
+                    service_years: service.service_years,
+                    cycle: previousCycle,
                     delegated: true,
+                    previous_registration: false,
+                    previous_award: false,
+                    confirmed: true,
+                    ceremony_opt_out: true,
+                    survey_opt_in: false,
                     awards: null
                 }, attachments.service.model.schema));
             });
-
     });
 
     // apply update query

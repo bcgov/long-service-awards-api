@@ -1,61 +1,62 @@
-<%- include('email-doctype'); %>
-<html xmlns="http://www.w3.org/1999/xhtml">
-<%- include('email-head', {title: title}); %>
-<body class="body" style="padding:0; margin:0; display:block; background:#ffffff; -webkit-text-size-adjust:none" bgcolor="#ffffff">
-<table align="center" cellpadding="0" cellspacing="0" width="100%" height="100%">
-    <tr>
-        <td align="center" valign="middle" bgcolor="#ffffff" width="100%">
-
-            <table cellspacing="0" cellpadding="0" width="100%">
-                <tr>
-                    <td width="100%">
-                        <div class="logo">
-                            <img class="logo" src="https://longserviceawards.gww.gov.bc.ca/wp-content/uploads/2022/07/lsa-logo-web.png">
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="border-bottom:1px solid #e7e7e7;">
-                        <h1 style="text-align: center">Long Service Awards: Registration Confirmation</h1>
-                        <p style="text-align: center"><strong>THIS IS AN AUTOMATED EMAIL. NO RESPONSE IS REQUIRED.</strong></p>
-                        <p>
-                            You have successfully registered for a <%= service.milestone %> year Long Service Award.
-                            Congratulations on reaching this milestone in your career!
-                        </p>
-                        <p>
-                            An email has been sent to your supervisor, so they are aware of your registration and can support
-                            you to attend your award ceremony.
-                        </p>
-                        <p>
-                            Find details about the program including the ceremony, travel policies and more on
-                            the <a href="https://longserviceawards.gww.gov.bc.ca">Long Service Awards website</a>.
-                        </p>
-                        <h2>Ceremony dates</h2>
-                        <p>
-                            We are following the Provincial Health Officer’s directives regarding events and travel. We will
-                            provide any updates to registered recipients over the summer and update the Long Service Awards website.
-                        </p>
-                        <h2>Deferring attendance</h2>
-                        <p>
-                            If you have registered but are unable to attend your ceremony, you may defer for one year and attend a
-                            ceremony in 2024. Please RSVP your regrets and re-register for the Long Service Awards next year.
-                            Arrangements will be made to have your award presented to you towards the end of the year.
-                        </p>
-                        <h2>Travel</h2>
-                        <p>
-                            Please connect with your Long Service Award contact to confirm your organization’s travel process.
-                            You can also find information about the travel policy and reimbursement process on the Long Service Awards
-                            website.
-                        </p>
-                        <p>We hope to see you at the ceremony this fall.</p>
-                        <p>Long Service Awards team</p>
-                        <%- include('email-footer'); %>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<%- await include('email-doctype'); %>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<%- await include('email-head', {title: title}); %>
+<body class="body" style="padding:0; margin:0; display:block; background:#ffffff; -webkit-text-size-adjust:none">
+<div class="container">
+    <%- await include('email-banner'); %>
+    <table>
+        <tr>
+            <td style="border-bottom:1px solid #e7e7e7;">
+                <p style="text-align: center"><strong>This is an automated email. No response is required.</strong></p>
+                <p>
+                    You have successfully registered for a <%= service.milestone %> year Long Service Award.
+                    Congratulations on reaching this milestone in your career!
+                </p>
+                <p>
+                    You chose <%= service.awards.award.label %> as your award option.
+                </p>
+                <h2>Ceremony</h2>
+                <p>
+                    The <%= service.cycle %> ceremonies will be held at Government House in Victoria this fall.
+                    Your invitation will be emailed to you by the end of June and will include your
+                    ceremony details. Because each ceremony is tailored to host specific ministries
+                    and organizations, it is not possible to change your ceremony date.
+                </p>
+                <p>
+                    An email has also been sent to your supervisor confirming your registration.
+                </p>
+                <h2>Deferred attendance</h2>
+                <p>
+                    If you register and are unable to attend your ceremony, you can defer for one year and
+                    attend a ceremony in 2024. If you are unable to or have chosen not to attend the
+                    ceremony, your award will be presented to you by your ministry in late <%= service.cycle %>.
+                </p>
+                <p>
+                    If you deferred your last invitation, this is your final opportunity to attend.
+                </p>
+                <h2>Travel</h2>
+                <p>
+                    Please connect with your Long Service Award contacts to confirm your organization’s
+                    travel process. You can also find information about the travel policy and reimbursement
+                    process on the Long Service Awards website.
+                </p>
+                <p>
+                    For those without IDIR access, please email <a href="mailto:longserviceawards@gov.bc.ca?subject=Question%20about%20LSA%20ceremony">
+                    LongServiceAwards@gov.bc.ca</a> if you have any questions, or if you’d like to be connected with
+                    your <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">
+                    organization’s contact</a>.
+                </p>
+                <p>
+                    We hope to see you at the ceremony this fall.
+                </p>
+                <p>
+                    Long Service Awards team
+                </p>
+                <%- await include('email-footer'); %>
+            </td>
+        </tr>
+    </table>
+</div>
 </body>
 </html>
 

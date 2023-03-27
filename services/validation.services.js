@@ -31,6 +31,25 @@ const isEmpty = (obj, ignore=[]) => {
 };
 
 /**
+ * Utility to remove null property values from objects
+ * - ignores filtered fields in input
+ * - note recursion
+ * **/
+
+const removeNull = (obj, ignore=[]) => {
+    // ignore non-objects and arrays
+    if (Array.isArray(obj) || typeof obj !== 'object') return obj;
+    // remove null values from nested objects
+    return Object.keys(obj || {})
+        .reduce((o, key) => {
+            // console.log(key, obj[key], obj[key] === {})
+            if (obj[key] !== null && obj[key] !== undefined && obj[key] !== {} && obj[key] !== '')
+                o[key] = removeNull(obj[key]);
+            return o;
+        }, {});
+};
+
+/**
  * convert timestamp to JS standard Date class
  *
  * @param date
@@ -177,8 +196,10 @@ const sanitize = (data, datatype) => {
             return isNaN(parseFloat(data)) ? null : parseFloat(data);
         },
         'text': function() {
-            // Replaces HTML tags with null string.
-            return data ? data.toString().replace( /(<([^>]+)>)/ig, '') : '';
+            // Replaces undesirable HTML tags with null string.
+            // - exceptions: <p>, <ul>, <ol>, <b>, <li>, <br>
+            return data ? data.toString().replace(
+                /(<((?!\/?p|\/?b|\/?ul|\/?ol|\/?li|br\s).)*?>)/ig, '') : '';
         },
         'timestamp': function() {
             // convert timestamp to locale string
@@ -216,15 +237,16 @@ const confirm = (schema, data) => {
 }
 
 module.exports = {
-    matchers: matchers,
-    isEmpty: isEmpty,
-    confirm: confirm,
-    convertDate: convertDate,
-    sanitize: sanitize,
-    validateRequired: validateRequired,
-    validateEmployeeNumber: validateEmployeeNumber,
-    validateGUID: validateGUID,
-    validateEmail: validateEmail,
-    validatePhone: validatePhone,
-    validatePostcode: validatePostcode
+    matchers,
+    isEmpty,
+    removeNull,
+    confirm,
+    convertDate,
+    sanitize,
+    validateRequired,
+    validateEmployeeNumber,
+    validateGUID,
+    validateEmail,
+    validatePhone,
+    validatePostcode
 }

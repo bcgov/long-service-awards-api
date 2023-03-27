@@ -27,20 +27,26 @@ const dirPath = '/resources/email_templates/';
 
 const _logMail = async (error, response, recipient) => {
 
-      const parsedError = error ? decodeError(error) : {hint: 'N/A', msg: 'Mail delivered successfully'};
-      const {hint, msg} = parsedError || {};
-      const {id, user} = recipient || {};
+  const parsedError = error ? decodeError(error) : {hint: 'N/A', msg: 'Mail delivered successfully'};
+  const {hint, msg} = parsedError || {};
+  const {id, user} = recipient || {};
+  const transaction = {
+    recipient: id,
+    error: !!error,
+    code: error ? 'failedMailSend' : 'successMailSend',
+    description: `${msg ? msg : 'Error not indexed'} (${hint ? hint : 'N/A'})`.slice(0, 256),
+    details: `[${JSON.stringify(error)}, ${JSON.stringify(response)}]`
+  };
 
-      // log event in transaction table
-      await Transaction.save({
-        user: user || null,
-        recipient: id,
-        error: !!error,
-        code: error ? 'failedMailSend' : 'successMailSend',
-        description: `${msg ? msg : 'Error not indexed'} (${hint ? hint : 'N/A'})`.slice(0, 256),
-        details: `[${JSON.stringify(error)}, ${JSON.stringify(response)}]`
-      })
-    }
+  // include user ID if present
+  if (user) {
+    const {id} = user || {};
+    transaction.user = id || null;
+  }
+
+  // log event in transaction table
+  await Transaction.create(transaction);
+}
 
 /**
  * Send mail
@@ -58,7 +64,14 @@ const sendMail = async (
     template,
     data,
     attachments,
-    options={}) => {
+    options={},
+) => {
+
+  // set mail parameters
+  const fromName = process.env.MAIL_FROM_NAME;
+  const fromEmail = process.env.MAIL_FROM_ADDRESS;
+  const templatePath = path.join(__dirname, '..', dirPath, template);
+  const templateData = {...{title: subject}, ...data};
 
   try {
 
@@ -74,34 +87,25 @@ const sendMail = async (
       pool: true
     });
 
-    // set mail parameters
-    const fromName = process.env.MAIL_FROM_NAME;
-    const fromEmail = process.env.MAIL_FROM_ADDRESS;
-    const templatePath = path.join(__dirname, '..', dirPath, template);
-    const templateData = {...{title: subject}, ...data};
-
     // generate html body using template file
-    ejs.renderFile(templatePath, templateData, options, async (err, body) => {
-      // send mail with defined transport object
-      try {
-        const response = await transporter.sendMail({
-          from: `"${fromName}" <${fromEmail}>`, // sender address
-          to: to.join(', '), // list of receivers
-          subject: subject, // subject line
-          html: body, // html body
-        });
-        // log send event
-        await _logMail(null, response, data);
-      }  catch (e) {
-        // log send error
-        _logMail(e, {
-          from: `"${fromName}" <${fromEmail}>`, to: to.join(', '), subject: subject
-        }, data).catch(console.error);
-      }
+    const body = await ejs.renderFile(templatePath, templateData, {async: true});
+    const response = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`, // sender address
+      to: to.join(', '), // list of receivers
+      subject: subject, // subject line
+      html: body, // html body
     });
-  }  catch (e) {
-    console.error(e)
-    throw new Error('badMailTemplate');
+    // log send event
+    await _logMail(null, response, data);
+    // return mail send response
+    return [null, response];
+  }  catch (error) {
+    console.error(error)
+    // log error
+    _logMail(error, {
+      from: `"${fromName}" <${fromEmail}>`, to: to.join(', '), subject: subject
+    }, data).catch(console.error);
+    return [error, null];
   }
 
 }
@@ -121,20 +125,26 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
   if (!confirmed) return;
 
   // send confirmation mail to supervisor
-  await sendMail(
+  const [error1, response1] = await sendMail(
       [supervisor.office_email || ''],
       'Long Service Award - Registration Confirmation',
       'email-supervisor-registration-confirm.ejs',
-      recipient
+      recipient,
+      [],
+      null
   );
 
   // send confirmation mail to recipient
-  await sendMail(
+  const [error2, response2] = await sendMail(
       [contact.office_email || ''],
       'Long Service Award - Registration Confirmation',
       'email-recipient-registration-confirm.ejs',
-      recipient
+      recipient,
+      [],
+      null
   );
+
+  return [error1 || error2 || null, {response1, response2}]
 }
 
 

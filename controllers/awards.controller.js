@@ -19,7 +19,7 @@ const Award = require("../models/awards.model.js");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await Award.findAll();
+    const results = await Award.findAll(req.query);
     res.status(200).json({
       message: null,
       result: results,
@@ -72,6 +72,7 @@ exports.get = async (req, res, next) => {
 exports.filter = async (req, res, next) => {
   try {
     const {field, value} = req.params || {};
+    // note: defaults to return only active awards
     const results = await Award.findByField(field, value || null);
     res.status(200).json({
       message: null,
@@ -95,16 +96,20 @@ exports.filter = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
 
-    const data = req.body;
-    const item = await Award.create(data);
+    // create new record and save
+    const award = await Award.create(req.body);
 
     // handle exception
-    if (!item) return next(Error('noRecord'));
+    if (!award) return next(Error('noRecord'));
 
     // send response
     res.status(200).json({
-      message: {},
-      result: item.data,
+      message: {
+        severity: 'success',
+        summary: 'Award Created Successfully!',
+        detail: 'New award record created.'
+      },
+      result: award.data,
     });
   } catch (err) {
     return next(err);
@@ -123,16 +128,24 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
 
-    const data = req.body;
-    const item = await Award.update(data);
+    // check that recipient exists
+    const {id} = req.params || {};
+    const award = await Award.findById(id);
 
     // handle exception
-    if (!item) return next(Error('noRecord'));
+    if (!award) return next(Error('noRecord'));
+
+    // update record
+    await award.save(req.body);
 
     // send response
     res.status(200).json({
-      message: {},
-      result: item,
+      message: {
+        severity: 'success',
+        summary: 'Award Updated Successfully!',
+        detail: 'Award record updated.'
+      },
+      result: award.data,
     });
   } catch (err) {
     return next(err);
@@ -152,7 +165,16 @@ exports.remove = async (req, res, next) => {
   try {
     const id = req.params.id;
     const results = await Award.remove(id);
-    res.status(200).json(results);
+
+    // send response
+    res.status(200).json({
+      message: {
+        severity: 'success',
+        summary: 'Award Deleted Successfully!',
+        detail: 'Award record was removed.'
+      },
+      result: results,
+    });
   } catch (err) {
     return next(err);
   }

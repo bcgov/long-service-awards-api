@@ -29,15 +29,6 @@ const schema = {
             editable: false,
             required: true
         },
-        recipient: {
-            dataType: 'uuid',
-            required: true,
-            editable: false
-        },
-        type: {
-            dataType: 'varchar',
-            required: true
-        },
         first_name: {
             dataType: 'varchar',
             required: true
@@ -74,13 +65,13 @@ const schema = {
         office_address: {
             model: Address,
             required: true,
-            get: async (id) => { return await Address.findByContact(id, 'office') },
-            attach: async (address, contact) => { await Address.attach(address, contact, 'office') }
+            get: async (id) => { return await Address.findAttachment(id, 'office_address', schema) },
+            attach: async (address, contact) => { await Address.attach(address, contact, 'office_address') }
         },
         personal_address: {
             model: Address,
-            get: async (id) => { return await Address.findByContact(id, 'personal') },
-            attach: async (address, contact) => { await Address.attach(address, contact, 'personal') }
+            get: async (id) => { return await Address.findAttachment(id, 'personal_address', schema) },
+            attach: async (address, contact) => { await Address.attach(address, contact, 'personal_address') }
         }
     }
 };
@@ -110,30 +101,26 @@ module.exports =  {
 
         if (!contact || !recipient || !type) return null;
 
-        // look up any existing recipient contact for given type
-        const current = await defaults.findOneByFields(
-            ['recipient', 'type'], [recipient.id, type], schema);
-
-        // if none, create new UUID ID value for contact
-        contact.id = current ? current.id : uuid.v4();
-        contact.recipient = recipient.id;
-        contact.type = type;
+        // if no contact ID, create new UUID ID value and set recipient attribute
+        contact.id = recipient.hasOwnProperty(type) && recipient[type] ? recipient[type] : uuid.v4();
+        recipient[type] = contact.id;
 
         // ignore attach contact if data is empty, otherwise upsert record
-        if (!isEmpty(contact.data, ['id', 'recipient', 'type'])) {
+        if (!isEmpty(contact.data, ['id'])) {
             await defaults.transact([
-                defaults.queries.upsert(contact.data, schema)
+                defaults.queries.upsert(contact.data, schema),
+                db.recipients.queries.updateContact(recipient.id, contact.id, type)
             ]);
         }
     },
     findByRecipient: async(id, type) => {
-        // look up any existing recipient contact info
-        return construct(await defaults.findOneByFields(['recipient', 'type'], [id, type], schema));
+        // look up existing recipient contact/supervisor info
+        return construct(await db.recipients.findContact(id, type, schema));
     },
     findById: async(id) => {
         return construct(await db.defaults.findById(id, schema));
     },
     removeAll: async() => {
-        await db.defaults.removeAll(schema);
+        return await db.defaults.removeAll(schema);
     }
 }

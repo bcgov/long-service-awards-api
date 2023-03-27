@@ -19,10 +19,10 @@ router.get('/list', authorizeAdmin, usersController.getAll);
 router.get('/view/:id', authorizeAdmin, usersController.get);
 router.post('/update/:id', authorizeAdmin, usersController.update);
 router.get('/delete/:id', authorizeSuperAdmin, usersController.remove);
+router.get('/roles/list', authorizeAdmin, usersController.getRoles);
+// router.post('/roles/:id', authorizeAdmin, usersController.roles);
 // router.get('/permissions', authorizeSuperAdmin, usersController.roles);
 // router.get('/permissions/:role', authorizeSuperAdmin, usersController.roles);
 // router.post('/permissions/update', authorizeSuperAdmin, usersController.roles);
-router.get('/roles/list', authorizeAdmin, usersController.getRoles);
-// router.post('/roles/:id', authorizeAdmin, usersController.roles);
 
 module.exports = router;

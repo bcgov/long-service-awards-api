@@ -8,10 +8,10 @@
 const db = require('../queries/index.queries');
 const {ModelConstructor} = require("./constructor.model");
 const AwardSelection = require("./award-selections.model");
-const Setting = require("./settings.model");
 const defaults = require("../queries/default.queries");
 const uuid = require("uuid");
 const {isEmpty} = require("../services/validation.services");
+const QualifyingYear = require("./qualifying-years.model");
 
 'use strict';
 
@@ -119,8 +119,8 @@ module.exports =  {
     if (isEmpty(serviceSelection.data)) return;
 
     // set reference values
-    const cycle = await Setting.findOneByField('name', 'cycle');
-    serviceSelection.cycle = cycle && cycle.value;
+    const cycle = await QualifyingYear.findCurrent();
+    serviceSelection.cycle = cycle && cycle.name;
     serviceSelection.recipient = recipient.id;
     serviceSelection.delegated = false;
 
@@ -143,9 +143,9 @@ module.exports =  {
      * Finds active service record for current LSA cycle (e.g., 2023)
      */
 
-    const cycle = await Setting.findOneByField('name', 'cycle');
+    const cycle = await QualifyingYear.findCurrent();
     const serviceSelection = await db.defaults.findOneByFields(
-        ['recipient', 'cycle'], [recipientID, cycle && cycle.value], schema);
+        ['recipient', 'cycle'], [recipientID, cycle && cycle.name], schema);
     return construct(serviceSelection)
   },
   findByRecipient: async(recipientID) => {

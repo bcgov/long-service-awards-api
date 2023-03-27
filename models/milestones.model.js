@@ -30,6 +30,9 @@ const schema = {
         label: {
             dataType: 'varchar',
             required: true
+        },
+        active: {
+            dataType: 'boolean'
         }
     }
 };

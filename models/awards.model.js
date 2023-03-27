@@ -23,9 +23,10 @@ const schema = {
         id: {
             dataType: 'integer',
             required: true,
+            serial: true,
             editable: false
         },
-        vendor: {
+        short_code: {
             dataType: 'varchar'
         },
         type: {
@@ -45,6 +46,12 @@ const schema = {
         },
         image_url: {
             dataType: 'varchar'
+        },
+        quantity: {
+            dataType: 'integer'
+        },
+        active: {
+            dataType: 'boolean'
         }
     },
     attachments: {

@@ -19,11 +19,7 @@ const db = require('../queries/index.queries');
 const schema = {
     modelName: 'qualifying_years',
     attributes: {
-        id: {
-            dataType: 'integer',
-            required: true
-        },
-        year: {
+        name: {
             dataType: 'integer',
             required: true
         },
@@ -33,4 +29,12 @@ const schema = {
     }
 };
 
-module.exports = db.generate(schema);
+module.exports = {
+    schema: schema,
+    findAll: async () => {
+        return await db.defaults.findAll({orderby: 'name', order: 'DESC'}, schema);
+    },
+    findCurrent: async () => {
+        return await db.defaults.findOneByField('current', true, schema);
+    },
+}

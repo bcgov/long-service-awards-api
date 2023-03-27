@@ -6,6 +6,7 @@
  */
 
 const db = require('../queries/index.queries');
+const {settings} = require("../queries/index.queries");
 
 'use strict';
 
@@ -38,4 +39,15 @@ const schema = {
   }
 };
 
-module.exports = db.generate(schema);
+const methods = db.generate(schema) || {};
+const {construct} = methods || {};
+
+// overload default methods
+// - use 'name' as id key
+methods.findById = async (name) => {
+  return construct(await db.defaults.findOneByField('name', name, schema), schema);
+}
+methods.create = async (data) => { return construct(await settings.upsert(data), schema) }
+methods.update = async (data) => { return construct(await settings.upsert(data), schema) }
+
+module.exports = methods;

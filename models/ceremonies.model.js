@@ -7,6 +7,7 @@
 
 const db = require('../queries/index.queries');
 const {ModelConstructor} = require("./constructor.model");
+const Address = require("./addresses.model");
 
 'use strict';
 
@@ -28,13 +29,20 @@ const schema = {
             dataType: 'integer',
             required: true
         },
-        address: {
-            dataType: 'integer',
-            required: true
-        },
         datetime: {
             dataType: 'timestamp',
             required: true
+        },
+        active: {
+            dataType: 'boolean'
+        }
+    },
+    attachments: {
+        address: {
+            model: Address,
+            required: true,
+            get: async (id) => { return await Address.findAttachment(id, 'address') },
+            attach: async (address, ceremony) => { await Address.attach(address, ceremony, 'address') }
         }
     }
 };
@@ -48,23 +56,4 @@ const schema = {
  * @public
  */
 
-const construct = (init, attach) => {
-    return ModelConstructor({
-        init: init,
-        schema: schema,
-        db: db.defaults,
-        attach: attach
-    });
-}
-
-module.exports =  {
-    schema: schema,
-    findAll: async(filter) => {
-        return await db.defaults.findAll(filter, schema);
-    },
-    findById: async(id) => { await db.defaults.findById(id, schema) },
-    create: async(data) => { await db.defaults.insert(data, schema) },
-    update: async(data) => { await db.defaults.update(data, schema) },
-    remove: async(id) => { await db.defaults.remove(id, schema) },
-    removeAll: async() => { await db.defaults.removeAll(schema) }
-}
+module.exports = db.generate(schema);
