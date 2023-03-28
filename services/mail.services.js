@@ -127,7 +127,7 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
   // send confirmation mail to supervisor
   const [error1, response1] = await sendMail(
       [supervisor.office_email || ''],
-      'Long Service Award - Registration Confirmation',
+      'Long Service Awards - Registration Confirmation',
       'email-supervisor-registration-confirm.ejs',
       recipient,
       [],
@@ -137,7 +137,7 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
   // send confirmation mail to recipient
   const [error2, response2] = await sendMail(
       [contact.office_email || ''],
-      'Long Service Award - Registration Confirmation',
+      'Long Service Awards - Registration Confirmation',
       'email-recipient-registration-confirm.ejs',
       recipient,
       [],

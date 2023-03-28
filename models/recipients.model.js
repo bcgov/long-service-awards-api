@@ -9,7 +9,7 @@ const db = require('../queries/index.queries');
 const Contact = require("../models/contacts.model.js");
 const ServiceSelection = require('../models/service-selections.model.js');
 const {ModelConstructor} = require("./constructor.model");
-const {validateEmployeeNumber} = require("../services/validation.services");
+const {validateEmployeeNumber, isEmpty} = require("../services/validation.services");
 const Organization = require("./organizations.model");
 const User = require("./users.model");
 const QualifyingYear = require("./qualifying-years.model");
@@ -162,6 +162,34 @@ module.exports =  {
         }
         return [];
     },
+    findAllTest: async(filter, user) => {
+
+        // check if user is administrator (skip user-org filtering)
+        const { role } = user || {};
+        const isAdmin = ['super-administrator', 'administrator'].includes(role.name);
+        if (isAdmin) {
+            return await db.recipients.findAll(filter, [], schema);
+        }
+
+        // restrict available orgs to user assignment
+        // - check filter overlap with assigned orgs
+        const { organizations = [] } = user || {};
+        const userFilter = (organizations || []).map(({organization}) => organization.id);
+        // if org-contact has no assigned organizations, return empty results
+        if (['org-contact'].includes(role.name) && organizations.length > 0) {
+            // explode existing organization filter params
+            const orgFilter = filter.hasOwnProperty('organization')
+                && filter.organization.split(',').map(id => parseInt(id));
+            // filter org params to be contained in user filter
+            const intersection = userFilter.filter(id => (orgFilter || []).includes(parseInt(id)));
+            // ensure org filter is not empty
+            filter.organization = intersection.length === 0
+                ? userFilter.join(',')
+                : intersection.join(',');
+            return await db.recipients.findAll(filter, ['notes'], schema);
+        }
+        return [];
+    },
     findById: async(id, user) => {
         // get recipient data
         const recipient = await db.defaults.findById(id, schema);
@@ -193,6 +221,10 @@ module.exports =  {
     },
     delegate: async(data, user) => {
         const cycle = await QualifyingYear.findCurrent();
+        // check that data has supervisor and employees
+        const { employees=[], supervisor={} } = data || {};
+        if (employees.length === 0 || isEmpty(supervisor)) return null;
+
         return await db.recipients.delegate(data, user, cycle && cycle.name, schema);
     },
     count: async(filter, user) => {
