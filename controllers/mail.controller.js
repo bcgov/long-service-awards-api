@@ -25,7 +25,7 @@ const _mailHandlers = {
     // - confirm submission data is complete
     if (confirmed) {
       // check that submission has required fields
-      if (!confirm(Recipient.schema, data)) return [true, null];
+      // if (!confirm(Recipient.schema, data)) return [true, null];
       // send confirmation email (if confirmed)
       return await sendRegistrationConfirmation(data);
     }
@@ -57,7 +57,10 @@ exports.send = async (req, res, next) => {
     const [error, result] = await handler(req.body);
 
     // handle exceptions
-    if (error) return next(Error('failedMailSend'));
+    if (error) {
+      console.error(error);
+      return next(error);
+    }
 
     res.status(200).json({
       message: {

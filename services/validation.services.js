@@ -220,7 +220,7 @@ const sanitize = (data, datatype) => {
 const confirm = (schema, data) => {
 
     // check completeness of model data
-    const isComplate = data && Object.entries(schema.attributes || {})
+    const isComplete = data && Object.entries(schema.attributes || {})
         .filter(([_, field]) => field.hasOwnProperty('required') && field.required)
         .every(([key, field]) => {
             // check if required field has data
@@ -234,7 +234,7 @@ const confirm = (schema, data) => {
             model.schema,
             data && data.hasOwnProperty(key) ? data[key] : null)
         );
-    return isComplate && hasCompleteAttachments;
+    return isComplete && hasCompleteAttachments;
 }
 
 module.exports = {
