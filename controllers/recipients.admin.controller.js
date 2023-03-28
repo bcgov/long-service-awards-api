@@ -23,6 +23,7 @@ exports.getAll = async (req, res, next) => {
 
     // apply query filter to results
     const recipients = await Recipient.findAll(req.query, res.locals.user);
+    // const recipients = await Recipient.findAllTest(req.query, res.locals.user);
     const {total_filtered_records} = await Recipient.count(req.query, res.locals.user);
 
     // send response

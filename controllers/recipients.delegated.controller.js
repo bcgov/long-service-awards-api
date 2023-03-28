@@ -47,30 +47,30 @@ exports.get = async (req, res, next) => {
  * @src public
  */
 
-exports.create = async (req, res, next) => {
-  try {
-
-    let { id=null, guid=null, idir=null} = res.locals.user || {};
-
-    // create delegated user if one does not exist
-    if (!id) await User.register({guid, idir, role: 'delegate'});
-
-    // confirm user exists
-    const user = await User.findByGUID(guid);
-    if (!user && user.hasOwnProperty(id)) return next(Error('noRecord'));
-
-    res.status(200).json({
-      message: {
-        severity: 'success',
-        summary: 'Delegated User Created Successfully!',
-        detail: 'Delegated user created.'
-      },
-      result: await Recipient.findByUser(user.id),
-    });
-  } catch (err) {
-    return next(err);
-  }
-};
+// exports.create = async (req, res, next) => {
+//   try {
+//
+//     let { id=null, guid=null, idir=null} = res.locals.user || {};
+//
+//     // create delegated user if one does not exist
+//     if (!id) await User.register({guid, idir, role: 'delegate'});
+//
+//     // confirm user exists
+//     const user = await User.findByGUID(guid);
+//     if (!user && user.hasOwnProperty(id)) return next(Error('noRecord'));
+//
+//     res.status(200).json({
+//       message: {
+//         severity: 'success',
+//         summary: 'Delegated User Created Successfully!',
+//         detail: 'Delegated user created.'
+//       },
+//       result: await Recipient.findByUser(user.id),
+//     });
+//   } catch (err) {
+//     return next(err);
+//   }
+// };
 
 /**
  * Save delegated recipient data.
@@ -93,7 +93,10 @@ exports.save = async (req, res, next) => {
     if (!user && user.hasOwnProperty(id)) return next(Error('noRecord'));
 
     // create delegated recipient records
-    await Recipient.delegate(req.body, user);
+    const result = await Recipient.delegate(req.body, user);
+
+    // check result is valid
+    if (!result) return next(Error('invalidInput'));
 
     res.status(200).json({
       message: {

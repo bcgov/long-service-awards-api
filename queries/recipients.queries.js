@@ -107,7 +107,47 @@ const recipientQueries = {
 
         return {
             sql: `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
-                  FROM recipients 
+                  FROM recipients
+                           LEFT JOIN contacts ON contacts.id = recipients.contact
+                           LEFT JOIN organizations ON organizations.id = recipients.organization
+                           LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                      ${filterStatements && ' WHERE ' + filterStatements}
+                  GROUP BY recipients.id
+                               ${orderClause}
+                               ${limitClause}
+                  OFFSET ${offset};`,
+            data: filterValues
+        };
+
+    },
+    findAllTest: (filter, ignore=[], schema) => {
+
+        /**
+         * Generate query: Find all filtered records in table.
+         *
+         * @param schema
+         * @param {int} offset
+         * @param {String} order
+         * @return {Promise} results
+         * @public
+         */
+
+            // destructure filter for sort/order/offset/limit
+        const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
+        // (optional) order by attribute
+        const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
+        const limitClause = limit ? `LIMIT ${limit}` : '';
+
+        // get column filters
+        const [filterStatements, filterValues] = getFilters(filter);
+        const selections = Object.keys(schema.attributes)
+            .filter(field => !ignore.includes(field))
+            .map(field => 'recipients.' + field).join(', ');
+
+
+        return {
+            sql: `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
+                  FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
@@ -280,6 +320,10 @@ exports.findAll = async (filter, ignore, schema) => {
     }));
 }
 
+exports.findAllTest = async (filter, ignore, schema) => {
+    return await query(recipientQueries.findAllTest(filter, ignore, schema));
+}
+
 /**
  * Default transactions
  * @public
@@ -357,7 +401,12 @@ exports.delegate = async (data, user, cycle, schema) => {
     const { employees=[], supervisor={} } = data || {};
     const q = [];
 
-    console.log(data)
+    // ensure supervisor contact info is not empty
+    if (
+        !supervisor.first_name
+        || !supervisor.last_name
+        || !supervisor.office_email
+    ) return null;
 
     // DISABLED: Note delegate may not be the employees' supervisor
     // // update delegated user info with supervisor info

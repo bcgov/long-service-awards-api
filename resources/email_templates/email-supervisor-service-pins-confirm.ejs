@@ -1,0 +1,59 @@
+<%- await include('email-doctype'); %>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<%- await include('email-head', {title: title}); %>
+<body class="body" style="padding:0; margin:0; display:block; background:#ffffff; -webkit-text-size-adjust:none" bgcolor="#ffffff">
+<div class="container">
+    <%- await include('email-banner'); %>
+    <table>
+        <tr>
+            <td style="border-bottom:1px solid #e7e7e7;">
+                <p style="text-align: center"><strong>This is an automated email. No response is required.</strong></p>
+                <p>
+                    This email is to advise that your employee, <%= contact.first_name %> <%= contact.last_name %>, has
+                    registered to receive a <%= service.milestone %> year <a href="https://longserviceawards.gww.gov.bc.ca">
+                    Long Service Award</a> in <%= service.cycle %>.
+                </p>
+                <p>
+                    Long Service Awards registration is open to any full-time, part-time or seasonal
+                    employees who have reached a 25, 30, 35, 40, 45 or 50 year milestone with the
+                    BC Public Service by December 31, <%= service.cycle %>. Employees who have achieved one of these milestones
+                    prior to this year but have not been recognized for it can also register.
+                </p>
+                <h2>Ceremony</h2>
+                <p>
+                    The <%= service.cycle %> ceremonies will be held at Government House in Victoria this fall.
+                </p>
+                <p> If your employee has registered but are unable to attend their ceremony, they
+                    may be eligible to defer for one year and attend a ceremony in 2024. Their award will
+                    be presented to them by your ministry in late <%= service.cycle %>.
+                </p>
+                <p>
+                    If they declined their last invitation, this is their final opportunity to attend.
+                </p>
+                <h2>Travel and Time Off</h2>
+                <p>
+                    Long Service Awards recipients from outside Greater Victoria must be
+                    approved to take time off to attend their ceremony. Travel costs, including transportation,
+                    hotel and meal expenses for the recipient and one guest, are covered by the employee’s
+                    organization.
+                </p>
+                <p>
+                    For Victoria-based recipients, taxi expenses to and from their ceremony
+                    are covered by their organization. In addition, Victoria-based recipients must be provided
+                    a reasonable amount of time to prepare for their ceremony. It is recommended that recipients
+                    are able to leave their workplace by at least 2 pm on the day of their event without any
+                    negative impact to their pay. In cases where the recipient is a front-line worker,
+                    arrangements for coverage should be made in advance.
+                </p>
+                <p>
+                    If you have additional questions, contact
+                    your <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">Long Service
+                    Award contact</a>.
+                </p>
+                <%- await include('email-footer'); %>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
