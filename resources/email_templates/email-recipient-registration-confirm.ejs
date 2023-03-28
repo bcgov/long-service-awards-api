@@ -12,9 +12,11 @@
                     You have successfully registered for a <%= service.milestone %> year Long Service Award.
                     Congratulations on reaching this milestone in your career!
                 </p>
-                <p>
-                    You chose <%= service.awards.award.label %> as your award option.
-                </p>
+                <% if (!service.previous_award && typeof service.awards.award.label != 'undefined'){ %>
+                    <p>
+                        You chose <%= service.awards.award.label %> as your award option.
+                    </p>
+                <% } %>
                 <h2>Ceremony</h2>
                 <p>
                     The <%= service.cycle %> ceremonies will be held at Government House in Victoria this fall.
