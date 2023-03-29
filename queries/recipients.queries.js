@@ -144,7 +144,6 @@ const recipientQueries = {
             .filter(field => !ignore.includes(field))
             .map(field => 'recipients.' + field).join(', ');
 
-
         return {
             sql: `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
                   FROM recipients
