@@ -12,7 +12,7 @@
                     You have successfully registered for a <%= service.milestone %> year Long Service Award.
                     Congratulations on reaching this milestone in your career!
                 </p>
-                <% if (!service.previous_award && typeof service.awards.award.label != 'undefined'){ %>
+                <% if (!service.previous_award && typeof service.awards !== 'undefined' && typeof service.awards.award !== 'undefined'){ %>
                     <p>
                         You chose <%= service.awards.award.label %> as your award option.
                     </p>
