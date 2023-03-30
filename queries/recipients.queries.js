@@ -114,7 +114,7 @@ const recipientQueries = {
                       ${filterStatements && ' WHERE ' + filterStatements}
                   GROUP BY recipients.id
                                ${orderClause}
-                               ${limitClause}
+                                   ${limitClause}
                   OFFSET ${offset};`,
             data: filterValues
         };
@@ -122,41 +122,69 @@ const recipientQueries = {
     },
     findAllTest: (filter, ignore=[], schema) => {
 
-        /**
-         * Generate query: Find all filtered records in table.
-         *
-         * @param schema
-         * @param {int} offset
-         * @param {String} order
-         * @return {Promise} results
-         * @public
-         */
-
-            // destructure filter for sort/order/offset/limit
-        const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
-        // (optional) order by attribute
-        const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
-        const limitClause = limit ? `LIMIT ${limit}` : '';
-
-        // get column filters
-        const [filterStatements, filterValues] = getFilters(filter);
-        const selections = Object.keys(schema.attributes)
-            .filter(field => !ignore.includes(field))
-            .map(field => 'recipients.' + field).join(', ');
-
-        return {
-            sql: `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
-                  FROM recipients
-                           LEFT JOIN contacts ON contacts.id = recipients.contact
-                           LEFT JOIN organizations ON organizations.id = recipients.organization
-                           LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-                      ${filterStatements && ' WHERE ' + filterStatements}
-                  GROUP BY recipients.id
-                               ${orderClause}
-                               ${limitClause}
-                  OFFSET ${offset};`,
-            data: filterValues
-        };
+        // /**
+        //  * Generate query: Find all filtered records in table.
+        //  *
+        //  * @param schema
+        //  * @param {int} offset
+        //  * @param {String} order
+        //  * @return {Promise} results
+        //  * @public
+        //  */
+        //
+        //     // destructure filter for sort/order/offset/limit
+        // const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
+        // // (optional) order by attribute
+        // const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
+        // const limitClause = limit ? `LIMIT ${limit}` : '';
+        //
+        // // get column filters
+        // const [filterStatements, filterValues] = getFilters(filter);
+        // const selections = Object.keys(schema.attributes)
+        //     .filter(field => !ignore.includes(field))
+        //     .map(field => 'recipients.' + field).join(', ');
+        //
+        // return {
+        //     sql:
+        //     //     `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
+        //     //           FROM recipients
+        //     //                    LEFT JOIN contacts ON contacts.id = recipients.contact
+        //     //                    LEFT JOIN organizations ON organizations.id = recipients.organization
+        //     //                    LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+        //     //               ${filterStatements && ' WHERE ' + filterStatements}
+        //     //           GROUP BY recipients.id
+        //     //                        ${orderClause}
+        //     //                            ${limitClause}
+        //     //           OFFSET ${offset};`,
+        //     //     data: filterValues
+        //     // };
+        //
+        //         `select
+        //              json_build_object(
+        //                      r.id,
+        //                      r.status,
+        //                      r.guid,
+        //                      r.idir,
+        //                      r.employee_number,
+        //                      organizajson_build_object(
+        //                              'name', o.name
+        //                          ),
+        //                      r.division,
+        //                      r.branch,
+        //                      r.contact,
+        //                      r.supervisor,
+        //                      r.bcgeu,
+        //                      r.retirement,
+        //                      r.retirement_date,
+        //                      r.notes,
+        //                      r.created_at,
+        //                      r.updated_at
+        //                  )
+        //          from recipients r
+        //                   left join organizations o on o.id = r.organization
+        //         ;`,
+        //     data: filterValues
+        // };
 
     },
     count: (filter) => {
@@ -171,7 +199,7 @@ const recipientQueries = {
          * @public
          */
 
-        // get column filters
+            // get column filters
         const [filterStatements, filterValues] = getFilters(filter);
         return {
             sql: `SELECT COUNT(*) as total_filtered_records
@@ -187,8 +215,8 @@ const recipientQueries = {
     findContact: (id, type)=>{
         const contactRef = type === 'contact' ? 'recipients.contact' : 'recipients.supervisor'
         return {
-            sql: `SELECT contacts.* FROM contacts 
-                  JOIN recipients ON contacts.id = ${contactRef}
+            sql: `SELECT contacts.* FROM contacts
+                                             JOIN recipients ON contacts.id = ${contactRef}
                   WHERE recipients.id = $1::uuid;`,
             data: [id],
         };
@@ -217,19 +245,19 @@ const recipientQueries = {
         } = data || {};
         return {
             sql: `INSERT INTO recipients (
-                        id, guid, idir, "user", employee_number, status, organization, contact, supervisor
-                        )
+                id, guid, idir, "user", employee_number, status, organization, contact, supervisor
+            )
                   VALUES (
-                          $1::uuid, 
-                          $2::varchar, 
-                          $3::varchar, 
-                          $4::uuid, 
-                          $5::integer, 
-                          $6::varchar, 
-                          $7::integer, 
-                          $8::uuid, 
-                          $9::uuid
-                          )
+                             $1::uuid,
+                             $2::varchar,
+                             $3::varchar,
+                             $4::uuid,
+                             $5::integer,
+                             $6::varchar,
+                             $7::integer,
+                             $8::uuid,
+                             $9::uuid
+                         )
                   ON CONFLICT DO NOTHING
                   RETURNING *;`,
             data: [id, guid, idir, user, employee_number, status, organization, contact, supervisor],
@@ -282,16 +310,16 @@ const recipientQueries = {
         return [
             {sql: 'SELECT COUNT(*) as total_count FROM recipients;', data: []},
             {sql: `SELECT COUNT(*) as lsa_current_count FROM  recipients
-                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                                                                  LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                    WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
             {sql: `SELECT COUNT(*) as lsa_previous_count FROM  recipients
-                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                                                                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                    WHERE service_selections.cycle != ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
             {sql: `SELECT COUNT(*) as service_pins_count FROM recipients
-                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                                                                  LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                    WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone IS NOT NULL ;`, data: []},
             {sql: `SELECT COUNT(*) as other_count FROM recipients
-                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                                                           LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                    WHERE service_selections.milestone IS NULL;`, data: []}
         ];
     }
@@ -320,6 +348,7 @@ exports.findAll = async (filter, ignore, schema) => {
 }
 
 exports.findAllTest = async (filter, ignore, schema) => {
+    console.log(recipientQueries.findAllTest(filter, ignore, schema))
     return await query(recipientQueries.findAllTest(filter, ignore, schema));
 }
 
