@@ -241,6 +241,49 @@ const attachReferences = async (result, schema, idKey='id') => {
 }
 exports.attachReferences = attachReferences;
 
+
+/**
+ * Generate query: Add referenced attachment data to result
+ *
+ * @param {Object} result
+ * @param {Object} schema
+ * @param {String} idKey
+ * @return {Promise} results
+ * @public
+ */
+
+const attachQueries = async (result, schema, idKey='id') => {
+
+    if (!result || !schema) return null;
+    // get parent ID value from result data
+    const parentID = result.hasOwnProperty(idKey) ? result[idKey] : null;
+
+    // expand attributes that have a data model
+    await Promise.all(Object.keys(schema.attributes || {}).map(async (attKey) => {
+        const { model=null } = schema.attributes[attKey];
+        // find attribute value record for given ID and attach to result
+        if (model && result.hasOwnProperty(attKey)) {
+            // return item as model instance and expand data
+            const item = await model.findById(result[attKey]);
+            // data may be returned as either model instance or data object
+            const {data} = item || {};
+            result[attKey] = data || item;
+        }
+    }));
+
+    // attach reference data
+    await Promise.all(Object.keys(schema.attachments || {}).map(async (refKey) => {
+        const refData = await schema.attachments[refKey].get(parentID);
+        // check if reference data is an array or single model instance
+        if (refData) result[refKey] = Array.isArray(refData)
+            ? refData.map(refDataItem => { return refDataItem.data })
+            : refData.data;
+    }));
+
+    return result;
+}
+exports.attachQueries = attachQueries;
+
 /**
  * Generate query: Find all records in table.
  *

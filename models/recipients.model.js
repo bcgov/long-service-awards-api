@@ -164,6 +164,8 @@ module.exports =  {
     },
     findAllTest: async(filter, user) => {
 
+        return await db.recipients.findAllTest(filter, [], schema);
+
         // check if user is administrator (skip user-org filtering)
         const { role } = user || {};
         const isAdmin = ['super-administrator', 'administrator'].includes(role.name);
