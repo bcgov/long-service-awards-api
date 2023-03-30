@@ -119,16 +119,31 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
 
   // check status of registration
   const {service, supervisor, contact} = recipient || {};
-  const {confirmed} = service || {};
+  const {confirmed, milestone} = service || {};
 
   // check if registration is confirmed
   if (!confirmed) return;
 
+  // select confirmation email
+  // - LSA registrations (milestone >= 25)
+  // - Service Pin registration (milestone < 25)
+  const subject = milestone >= 25
+      ? 'Long Service Awards - Registration Confirmation'
+      : 'Service Pins - Registration Confirmation';
+
+  const recipientTemplate = milestone >= 25
+      ? 'email-recipient-registration-confirm.ejs'
+      : 'email-recipient-service-pins-confirm.ejs';
+
+  const supervisorTemplate = milestone >= 25
+      ? 'email-supervisor-registration-confirm.ejs'
+      : 'email-supervisor-service-pins-confirm.ejs';
+
   // send confirmation mail to supervisor
   const [error1, response1] = await sendMail(
       [supervisor.office_email || ''],
-      'Long Service Awards - Registration Confirmation',
-      'email-supervisor-registration-confirm.ejs',
+      subject,
+      supervisorTemplate,
       recipient,
       [],
       null
@@ -137,8 +152,8 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
   // send confirmation mail to recipient
   const [error2, response2] = await sendMail(
       [contact.office_email || ''],
-      'Long Service Awards - Registration Confirmation',
-      'email-recipient-registration-confirm.ejs',
+      subject,
+      recipientTemplate,
       recipient,
       [],
       null
@@ -146,8 +161,3 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
 
   return [error1 || error2 || null, {response1, response2}]
 }
-
-
-
-
-
