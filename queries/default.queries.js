@@ -14,7 +14,12 @@ const {query, queryOne, transactionOne} = require("../db");
  */
 
 const queries = {
-    findByFields: (fields, values, schema) => {
+    findByFields: (fields, values, schema, sort) => {
+
+        // (optional) order by attribute
+        const {orderby, order} = sort || {};
+        const orderClause = order && orderby ? `ORDER BY ${orderby} ${order || 'ASC'}` : '';
+
         // construct where condition sql
         const where = fields.map((field, index) => {
             return `"${field}" = $${index + 1}::${schema.attributes[field].dataType}`
@@ -23,7 +28,8 @@ const queries = {
         return {
             sql: `SELECT *
                   FROM ${schema.modelName}
-                  WHERE ${where};`,
+                  WHERE ${where} 
+                  ${orderClause};`,
             data: values,
         };
     },
@@ -323,10 +329,20 @@ exports.findAll = async (filter, schema) => {
  * @public
  */
 
-exports.findById = async (id, schema) => {
+exports.findById = async (id, schema, sort) => {
+
+    // (optional) order by attribute
+    const {orderby, order} = sort || {};
+    const orderClause = order && orderby ? `ORDER BY ${orderby} ${order || 'ASC'}` : '';
+
     const {modelName=null} = schema || {};
     const result = await queryOne({
-        sql: `SELECT * FROM ${modelName} WHERE "id" = $1::${schema.attributes.id.dataType};`,
+        sql: `
+            SELECT * 
+            FROM ${modelName} 
+            WHERE "id" = $1::${schema.attributes.id.dataType}
+            ${orderClause}
+        ;`,
         data: [id],
     });
     // attach linked records to results
@@ -394,14 +410,19 @@ exports.findByField = async (field, value, schema, sort) => {
  * @public
  */
 
-exports.findOneByFields = async (fields, values, schema) => {
+exports.findOneByFields = async (fields, values, schema, sort) => {
+
+    // (optional) order by attribute
+    const {orderby, order} = sort || {};
+    const orderClause = order && orderby ? `ORDER BY ${orderby} ${order || 'ASC'}` : '';
+
     // construct where condition sql
     const where = fields.map((field, index) => {
         return `"${field}" = $${index + 1}::${schema.attributes[field].dataType}`
     }).join(' AND ');
 
     const result = await queryOne({
-        sql: `SELECT * FROM ${schema.modelName} WHERE ${where};`,
+        sql: `SELECT * FROM ${schema.modelName} WHERE ${where} ${orderClause};`,
         data: values,
     });
 
