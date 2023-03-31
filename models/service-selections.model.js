@@ -137,6 +137,39 @@ module.exports =  {
     // upsert record
     return await defaults.upsert(serviceSelection.data, serviceSelection.schema);
   },
+  attachPrevious: async(serviceSelection, recipient) => {
+
+    /**
+     * Attach service selection to recipient
+     * @public
+     */
+
+    // ignore empty request data
+    if (isEmpty(serviceSelection.data)) return;
+
+    // ignore service attachment if adding to current cycle
+    const cycle = await QualifyingYear.findCurrent();
+    if (cycle && cycle.name === serviceSelection.cycle) return null;
+
+    // set reference values
+    serviceSelection.recipient = recipient.id;
+    serviceSelection.delegated = false;
+
+    // Find previous service record for LSA cycle year (if exists)
+    const current = await db.defaults.findOneByFields(
+        ['recipient', 'cycle'],
+        [recipient.id, serviceSelection.cycle], schema
+    );
+
+    // check for milestone changes
+    // - if different, delete service record from db (deletes any attached awards)
+    if (current && current.milestone !== serviceSelection.milestone) await serviceSelection.delete();
+
+    // use existing service record ID / or generate new ID
+    serviceSelection.id = current ? current.id : uuid.v4();
+    // upsert record
+    return await defaults.upsert(serviceSelection.data, serviceSelection.schema);
+  },
   findActiveByRecipient: async(recipientID) => {
 
     /**
@@ -154,7 +187,8 @@ module.exports =  {
      * Finds all service records for recipient
      */
 
-    const services = await db.defaults.findByField('recipient', recipientID, schema);
+    const services = await db.defaults.findByField(
+        'recipient', recipientID, schema, {orderby: 'milestone', order: 'DESC'});
     return (services || []).map(service => {
       return construct(service)
     });

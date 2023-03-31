@@ -35,8 +35,9 @@ const getFilters = (data) => {
      * */
 
     const filters = {
-        first_name: () => `(contacts.first_name LIKE '%' || $${index++}::varchar || '%')`,
-        last_name: () => `(contacts.last_name LIKE '%' || $${index++}::varchar || '%')`,
+        first_name: () => `(contacts.first_name ILIKE '%' || $${index++}::varchar || '%')`,
+        last_name: () => `(contacts.last_name ILIKE '%' || $${index++}::varchar || '%')`,
+        idir: () => `(recipients.idir LIKE '%' || $${index++}::varchar || '%')`,
         employee_number: () => `(recipients.employee_number LIKE '%' || $${index++}::varchar || '%')`,
         organization: (range) => `(organizations.id IN (${
             (range || []).map(() => `$${index++}::integer`).join(',')
@@ -122,69 +123,129 @@ const recipientQueries = {
     },
     findAllTest: (filter, ignore=[], schema) => {
 
-        // /**
-        //  * Generate query: Find all filtered records in table.
-        //  *
-        //  * @param schema
-        //  * @param {int} offset
-        //  * @param {String} order
-        //  * @return {Promise} results
-        //  * @public
-        //  */
-        //
-        //     // destructure filter for sort/order/offset/limit
-        // const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
-        // // (optional) order by attribute
-        // const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
-        // const limitClause = limit ? `LIMIT ${limit}` : '';
-        //
-        // // get column filters
-        // const [filterStatements, filterValues] = getFilters(filter);
-        // const selections = Object.keys(schema.attributes)
-        //     .filter(field => !ignore.includes(field))
-        //     .map(field => 'recipients.' + field).join(', ');
-        //
-        // return {
-        //     sql:
-        //     //     `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
-        //     //           FROM recipients
-        //     //                    LEFT JOIN contacts ON contacts.id = recipients.contact
-        //     //                    LEFT JOIN organizations ON organizations.id = recipients.organization
-        //     //                    LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-        //     //               ${filterStatements && ' WHERE ' + filterStatements}
-        //     //           GROUP BY recipients.id
-        //     //                        ${orderClause}
-        //     //                            ${limitClause}
-        //     //           OFFSET ${offset};`,
-        //     //     data: filterValues
-        //     // };
-        //
-        //         `select
-        //              json_build_object(
-        //                      r.id,
-        //                      r.status,
-        //                      r.guid,
-        //                      r.idir,
-        //                      r.employee_number,
-        //                      organizajson_build_object(
-        //                              'name', o.name
-        //                          ),
-        //                      r.division,
-        //                      r.branch,
-        //                      r.contact,
-        //                      r.supervisor,
-        //                      r.bcgeu,
-        //                      r.retirement,
-        //                      r.retirement_date,
-        //                      r.notes,
-        //                      r.created_at,
-        //                      r.updated_at
-        //                  )
-        //          from recipients r
-        //                   left join organizations o on o.id = r.organization
-        //         ;`,
-        //     data: filterValues
-        // };
+        /**
+         * Generate query: Find all filtered records in table.
+         *
+         * @param schema
+         * @param {int} offset
+         * @param {String} order
+         * @return {Promise} results
+         * @public
+         */
+
+            // destructure filter for sort/order/offset/limit
+        const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
+        // (optional) order by attribute
+        const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
+        const limitClause = limit ? `LIMIT ${limit}` : '';
+
+        // get column filters
+        const [filterStatements, filterValues] = getFilters(filter);
+        const selections = Object.keys(schema.attributes)
+            .filter(field => !ignore.includes(field))
+            .map(field => 'recipients.' + field).join(', ');
+
+        return {
+            sql: `select json_agg(json_build_object(
+                             'id', r.id,
+                             'status', r.status,
+                             'guid', r.guid,
+                             'idir', r.idir,
+                             'employee_number', r.employee_number,
+                             'organization', json_build_object(
+                                     'id', o.id,
+                                     'name', o.name,
+                                     'abbreviation', o.abbreviation,
+                                     'previous_service_pins', o.previous_service_pins,
+                                     'active', o.active
+                                 ),
+                             'division', r.division,
+                             'branch', r.branch,
+                             'bcgeu', r.bcgeu,
+                             'retirement', r.retirement,
+                             'retirement_date', r.retirement_date,
+                             'notes', r.notes,
+                             'created_at', r.created_at,
+                             'updated_at', r.updated_at,
+                             'contact', json_build_object(
+                                     'id', c.id,
+                                     'first_name', c.first_name,
+                                     'last_name', c.last_name,
+                                     'office_email', c.office_email,
+                                     'office_phone', c.office_phone,
+                                     'personal_email', c.personal_email,
+                                     'personal_phone', c.personal_phone,
+                                     'personal_address', json_build_object(
+                                             'id', cpa.id,
+                                             'pobox', cpa.pobox,
+                                             'street1', cpa.street1,
+                                             'street2', cpa.street2,
+                                             'community', cpa.community,
+                                             'province', cpa.province,
+                                             'country', cpa.country,
+                                             'postal_code', cpa.postal_code
+                                         ),
+                                     'office_address', json_build_object(
+                                             'id', coa.id,
+                                             'pobox', coa.pobox,
+                                             'street1', coa.street1,
+                                             'street2', coa.street2,
+                                             'community', coa.community,
+                                             'province', coa.province,
+                                             'country', coa.country,
+                                             'postal_code', coa.postal_code
+                                         )
+                                 ),
+                             'supervisor', json_build_object(
+                                     'id', s.id,
+                                     'first_name', s.first_name,
+                                     'last_name', s.last_name,
+                                     'office_email', s.office_email,
+                                     'office_phone', s.office_phone,
+                                     'personal_email', s.personal_email,
+                                     'personal_phone', s.personal_phone,
+                                     'office_address', json_build_object(
+                                             'id', soa.id,
+                                             'pobox', soa.pobox,
+                                             'street1', soa.street1,
+                                             'street2', soa.street2,
+                                             'community', soa.community,
+                                             'province', soa.province,
+                                             'country', soa.country,
+                                             'postal_code', soa.postal_code
+                                         )
+                                 ),
+                             'service', ''
+--                                      'id', srv.id,
+--                                      'recipient', srv.recipient,
+--                                      'milestone', srv.milestone,
+--                                      'qualifying_year', srv.qualifying_year,
+--                                      'service_years', srv.service_years,
+--                                      'cycle', srv.cycle,
+--                                      'previous_registration', srv.previous_registration,
+--                                      'previous_award', srv.previous_award,
+--                                      'delegated', srv.delegated,
+--                                      'confirmed', srv.confirmed,
+--                                      'ceremony_opt_out', srv.ceremony_opt_out,
+--                                      'survey_opt_in', srv.survey_opt_in
+                            
+
+                         ))
+                          from recipients r
+                              left join organizations o on o.id = r.organization
+                              left join contacts c on r.contact = c.id
+                              left join addresses coa on c.office_address = coa.id
+                              left join addresses cpa on c.personal_address = cpa.id
+                              left join contacts s on r.supervisor = s.id
+                              left join addresses soa on c.office_address = soa.id
+                                left join (
+                                select ss.recipient, json_agg(json_build_object('milestone', ss.milestone)
+                                    ) from service_selections ss where ss.recipient = r.id
+                                )
+                    group by r.id
+                ;`,
+            data: filterValues
+        };
 
     },
     count: (filter) => {
