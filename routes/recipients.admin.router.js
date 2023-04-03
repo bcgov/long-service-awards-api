@@ -13,7 +13,7 @@ const { authorizeOrgContact } = require('../services/auth.services')
  * Recipient admin endpoints
  */
 
-router.get('/test', controller.getAll);
+router.get('/test', controller.getAllTest);
 
 
 router.get('/list', authorizeOrgContact, controller.getAll);

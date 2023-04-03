@@ -206,11 +206,12 @@ module.exports =  {
         const { organizations=[] } = user || {};
         const orgFilter = (organizations || []).map(({organization}) => organization.id);
         const {organization} = recipient || {};
+
         // if recipient has no assigned organizations, proceed (since could be a new registration)
         if (['org-contact'].includes(role.name) && !organization) {
             return construct(recipient);
         }
-        // if org-contact has no assigned organizations, return empty results
+        // if recipient has assigned org that matches an org-contact assigned org, proceed
         if (['org-contact'].includes(role.name) && organization && orgFilter.includes(organization.id)) {
             return construct(recipient);
         }
