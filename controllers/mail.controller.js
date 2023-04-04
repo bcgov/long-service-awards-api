@@ -16,10 +16,12 @@ const {confirm} = require("../services/validation.services");
  * */
 
 const _mailHandlers = {
-  'reg-confirm': async (data) => {
+  'reg-confirm': async (data, user) => {
     // check confirmation status of registration
-    const {service} = data || {};
+    const {id, service} = data || {};
     const {confirmed} = service || {};
+    // get recipient data
+    const recipient = await Recipient.findById(id, user);
     // Handle registration submissions
     // - check confirmation status of registration
     // - confirm submission data is complete
@@ -27,7 +29,7 @@ const _mailHandlers = {
       // check that submission has required fields
       // if (!confirm(Recipient.schema, data)) return [true, null];
       // send confirmation email (if confirmed)
-      return await sendRegistrationConfirmation(data);
+      return await sendRegistrationConfirmation(recipient.data);
     }
     return null;
   },
@@ -54,7 +56,7 @@ exports.send = async (req, res, next) => {
 
     // send email
     // - define mail response callback
-    const [error, result] = await handler(req.body);
+    const [error, result] = await handler(req.body, res.locals.user);
 
     // handle exceptions
     if (error) {
