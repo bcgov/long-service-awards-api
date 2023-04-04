@@ -23,7 +23,27 @@ exports.getAll = async (req, res, next) => {
 
     // apply query filter to results
     const recipients = await Recipient.findAll(req.query, res.locals.user);
-    // const recipients = await Recipient.findAllTest(req.query, res.locals.user);
+    const {total_filtered_records} = await Recipient.count(req.query, res.locals.user);
+
+    // send response
+    res.status(200).json({
+      message: {
+        severity: 'success',
+        summary: 'Recipient Record(s) Found',
+        detail: 'Recipient records found.'
+      },
+      result: {recipients, total_filtered_records}
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.getAllTest = async (req, res, next) => {
+  try {
+
+    // apply query filter to results
+    const recipients = await Recipient.findAllTest(req.query, res.locals.user);
     const {total_filtered_records} = await Recipient.count(req.query, res.locals.user);
 
     // send response

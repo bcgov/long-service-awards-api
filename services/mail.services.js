@@ -54,8 +54,10 @@ const _logMail = async (error, response, recipient) => {
  * @param to
  * @param template
  * @param data
- * @param attachments
- * @param options
+ * @param from
+ * @param fromName
+ // * @param attachments
+ // * @param options
  */
 
 const sendMail = async (
@@ -63,15 +65,15 @@ const sendMail = async (
     subject,
     template,
     data,
-    attachments,
-    options={},
+    from,
+    fromName,
+    // attachments,
+    // options={},
 ) => {
 
   // set mail parameters
-  const fromName = process.env.MAIL_FROM_NAME;
-  const fromEmail = process.env.MAIL_FROM_ADDRESS;
   const templatePath = path.join(__dirname, '..', dirPath, template);
-  const templateData = {...{title: subject}, ...data};
+  const templateData = {...{ title: subject }, ...data};
 
   try {
 
@@ -90,7 +92,7 @@ const sendMail = async (
     // generate html body using template file
     const body = await ejs.renderFile(templatePath, templateData, {async: true});
     const response = await transporter.sendMail({
-      from: `"${fromName}" <${fromEmail}>`, // sender address
+      from: `"${fromName}" <${from}>`, // sender address
       to: to.join(', '), // list of receivers
       subject: subject, // subject line
       html: body, // html body
@@ -100,10 +102,12 @@ const sendMail = async (
     // return mail send response
     return [null, response];
   }  catch (error) {
-    console.error(error)
-    // log error
+    console.error(error);
+    // log error as transaction record
     _logMail(error, {
-      from: `"${fromName}" <${fromEmail}>`, to: to.join(', '), subject: subject
+      from: `"${fromName}" <${from}>`,
+      to: to.join(', '),
+      subject: subject
     }, data).catch(console.error);
     return [error, null];
   }
@@ -120,6 +124,7 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
   // check status of registration
   const {service, supervisor, contact} = recipient || {};
   const {confirmed, milestone} = service || {};
+  const isLSA = milestone >= 25;
 
   // check if registration is confirmed
   if (!confirmed) return;
@@ -127,15 +132,24 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
   // select confirmation email
   // - LSA registrations (milestone >= 25)
   // - Service Pin registration (milestone < 25)
-  const subject = milestone >= 25
+
+  const from = isLSA
+      ? process.env.MAIL_FROM_ADDRESS
+      : 'Corporate.Engagement@gov.bc.ca';
+
+  const fromName = isLSA
+      ? process.env.MAIL_FROM_NAME
+      : 'Corporate Engagement';
+
+  const subject = isLSA
       ? 'Long Service Awards - Registration Confirmation'
       : 'Service Pins - Registration Confirmation';
 
-  const recipientTemplate = milestone >= 25
+  const recipientTemplate = isLSA
       ? 'email-recipient-registration-confirm.ejs'
       : 'email-recipient-service-pins-confirm.ejs';
 
-  const supervisorTemplate = milestone >= 25
+  const supervisorTemplate = isLSA
       ? 'email-supervisor-registration-confirm.ejs'
       : 'email-supervisor-service-pins-confirm.ejs';
 
@@ -145,6 +159,8 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
       subject,
       supervisorTemplate,
       recipient,
+      from,
+      fromName,
       [],
       null
   );
@@ -155,6 +171,8 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
       subject,
       recipientTemplate,
       recipient,
+      from,
+      fromName,
       [],
       null
   );

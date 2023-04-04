@@ -146,7 +146,7 @@ const recipientQueries = {
             .map(field => 'recipients.' + field).join(', ');
 
         return {
-            sql: `select json_agg(json_build_object(
+            sql: `select r.id as recipient_id, json_build_object(
                              'id', r.id,
                              'status', r.status,
                              'guid', r.guid,
@@ -215,7 +215,7 @@ const recipientQueries = {
                                              'postal_code', soa.postal_code
                                          )
                                  ),
-                             'service', ''
+                             'service', json_agg(json_build_object('milestone', srv.milestone))
 --                                      'id', srv.id,
 --                                      'recipient', srv.recipient,
 --                                      'milestone', srv.milestone,
@@ -230,7 +230,7 @@ const recipientQueries = {
 --                                      'survey_opt_in', srv.survey_opt_in
                             
 
-                         ))
+                         )
                           from recipients r
                               left join organizations o on o.id = r.organization
                               left join contacts c on r.contact = c.id
@@ -238,11 +238,8 @@ const recipientQueries = {
                               left join addresses cpa on c.personal_address = cpa.id
                               left join contacts s on r.supervisor = s.id
                               left join addresses soa on c.office_address = soa.id
-                                left join (
-                                select ss.recipient, json_agg(json_build_object('milestone', ss.milestone)
-                                    ) from service_selections ss where ss.recipient = r.id
-                                )
-                    group by r.id
+                              left join service_selections srv on r.id = srv.recipient
+                    group by recipient_id
                 ;`,
             data: filterValues
         };

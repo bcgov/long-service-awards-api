@@ -26,7 +26,7 @@ const schema = {
     vendor: {
       dataType: 'varchar'
     },
-    name: {
+    label: {
       dataType: 'varchar',
       required: true
     },
