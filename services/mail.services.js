@@ -179,3 +179,27 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
 
   return [error1 || error2 || null, {response1, response2}]
 }
+
+/**
+ * Send user reset password link
+ * @param link
+ */
+
+module.exports.sendResetPassword = async (data) => {
+
+  const {email, link} = data || {};
+
+  console.log('Mail!!!', email, link)
+
+  // send confirmation mail to supervisor
+  return await sendMail(
+      [email],
+      'Long Service Awards: Reset Admin User Password',
+      'email-user-reset-password.ejs',
+      {'link': link},
+      process.env.MAIL_FROM_ADDRESS,
+      process.env.MAIL_FROM_NAME,
+      [],
+      null
+  );
+}

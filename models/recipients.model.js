@@ -33,7 +33,6 @@ const schema = {
         },
         status: {
             dataType: 'varchar',
-            editable: false,
             required: true
         },
         employee_number: {
@@ -145,37 +144,7 @@ module.exports =  {
         }
 
         // restrict available orgs to user assignment
-        // - check filter overlap with assigned orgs
-        const { organizations = [] } = user || {};
-        const userFilter = (organizations || []).map(({organization}) => organization.id);
-        // if org-contact has no assigned organizations, return empty results
-        if (['org-contact'].includes(role.name) && organizations.length > 0) {
-            // explode existing organization filter params
-            const orgFilter = filter.hasOwnProperty('organization')
-                && filter.organization.split(',').map(id => parseInt(id));
-            // filter org params to be contained in user filter
-            const intersection = userFilter.filter(id => (orgFilter || []).includes(parseInt(id)));
-            // ensure org filter is not empty
-            filter.organization = intersection.length === 0
-                ? userFilter.join(',')
-                : intersection.join(',');
-            return await db.recipients.findAll(filter, ['notes'], schema);
-        }
-        return [];
-    },
-    findAllTest: async(filter, user) => {
-
-        return await db.recipients.findAllTest(filter, [], schema);
-
-        // check if user is administrator (skip user-org filtering)
-        const { role } = user || {};
-        const isAdmin = ['super-administrator', 'administrator'].includes(role.name);
-        if (isAdmin) {
-            return await db.recipients.findAll(filter, [], schema);
-        }
-
-        // restrict available orgs to user assignment
-        // - check filter overlap with assigned orgs
+        // - check filter overlap with user-assigned orgs
         const { organizations = [] } = user || {};
         const userFilter = (organizations || []).map(({organization}) => organization.id);
         // if org-contact has no assigned organizations, return empty results
@@ -223,6 +192,34 @@ module.exports =  {
     },
     findByUser: async(user) => {
         return await db.defaults.findByField('user', user, schema);
+    },
+    report: async(filter, user) => {
+
+        // check if user is administrator (skip user-org filtering)
+        const { role } = user || {};
+        const isAdmin = ['super-administrator', 'administrator'].includes(role.name);
+        if (isAdmin) {
+            return await db.recipients.report(filter, [], schema);
+        }
+
+        // restrict available orgs to user assignment
+        // - check filter overlap with user-assigned orgs
+        const { organizations = [] } = user || {};
+        const userFilter = (organizations || []).map(({organization}) => organization.id);
+        // if org-contact has no assigned organizations, return empty results
+        if (['org-contact'].includes(role.name) && organizations.length > 0) {
+            // explode existing organization filter params
+            const orgFilter = filter.hasOwnProperty('organization')
+                && filter.organization.split(',').map(id => parseInt(id));
+            // filter org params to be contained in user filter
+            const intersection = userFilter.filter(id => (orgFilter || []).includes(parseInt(id)));
+            // ensure org filter is not empty
+            filter.organization = intersection.length === 0
+                ? userFilter.join(',')
+                : intersection.join(',');
+            return await db.recipients.report(filter, ['notes'], schema);
+        }
+        return [];
     },
     register: async(data) => {
         return construct(await db.recipients.insert(data));

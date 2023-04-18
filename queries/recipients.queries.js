@@ -32,6 +32,8 @@ const getFilters = (data) => {
      * - Organization
      * - Milestones
      * - Confirmed
+     * - Ceremony Opt Out
+     * - Status
      * */
 
     const filters = {
@@ -51,6 +53,10 @@ const getFilters = (data) => {
         confirmed: (value) => `(
         service_selections.confirmed = $${index++}::boolean 
         ${value[0] === 'false' ? 'OR service_selections.confirmed IS NULL' : '' } )`,
+        ceremony_opt_out: (value) => `(
+        service_selections.ceremony_opt_out = $${index++}::boolean 
+        ${value[0] === 'false' ? 'OR service_selections.ceremony_opt_out IS NULL' : '' } )`,
+        status: () => `(recipients.status = $${index++}::varchar)`,
     }
     // match filter with input data
     let statements = "";
@@ -81,6 +87,46 @@ const getFilters = (data) => {
  * */
 
 const recipientQueries = {
+    // findAll: (filter, ignore=[], schema) => {
+    //
+    //     /**
+    //      * Generate query: Find all filtered records in table.
+    //      *
+    //      * @param schema
+    //      * @param {int} offset
+    //      * @param {String} order
+    //      * @return {Promise} results
+    //      * @public
+    //      */
+    //
+    //         // destructure filter for sort/order/offset/limit
+    //     const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
+    //     // (optional) order by attribute
+    //     const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
+    //     const limitClause = limit ? `LIMIT ${limit}` : '';
+    //
+    //     // get column filters
+    //     const [filterStatements, filterValues] = getFilters(filter);
+    //     const selections = Object.keys(schema.attributes)
+    //         .filter(field => !ignore.includes(field))
+    //         .map(field => 'recipients.' + field).join(', ');
+    //
+    //
+    //     return {
+    //         sql: `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
+    //               FROM recipients
+    //                        LEFT JOIN contacts ON contacts.id = recipients.contact
+    //                        LEFT JOIN organizations ON organizations.id = recipients.organization
+    //                        LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+    //                   ${filterStatements && ' WHERE ' + filterStatements}
+    //               GROUP BY recipients.id
+    //                            ${orderClause}
+    //                                ${limitClause}
+    //               OFFSET ${offset};`,
+    //         data: filterValues
+    //     };
+    //
+    // },
     findAll: (filter, ignore=[], schema) => {
 
         /**
@@ -96,85 +142,58 @@ const recipientQueries = {
             // destructure filter for sort/order/offset/limit
         const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
         // (optional) order by attribute
-        const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
+        const orderClause = order && orderby ? `ORDER BY r.${orderby} ${order}` : '';
         const limitClause = limit ? `LIMIT ${limit}` : '';
 
         // get column filters
         const [filterStatements, filterValues] = getFilters(filter);
         const selections = Object.keys(schema.attributes)
             .filter(field => !ignore.includes(field))
-            .map(field => 'recipients.' + field).join(', ');
-
+            .map(field => 'r.' + field).join(', ');
 
         return {
-            sql: `SELECT ${selections}, COUNT(recipients.id) as total_filtered_records
-                  FROM recipients
-                           LEFT JOIN contacts ON contacts.id = recipients.contact
-                           LEFT JOIN organizations ON organizations.id = recipients.organization
-                           LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+            sql: `WITH rcps AS (
+                SELECT r.* FROM recipients as r
+                           LEFT JOIN contacts ON contacts.id = r.contact
+                           LEFT JOIN organizations ON organizations.id = r.organization
+                           LEFT JOIN service_selections ON service_selections.recipient = r.id
                       ${filterStatements && ' WHERE ' + filterStatements}
-                  GROUP BY recipients.id
-                               ${orderClause}
-                                   ${limitClause}
-                  OFFSET ${offset};`,
-            data: filterValues
-        };
-
-    },
-    findAllTest: (filter, ignore=[], schema) => {
-
-        /**
-         * Generate query: Find all filtered records in table.
-         *
-         * @param schema
-         * @param {int} offset
-         * @param {String} order
-         * @return {Promise} results
-         * @public
-         */
-
-            // destructure filter for sort/order/offset/limit
-        const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
-        // (optional) order by attribute
-        const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
-        const limitClause = limit ? `LIMIT ${limit}` : '';
-
-        // get column filters
-        const [filterStatements, filterValues] = getFilters(filter);
-        const selections = Object.keys(schema.attributes)
-            .filter(field => !ignore.includes(field))
-            .map(field => 'recipients.' + field).join(', ');
-
-        return {
-            sql: `select r.id as recipient_id, json_build_object(
-                             'id', r.id,
-                             'status', r.status,
-                             'guid', r.guid,
-                             'idir', r.idir,
-                             'employee_number', r.employee_number,
-                             'organization', json_build_object(
+                  GROUP BY r.id
+                               ${orderClause} ${limitClause}
+                  OFFSET ${offset}
+                  )
+            SELECT
+                ${selections},
+                      "org".*,
+                      "pcon".*,
+                      "scon".*,
+                      "srvs".*
+                  FROM rcps AS "r"
+                           -- Organization details
+                           LEFT JOIN (
+                      SELECT o.id as organization_id,
+                             json_build_object(
                                      'id', o.id,
                                      'name', o.name,
                                      'abbreviation', o.abbreviation,
                                      'previous_service_pins', o.previous_service_pins,
                                      'active', o.active
-                                 ),
-                             'division', r.division,
-                             'branch', r.branch,
-                             'bcgeu', r.bcgeu,
-                             'retirement', r.retirement,
-                             'retirement_date', r.retirement_date,
-                             'notes', r.notes,
-                             'created_at', r.created_at,
-                             'updated_at', r.updated_at,
-                             'contact', json_build_object(
-                                     'id', c.id,
-                                     'first_name', c.first_name,
-                                     'last_name', c.last_name,
-                                     'office_email', c.office_email,
-                                     'office_phone', c.office_phone,
-                                     'personal_email', c.personal_email,
-                                     'personal_phone', c.personal_phone,
+                                 ) AS organization
+                      FROM "organizations" AS "o"
+                      GROUP BY organization_id
+                  ) AS "org" ON organization_id = "r"."organization"
+
+                      -- Personal contact details
+                           LEFT JOIN (
+                      SELECT cp.id as contact_id,
+                             json_build_object(
+                                     'id', cp.id,
+                                     'first_name', cp.first_name,
+                                     'last_name', cp.last_name,
+                                     'office_email', cp.office_email,
+                                     'office_phone', cp.office_phone,
+                                     'personal_email', cp.personal_email,
+                                     'personal_phone', cp.personal_phone,
                                      'personal_address', json_build_object(
                                              'id', cpa.id,
                                              'pobox', cpa.pobox,
@@ -195,52 +214,116 @@ const recipientQueries = {
                                              'country', coa.country,
                                              'postal_code', coa.postal_code
                                          )
-                                 ),
-                             'supervisor', json_build_object(
-                                     'id', s.id,
-                                     'first_name', s.first_name,
-                                     'last_name', s.last_name,
-                                     'office_email', s.office_email,
-                                     'office_phone', s.office_phone,
-                                     'personal_email', s.personal_email,
-                                     'personal_phone', s.personal_phone,
-                                     'office_address', json_build_object(
-                                             'id', soa.id,
-                                             'pobox', soa.pobox,
-                                             'street1', soa.street1,
-                                             'street2', soa.street2,
-                                             'community', soa.community,
-                                             'province', soa.province,
-                                             'country', soa.country,
-                                             'postal_code', soa.postal_code
-                                         )
-                                 ),
-                             'service', json_agg(json_build_object('milestone', srv.milestone))
---                                      'id', srv.id,
---                                      'recipient', srv.recipient,
---                                      'milestone', srv.milestone,
---                                      'qualifying_year', srv.qualifying_year,
---                                      'service_years', srv.service_years,
---                                      'cycle', srv.cycle,
---                                      'previous_registration', srv.previous_registration,
---                                      'previous_award', srv.previous_award,
---                                      'delegated', srv.delegated,
---                                      'confirmed', srv.confirmed,
---                                      'ceremony_opt_out', srv.ceremony_opt_out,
---                                      'survey_opt_in', srv.survey_opt_in
-                            
+                                 ) AS contact
+                      FROM "contacts" AS "cp"
+                               -- Contact: address details
+                               LEFT JOIN "addresses" AS "cpa" ON cpa.id = cp."personal_address"
+                               LEFT JOIN "addresses" AS coa ON coa.id = cp."office_address"
+                      GROUP BY contact_id, cpa.id, coa.id
+                  ) AS "pcon" ON contact_id = "r"."contact"
 
-                         )
-                          from recipients r
-                              left join organizations o on o.id = r.organization
-                              left join contacts c on r.contact = c.id
-                              left join addresses coa on c.office_address = coa.id
-                              left join addresses cpa on c.personal_address = cpa.id
-                              left join contacts s on r.supervisor = s.id
-                              left join addresses soa on c.office_address = soa.id
-                              left join service_selections srv on r.id = srv.recipient
-                    group by recipient_id
-                ;`,
+                      -- Supervisor contact details
+                           LEFT JOIN (
+                      SELECT cs.id as supervisor_id,
+                             json_build_object(
+                                     'id', cs.id,
+                                     'first_name', cs.first_name,
+                                     'last_name', cs.last_name,
+                                     'office_email', cs.office_email,
+                                     'office_phone', cs.office_phone,
+                                     'personal_email', cs.personal_email,
+                                     'personal_phone', cs.personal_phone,
+                                     'office_address', json_build_object(
+                                             'id', coa.id,
+                                             'pobox', coa.pobox,
+                                             'street1', coa.street1,
+                                             'street2', coa.street2,
+                                             'community', coa.community,
+                                             'province', coa.province,
+                                             'country', coa.country,
+                                             'postal_code', coa.postal_code
+                                         )
+                                 ) AS supervisor
+                      FROM "contacts" AS "cs"
+                               -- Contact: address details
+                               LEFT JOIN "addresses" AS coa ON coa.id = cs."office_address"
+                      GROUP BY supervisor_id, coa.id
+                  ) AS "scon" ON supervisor_id = "r"."supervisor"
+                      
+                    -- services details
+                           LEFT JOIN (
+                      SELECT srv.recipient as recipient_id, 
+                             JSON_AGG(
+                              json_build_object(
+                                      'id', srv.id,
+                                      'recipient', srv.recipient,
+                                      'milestone', srv.milestone,
+                                      'qualifying_year', srv.qualifying_year,
+                                      'service_years', srv.service_years,
+                                      'cycle', srv.cycle,
+                                      'previous_registration', srv.previous_registration,
+                                      'previous_award', srv.previous_award,
+                                      'delegated', srv.delegated,
+                                      'confirmed', srv.confirmed,
+                                      'ceremony_opt_out', srv.ceremony_opt_out,
+                                      'survey_opt_in', srv.survey_opt_in,
+                                      'awards', json_build_object(
+                                              'id', asel.id,
+                                              'award', json_build_object(
+                                                      'id', awd.id,
+                                                      'short_code', awd.short_code,
+                                                      'type', awd.type,
+                                                      'milestone', awd.milestone,
+                                                      'label', awd.label,
+                                                      'description', awd.description,
+                                                      'image_url', awd.image_url,
+                                                      'quantity', awd.quantity,
+                                                      'active', awd.active
+                                                  ),
+                                              'selections', selections
+                                          )
+                                  )
+                          ) AS services
+                      FROM "service_selections" AS "srv"
+                               -- Service Selection: award details
+                               LEFT JOIN "award_selections" AS asel ON asel.id = srv."id"
+                               LEFT JOIN "awards" AS awd ON awd.id = asel."award"
+
+                          -- Service Selection: award option selections
+                               LEFT JOIN (
+                                  SELECT aoptsel.service as aopt_service_id, JSON_AGG(
+                                          json_build_object(
+                                                  'service', aoptsel.service,
+                                                  'award_option', json_build_object(
+                                                          'id', aopt.id,
+                                                          'award', aopt.award,
+                                                          'type', aopt.type,
+                                                          'name', aopt.name,
+                                                          'description', aopt.description,
+                                                          'label', aopt.label,
+                                                          'value', aopt.value,
+                                                          'customizable', aopt.customizable
+                                                      ),
+                                                  'custom_value', aoptsel.custom_value,
+                                                  'pecsf_charity', json_build_object(
+                                                          'id', pecsf.id,
+                                                          'label', pecsf.label,
+                                                          'region', pecsf.region,
+                                                          'vendor', pecsf.vendor,
+                                                          'active', pecsf.active
+                                                      )
+                                              )
+                                      ) AS selections
+                                    FROM "award_option_selections" AS "aoptsel"
+                                           -- Award Selections: award option details
+                                           LEFT JOIN "award_options" AS aopt ON aopt.id = aoptsel."award_option"
+                                           LEFT JOIN "pecsf_charities" AS pecsf ON pecsf.id = aoptsel."pecsf_charity"
+                                      GROUP BY aopt_service_id
+                                  ) AS "aopts" ON aopt_service_id = "srv"."id"
+                           -- end award options 
+                      GROUP BY recipient_id
+                  ) AS "srvs" ON recipient_id = "r"."id"
+            ;`,
             data: filterValues
         };
 
@@ -274,7 +357,7 @@ const recipientQueries = {
         const contactRef = type === 'contact' ? 'recipients.contact' : 'recipients.supervisor'
         return {
             sql: `SELECT contacts.* FROM contacts
-                                             JOIN recipients ON contacts.id = ${contactRef}
+                  JOIN recipients ON contacts.id = ${contactRef}
                   WHERE recipients.id = $1::uuid;`,
             data: [id],
         };
@@ -329,7 +412,7 @@ const recipientQueries = {
         const timestamps = ['updated_at'];
 
         // filter ignored columns:
-        const ignore = ['id', 'guid', 'idir', 'user', 'status', 'created_at'];
+        const ignore = ['id', 'guid', 'idir', 'user', 'created_at'];
         const cols = Object.keys(schema.attributes).filter(key => !ignore.includes(key));
 
         // generate prepared statement value placeholders
@@ -340,7 +423,7 @@ const recipientQueries = {
             const placeholder = timestamps.includes(attr) ? `NOW()` : `$${index++}`;
 
             // map returns conjoined prepared parameters in order
-            return [attr, `${placeholder}::${schema.attributes[attr].dataType}`].join('=');
+            return [`"${attr}"`, `${placeholder}::${schema.attributes[attr].dataType}`].join('=');
         });
 
         let sql = `        UPDATE recipients
@@ -362,6 +445,138 @@ const recipientQueries = {
 
         // apply update query
         return {sql: sql, data: filteredData};
+    },
+    report: (filter, ignore=[], schema) => {
+
+        /**
+         * Generate query: Report recipients data
+         *
+         * @param schema
+         * @param {Object} filter
+         * @param {Array} ignore
+         * @return {Promise} results
+         * @public
+         */
+
+        // get column filters
+        const [filterStatements, filterValues] = getFilters(filter);
+        const selections = Object.keys(schema.attributes)
+                .filter(field => !ignore.includes(field))
+                .map(field => 'r.' + field).join(', ');
+
+        return {
+            sql: `WITH rcps AS (
+                SELECT r.* FROM recipients as r
+                                    LEFT JOIN contacts ON contacts.id = r.contact
+                                    LEFT JOIN organizations ON organizations.id = r.organization
+                                    LEFT JOIN service_selections ON service_selections.recipient = r.id
+                    ${filterStatements && ' WHERE ' + filterStatements}
+                GROUP BY r.id
+            )
+                  SELECT
+                      ${selections},
+                      "org".*,
+                      "pcon".*,
+                      "scon".*,
+                      "srvs".*
+                  FROM rcps AS "r"
+                           -- Organization details
+                           LEFT JOIN (
+                      SELECT o.id as organization_id,
+                             concat_ws(', ', o.name, o.abbreviation) AS organization
+                      FROM "organizations" AS "o"
+                      GROUP BY organization_id
+                  ) AS "org" ON organization_id = "r"."organization"
+
+                      -- Personal contact details
+                           LEFT JOIN (
+                      SELECT cp.id as contact_id,
+                             cp.first_name,
+                             cp.last_name,
+                             cp.office_email,
+                             cp.office_phone,
+                             cp.personal_email,
+                             cp.personal_phone,
+                             cpa.street1 AS personal_address_street_1,
+                             cpa.street2 AS personal_address_street_2,
+                             cpa.community AS personal_address_community,
+                             cpa.province AS personal_address_province,
+                             cpa.country AS personal_address_country,
+                             cpa.postal_code AS personal_address_postal_code,
+                             coa.street1 AS office_address_street_1,
+                             coa.street2 AS office_address_street_2,
+                             coa.community AS office_address_community,
+                             coa.province AS office_address_province,
+                             coa.country AS office_address_country,
+                             coa.postal_code AS office_address_postal_code
+                      FROM "contacts" AS "cp"
+                               -- Contact: address details
+                               LEFT JOIN "addresses" AS "cpa" ON cpa.id = cp."personal_address"
+                               LEFT JOIN "addresses" AS coa ON coa.id = cp."office_address"
+                      GROUP BY contact_id, cpa.id, coa.id
+                  ) AS "pcon" ON contact_id = "r"."contact"
+
+                      -- Supervisor contact details
+                           LEFT JOIN (
+                      SELECT cs.id as supervisor_id,
+                             cs.first_name AS supervisor_first_name,
+                             cs.last_name AS supervisor_last_name,
+                             cs.office_email AS supervisor_office_email,
+                             cs.office_phone AS supervisor_office_phone,
+                             cs.personal_email AS supervisor_personal_email,
+                             cs.personal_phone AS supervisor_personal_phone,
+                             coa.pobox AS supervisor_office_address_pobox,
+                             coa.street1 AS supervisor_office_address_street1,
+                             coa.street2 AS supervisor_office_address_street2,
+                             coa.community AS supervisor_office_address_community,
+                             coa.province AS supervisor_office_address_province,
+                             coa.country AS supervisor_office_address_country,
+                             coa.postal_code AS supervisor_office_address_postal_code
+                      FROM "contacts" AS "cs"
+                               -- Contact: address details
+                               LEFT JOIN "addresses" AS coa ON coa.id = cs."office_address"
+                      GROUP BY supervisor_id, coa.id
+                  ) AS "scon" ON supervisor_id = "r"."supervisor"
+
+                      -- services details
+                           LEFT JOIN (
+                      SELECT srv.recipient AS recipient_id,
+                             srv.milestone AS milestone,
+                             srv.qualifying_year AS qualifying_year,
+                             srv.service_years AS service_years,
+                             srv.cycle AS cycle,
+                             srv.previous_registration AS previous_registration,
+                             srv.previous_award AS previous_award,
+                             srv.delegated AS delegated,
+                             srv.confirmed AS confirmed,
+                             srv.ceremony_opt_out AS ceremony_opt_out,
+                             srv.survey_opt_in AS survey_opt_in,
+                             awd.short_code AS award_shortcode,
+                             awd.label AS award_label,
+                             string_agg(
+                                CASE WHEN awdopts.label IS NOT NULL THEN awdopts.label END, '; '
+                                 ) AS award_options,
+                            string_agg(
+                                CASE WHEN awdopts.type IN ('engraving', 'pecsf-certificate', 'certificate') 
+                                    THEN concat_ws(': ', awdopts.label, awdoptsel.custom_value) END, '; '
+                                ) AS award_custom_engraving,
+                             string_agg(
+                                CASE WHEN pecsf.label IS NOT NULL
+                                    THEN concat_ws(': ', pecsf.label, pecsf.region) END, '; '
+                                 ) AS pecsf_charities
+                      FROM "service_selections" AS "srv"
+                               -- Service Selection: award details
+                               LEFT JOIN "award_selections" AS asel ON asel.id = srv."id"
+                               LEFT JOIN "awards" AS awd ON awd.id = asel."award"
+                               LEFT JOIN "award_option_selections" AS awdoptsel ON awdoptsel.service = srv.id
+                               LEFT JOIN "award_options" AS awdopts ON awdopts.id = awdoptsel."award_option"
+                               LEFT JOIN "pecsf_charities" AS pecsf ON pecsf.id = awdoptsel."pecsf_charity"
+                      GROUP BY srv.id, awd.id
+                  ) AS "srvs" ON recipient_id = "r"."id"
+            ;`,
+            data: filterValues
+        };
+
     },
     stats: (schema, currentCycle) => {
         if (!schema.modelName) return null;
@@ -395,21 +610,8 @@ exports.queries = recipientQueries;
  */
 
 exports.findAll = async (filter, ignore, schema) => {
-    const result = await query(recipientQueries.findAll(filter, ignore, schema));
-
-    // console.log(recipientQueries.findAll(filter, ignore, schema))
-
-    // attach linked records to results
-    return await Promise.all((result || []).map(async(item) => {
-        return await attachReferences(item, schema);
-    }));
+    return await query(recipientQueries.findAll(filter, ignore, schema));
 }
-
-exports.findAllTest = async (filter, ignore, schema) => {
-    console.log(recipientQueries.findAllTest(filter, ignore, schema))
-    return await query(recipientQueries.findAllTest(filter, ignore, schema));
-}
-
 /**
  * Default transactions
  * @public
@@ -454,7 +656,6 @@ exports.insert = async (data) => {
  */
 
 const update = async (data, schema) => {
-    // console.log(recipientQueries.update(data, schema))
     return await transactionOne([recipientQueries.update(data, schema)]);
 }
 exports.update = update;
@@ -470,6 +671,19 @@ exports.update = update;
 
 exports.updateContact = async (recipientID, contactID) => {
     return await transactionOne([recipientQueries.updateContact(recipientID, contactID)]);
+}
+
+/**
+ * Generate query: Report recipients data
+ *
+ * @param {Object} data
+ * @param {Object} schema
+ * @return {Promise} results
+ * @public
+ */
+
+exports.report = async (filter, ignore, schema) => {
+    return await query(recipientQueries.report(filter, ignore, schema));
 }
 
 /**
@@ -529,8 +743,6 @@ exports.delegate = async (data, user, cycle, schema) => {
             last_name: supervisor.last_name,
             office_email: supervisor.office_email
         }, attachments.supervisor.model.schema));
-
-        console.log('Delegated service pins:', contactID, supervisorID)
 
         // create new recipient record (NOTE: generate UUID for GUID)
         q.push(recipientQueries.insert({

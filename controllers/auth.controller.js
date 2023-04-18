@@ -5,6 +5,11 @@
  * MIT Licensed
  */
 
+const path = require('path');
+const User = require('../models/users.model');
+const {resetToken} = require('../services/cache.services');
+const {sendResetPassword} = require("../services/mail.services");
+
 /**
  * Get current user state retrieved from IDIR (SAML) authentication
  *
@@ -67,22 +72,22 @@ exports.info = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
 
-    // Explicitly save the session before returning
-    req.session.save(() => {
-      if (req.isAuthenticated()) {
-        res.status(200).json({
-          message: {
-            severity: 'success',
-            summary: 'Welcome',
-            detail: 'You are now signed in.'
-          },
-          result: req.user,
-        });
-      }
-      else {
-        next(new Error('noAuth'));
-      }
-    });
+  // Explicitly save the session before returning
+  req.session.save(() => {
+    if (req.isAuthenticated()) {
+      res.status(200).json({
+        message: {
+          severity: 'success',
+          summary: 'Welcome',
+          detail: 'You are now signed in.'
+        },
+        result: req.user,
+      });
+    }
+    else {
+      next(new Error('noAuth'));
+    }
+  });
 }
 
 /**
@@ -127,4 +132,73 @@ exports.logout = async (req, res, next) => {
     return next(err);
   }
 };
+
+/**
+ * User request for password reset
+ *
+ * @param req
+ * @param res
+ * @param {Function} next
+ * @method post
+ * @src public
+ */
+
+exports.requestResetPassword = async (req, res, next) => {
+
+  // find user by email
+  const { email } = req.body || {};
+  const user = await User.findByEmail(email);
+  const expiry = 60;
+
+  // check if user is a registered user
+  if (!user) return next(new Error('notFound'));
+
+  // generate new token
+  const token = await resetToken(user.id, expiry);
+
+  // send reset link in email to user
+  const response = await sendResetPassword({
+    email,
+    link: path.join(process.env.LSA_APPS_ADMIN_URL, 'reset-password', token)
+  });
+
+  console.log(response)
+
+  res.status(200).json({
+    message: {
+      severity: 'success',
+      summary: 'Password Reset Request Sent!',
+      detail: 'A reset link has been sent to your email account.'
+    },
+    result: {},
+  });
+}
+
+/**
+ * User password reset
+ *
+ * @param req
+ * @param res
+ * @param {Function} next
+ * @method post
+ * @src public
+ */
+
+exports.resetPassword = async (req, res, next) => {
+
+  // Explicitly save the session before returning
+  if (req.isAuthenticated()) {
+    res.status(200).json({
+      message: {
+        severity: 'success',
+        summary: 'Welcome',
+        detail: 'You are now signed in.'
+      },
+      result: req.user,
+    });
+  }
+  else {
+    next(new Error('noAuth'));
+  }
+}
 
