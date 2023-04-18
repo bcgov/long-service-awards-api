@@ -9,7 +9,7 @@ const Recipient = require("../models/recipients.model.js");
 const {
   sendRegistrationConfirmation
 } = require("../services/mail.services");
-const {confirm} = require("../services/validation.services");
+// const {confirm} = require("../services/validation.services");
 
 /**
  * Mail templates
