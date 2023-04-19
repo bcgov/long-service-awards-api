@@ -199,7 +199,7 @@ module.exports =  {
         const { role } = user || {};
         const isAdmin = ['super-administrator', 'administrator'].includes(role.name);
         if (isAdmin) {
-            return await db.recipients.report(filter, [], schema);
+            return await db.recipients.report(filter, ['created_at'], schema);
         }
 
         // restrict available orgs to user assignment
@@ -217,7 +217,7 @@ module.exports =  {
             filter.organization = intersection.length === 0
                 ? userFilter.join(',')
                 : intersection.join(',');
-            return await db.recipients.report(filter, ['notes'], schema);
+            return await db.recipients.report(filter, ['notes', 'created_at'], schema);
         }
         return [];
     },
