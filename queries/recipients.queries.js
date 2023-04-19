@@ -458,6 +458,8 @@ const recipientQueries = {
          * @public
          */
 
+        console.log(filter)
+
         // get column filters
         const [filterStatements, filterValues] = getFilters(filter);
         const selections = Object.keys(schema.attributes)

@@ -56,7 +56,7 @@ exports.lsa = async (req, res, next) => {
     // define filter
     const filter = {
         cycle: String(cycle.name),
-        milestones: '25,30,35,40,45,50',
+        milestones: '25,30,35,40,45,50,55',
         confirmed: 'true'
     };
 
@@ -90,7 +90,9 @@ exports.servicePins = async (req, res, next) => {
     const cycle = await QualifyingYear.findCurrent();
 
     // define filter
-    const filter = {};
+    const filter = {
+      confirmed: 'true'
+    };
 
     // apply query filter to results
     const recipients = await Recipient.report(filter, res.locals.user);
