@@ -43,7 +43,11 @@ const awardsQueries = {
 
         // build filter clause array
         const filterClauses = [];
-        if (active) filterClauses.push('active = true');
+        if (active) {
+            filterClauses.push('active = true');
+            // include check for quantities
+            filterClauses.push('quantity != 0');
+        }
 
         return {
             sql: `SELECT * FROM awards 
@@ -54,6 +58,33 @@ const awardsQueries = {
             data: [],
         };
 
+    },
+    findByFields: (fields, values, schema, sort) => {
+
+        // (optional) order by attribute
+        const {orderby, order} = sort || {};
+        const orderClause = order && orderby ? `ORDER BY ${orderby} ${order || 'ASC'}` : '';
+
+        // build filter clause array
+        if (fields.includes('active')) {
+            filterClauses.push('active = true');
+            // include check for quantities
+            filterClauses.push('quantity != 0');
+        }
+
+        // construct where condition sql
+        const filterClauses = (fields || [])
+            .map((field, index) => {
+            return `"${field}" = $${index + 1}::${schema.attributes[field].dataType}`
+        });
+
+        return {
+            sql: `SELECT *
+                  FROM ${schema.modelName} 
+                      ${filterClauses.length > 0 ? ' WHERE ' + filterClauses.join(' AND ') : ''} 
+                  ${orderClause};`,
+            data: values,
+        };
     },
 }
 exports.queries = awardsQueries;
