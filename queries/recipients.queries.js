@@ -142,7 +142,7 @@ const recipientQueries = {
             // destructure filter for sort/order/offset/limit
         const {orderby = null, order = 'ASC', offset = 0, limit = null} = filter || {};
         // (optional) order by attribute
-        const orderClause = order && orderby ? `ORDER BY r.${orderby} ${order}` : '';
+        const orderClause = order && orderby ? `ORDER BY recipients.${orderby} ${order}` : '';
         const limitClause = limit ? `LIMIT ${limit}` : '';
 
         // get column filters
@@ -153,12 +153,12 @@ const recipientQueries = {
 
         return {
             sql: `WITH rcps AS (
-                SELECT r.* FROM recipients as r
-                           LEFT JOIN contacts ON contacts.id = r.contact
-                           LEFT JOIN organizations ON organizations.id = r.organization
-                           LEFT JOIN service_selections ON service_selections.recipient = r.id
+                SELECT recipients.* FROM recipients
+                           LEFT JOIN contacts ON contacts.id = recipients.contact
+                           LEFT JOIN organizations ON organizations.id = recipients.organization
+                           LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && ' WHERE ' + filterStatements}
-                  GROUP BY r.id
+                  GROUP BY recipients.id
                                ${orderClause} ${limitClause}
                   OFFSET ${offset}
                   )
@@ -458,8 +458,6 @@ const recipientQueries = {
          * @public
          */
 
-        console.log(filter)
-
         // get column filters
         const [filterStatements, filterValues] = getFilters(filter);
         const selections = Object.keys(schema.attributes)
@@ -585,17 +583,17 @@ const recipientQueries = {
         return [
             {sql: 'SELECT COUNT(*) as total_count FROM recipients;', data: []},
             {sql: `SELECT COUNT(*) as lsa_current_count FROM  recipients
-                                                                  LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-                   WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
+                     LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                     WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
             {sql: `SELECT COUNT(*) as lsa_previous_count FROM  recipients
-                                                                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-                   WHERE service_selections.cycle != ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
+                     LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                     WHERE service_selections.cycle != ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
             {sql: `SELECT COUNT(*) as service_pins_count FROM recipients
-                                                                  LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-                   WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone IS NOT NULL ;`, data: []},
+                     LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                     WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone IS NOT NULL ;`, data: []},
             {sql: `SELECT COUNT(*) as other_count FROM recipients
-                                                           LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-                   WHERE service_selections.milestone IS NULL;`, data: []}
+                    LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                    WHERE service_selections.milestone IS NULL;`, data: []}
         ];
     }
 }
@@ -612,6 +610,7 @@ exports.queries = recipientQueries;
  */
 
 exports.findAll = async (filter, ignore, schema) => {
+    console.log(recipientQueries.findAll(filter, ignore, schema))
     return await query(recipientQueries.findAll(filter, ignore, schema));
 }
 /**

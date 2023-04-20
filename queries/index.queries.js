@@ -48,7 +48,12 @@ module.exports = {
             },
             findByField: async(field, value, active=true) => {
                 // returns multiple
+                // - default filter for active record
                 return await defaults.findByFields([field, 'active'], [value, active], schema);
+            },
+            findByFields: async(fields, values, active=true) => {
+                // returns multiple
+                return await defaults.findByFields(fields, values, schema);
             },
             findById: async(id) => {
                 return construct(await defaults.findById(id, schema), schema);
