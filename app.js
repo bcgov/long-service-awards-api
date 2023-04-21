@@ -65,6 +65,7 @@ const apiRouters = [
     {path: '/recipients/delegated', router: require("./routes/recipients.delegated.router")},
     {path: '/awards', router: require("./routes/awards.router")},
     {path: '/service-pins', router: require("./routes/service-pins.router")},
+    {path: '/reports', router: require("./routes/reports.router")},
     {path: '/attendees', router: require("./routes/attendees.router")},
     {path: '/accommodations', router: require("./routes/accommodations.router")},
     {path: '/ceremonies', router: require("./routes/ceremonies.router")},

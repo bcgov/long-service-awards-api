@@ -138,3 +138,29 @@ exports.update = async (data) => {
     ];
     return await transaction(queries);
 }
+
+/**
+ * Generate query: Reset user password
+ *
+ * @param {Object} data
+ * @return {Promise} results
+ * @public
+ */
+
+exports.resetPassword = async (data) => {
+
+    const {id, password} = data || {};
+
+    // update user record
+    let queries = [{
+        sql: `
+                UPDATE users
+                SET password=$2::varchar
+                WHERE id = $1::uuid
+                RETURNING *;
+            `,
+        data: [id, password],
+    }
+    ];
+    return await transaction(queries);
+}

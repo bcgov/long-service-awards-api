@@ -25,10 +25,9 @@ router.get('/', function (req, res) {
 // log out of admin dashboard
 router.post('/logout', authController.logout);
 
-// password reset for admin users
-router.get('/forgot-password', authController.logout);
-router.post('/request-reset-password', authController.logout);
-router.post('/reset-password', authController.logout);
+// password reset for users
+router.post('/request-reset-password', authController.requestResetPassword);
+router.post('/reset-password', authController.resetPassword);
 
 // get authenticated user data
 router.get('/auth/user', authController.info);
