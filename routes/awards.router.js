@@ -14,6 +14,8 @@ const controller = require("../controllers/awards.controller");
  * Router endpoints
  */
 
+router.get('/test', controller.getAll);
+
 router.get('/list', authorizeAdmin, controller.getAll);
 router.get('/filter/:field/:value', controller.filter);
 router.post('/create', authorizeAdmin, controller.create);

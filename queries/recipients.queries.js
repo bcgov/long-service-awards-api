@@ -50,6 +50,9 @@ const getFilters = (data) => {
         cycle: (range) => `(service_selections.cycle IN (${
             (range || []).map(() => `$${index++}::integer`).join(',')
         }))`,
+        qualifying_year: (range) => `(service_selections.qualifying_year IN (${
+            (range || []).map(() => `$${index++}::integer`).join(',')
+        }))`,
         confirmed: (value) => `(
         service_selections.confirmed = $${index++}::boolean 
         ${value[0] === 'false' ? 'OR service_selections.confirmed IS NULL' : '' } )`,
@@ -147,6 +150,13 @@ const recipientQueries = {
 
         // get column filters
         const [filterStatements, filterValues] = getFilters(filter);
+
+        // get additional service filter
+        const serviceFilter = filter.hasOwnProperty('cycle') && filter.hasOwnProperty('milestones')
+            ? `WHERE srv.milestone IN (${filter.milestones}) AND srv.cycle = ${filter.cycle} AND srv.confirmed = ${filter.confirmed}`
+            : `WHERE srv.confirmed = ${filter.confirmed}`;
+
+        // get column selections
         const selections = Object.keys(schema.attributes)
             .filter(field => !ignore.includes(field))
             .map(field => 'r.' + field).join(', ');
@@ -321,6 +331,7 @@ const recipientQueries = {
                                       GROUP BY aopt_service_id
                                   ) AS "aopts" ON aopt_service_id = "srv"."id"
                            -- end award options 
+                          -- ${serviceFilter}
                       GROUP BY recipient_id
                   ) AS "srvs" ON recipient_id = "r"."id"
             ;`,
@@ -441,6 +452,7 @@ const recipientQueries = {
                 return data[key]
             }));
 
+        // DEBUG SQL
         // console.log('UPDATE:', {sql: sql, data: filteredData})
 
         // apply update query
@@ -460,6 +472,13 @@ const recipientQueries = {
 
         // get column filters
         const [filterStatements, filterValues] = getFilters(filter);
+
+        // get additional service filter
+        const serviceFilter = filter.hasOwnProperty('cycle') && filter.hasOwnProperty('milestones')
+            ? `WHERE srv.milestone IN (${filter.milestones}) AND srv.cycle = ${filter.cycle} AND srv.confirmed = ${filter.confirmed}`
+            : `WHERE srv.confirmed = ${filter.confirmed}`;
+
+        // get column selections
         const selections = Object.keys(schema.attributes)
                 .filter(field => !ignore.includes(field))
                 .map(field => 'r.' + field).join(', ');
@@ -571,6 +590,7 @@ const recipientQueries = {
                                LEFT JOIN "award_option_selections" AS awdoptsel ON awdoptsel.service = srv.id
                                LEFT JOIN "award_options" AS awdopts ON awdopts.id = awdoptsel."award_option"
                                LEFT JOIN "pecsf_charities" AS pecsf ON pecsf.id = awdoptsel."pecsf_charity"
+                      ${serviceFilter}
                       GROUP BY srv.id, awd.id
                   ) AS "srvs" ON recipient_id = "r"."id"
             ;`,
@@ -584,13 +604,17 @@ const recipientQueries = {
             {sql: 'SELECT COUNT(*) as total_count FROM recipients;', data: []},
             {sql: `SELECT COUNT(*) as lsa_current_count FROM  recipients
                      LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-                     WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
+                     WHERE service_selections.cycle = ${currentCycle} 
+                       AND service_selections.milestone IN ( 25, 30, 35, 40, 45, 50, 55)
+                       AND service_selections.confirmed IS true;`, data: []},
             {sql: `SELECT COUNT(*) as lsa_previous_count FROM  recipients
                      LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-                     WHERE service_selections.cycle != ${currentCycle} AND service_selections.milestone >= 25;`, data: []},
+                     WHERE service_selections.cycle != ${currentCycle} 
+                       AND service_selections.milestone IN ( 25, 30, 35, 40, 45, 50, 55);`, data: []},
             {sql: `SELECT COUNT(*) as service_pins_count FROM recipients
                      LEFT JOIN service_selections ON service_selections.recipient = recipients.id
-                     WHERE service_selections.cycle = ${currentCycle} AND service_selections.milestone IS NOT NULL ;`, data: []},
+                     WHERE service_selections.milestone IN ( 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55)
+                       AND service_selections.confirmed IS true;`, data: []},
             {sql: `SELECT COUNT(*) as other_count FROM recipients
                     LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                     WHERE service_selections.milestone IS NULL;`, data: []}
@@ -610,7 +634,8 @@ exports.queries = recipientQueries;
  */
 
 exports.findAll = async (filter, ignore, schema) => {
-    console.log(recipientQueries.findAll(filter, ignore, schema))
+    // DEBUG SQL
+    // console.log(recipientQueries.findAll(filter, ignore, schema))
     return await query(recipientQueries.findAll(filter, ignore, schema));
 }
 /**
@@ -684,6 +709,8 @@ exports.updateContact = async (recipientID, contactID) => {
  */
 
 exports.report = async (filter, ignore, schema) => {
+    // DEBUG SQL
+    // console.log(recipientQueries.report(filter, ignore, schema))
     return await query(recipientQueries.report(filter, ignore, schema));
 }
 
@@ -815,6 +842,7 @@ exports.delegate = async (data, user, cycle, schema) => {
  */
 
 exports.count = async (filter, user, schema) => {
+    console.log(recipientQueries.count(filter, schema))
     return await queryOne(recipientQueries.count(filter, schema));
 }
 

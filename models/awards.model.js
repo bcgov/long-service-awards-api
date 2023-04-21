@@ -63,4 +63,11 @@ const schema = {
     }
 };
 
-module.exports = db.generate(schema);
+const methods = db.generate(schema);
+
+// overload default methods
+methods.findAll = async (filter) => {
+    return await db.awards.findAll(filter);
+}
+
+module.exports = methods;
