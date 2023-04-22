@@ -56,8 +56,7 @@ exports.lsa = async (req, res, next) => {
     // define filter
     const filter = {
         cycle: String(cycle.name),
-        milestones: '25,30,35,40,45,50,55',
-        confirmed: 'true'
+        milestones: '25,30,35,40,45,50,55'
     };
 
     // apply query filter to results
@@ -95,7 +94,7 @@ exports.servicePins = async (req, res, next) => {
     };
 
     // apply query filter to results
-    const recipients = await Recipient.report(filter, res.locals.user);
+    const recipients = await Recipient.report(filter, res.locals.user, cycle);
     const filename = `service-pins-report-${cycle}.csv`;
     // convert json results to csv format
     const csvData = Papa.unparse(recipients, { newline: '\n' });
