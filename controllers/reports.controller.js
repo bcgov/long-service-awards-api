@@ -60,7 +60,7 @@ exports.lsa = async (req, res, next) => {
     };
 
     // apply query filter to results
-    const recipients = await Recipient.report(filter, res.locals.user);
+    const recipients = await Recipient.report(filter, res.locals.user, cycle);
     const filename = `long-services-awards-report-${cycle}.csv`;
 
     // convert json results to csv format
