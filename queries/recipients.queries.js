@@ -753,7 +753,7 @@ exports.updateContact = async (recipientID, contactID) => {
 
 exports.report = async (filter, ignore, currentCycle, schema) => {
     // DEBUG SQL
-    // console.log(recipientQueries.report(filter, ignore, currentCycle, schema))
+    console.log(recipientQueries.report(filter, ignore, currentCycle, schema))
     return await query(recipientQueries.report(filter, ignore, currentCycle, schema));
 }
 
