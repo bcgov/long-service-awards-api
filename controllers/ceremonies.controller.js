@@ -6,6 +6,7 @@
  */
 
 const ceremoniesModel = require("../models/ceremonies.model.js");
+const uuid = require("uuid");
 
 /**
  * Retrieve all records.
@@ -19,8 +20,15 @@ const ceremoniesModel = require("../models/ceremonies.model.js");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await ceremoniesModel.findAll();
-    return res.status(200).json(results);
+    const ceremonies = await ceremoniesModel.findAll();
+    return res.status(200).json({
+      message: {
+        severity: 'success',
+        summary: 'Ceremony Record(s) Found',
+        detail: 'Ceremony records found.'
+      },
+      result: {ceremonies}
+    });
   } catch (err) {
     console.error(err);
     return next(err);
@@ -41,7 +49,10 @@ exports.get = async (req, res, next) => {
   try {
     const {id} = req.params || {};
     const results = await ceremoniesModel.findById(id);
-    res.status(200).json(results);
+    res.status(200).json({
+      message: {},
+      result: results,
+    });
   } catch (err) {
     return next(err);
   }
@@ -59,9 +70,19 @@ exports.get = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
+    const guid = uuid.v4();
     const data = req.body || {};
-    const results = await ceremoniesModel.create(data);
-    res.status(200).json(results);
+    await ceremoniesModel.create({
+      id: guid,
+    });
+    const ceremony = await ceremoniesModel.findOneByField('id', guid);
+    res.status(200).json({
+      message: { 
+        severity: 'success', 
+        summary: 'Add Ceremony', 
+        detail: 'New ceremony record created.'
+      },
+      result:{ceremony}});
   } catch (err) {
     return next(err);
   }
@@ -76,6 +97,7 @@ exports.create = async (req, res, next) => {
  * @src public
  */
 
+// TODO: need to update address attachment
 exports.update = async (req, res, next) => {
   try {
     const data = req.body;

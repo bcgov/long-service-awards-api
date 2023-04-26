@@ -101,9 +101,9 @@ module.exports =  {
             ]);
         }
     },
-    findAttachment: async(parentID, parentField, parentschema) => {
+    findAttachment: async(parentID, parentField, parentSchema) => {
         // look up addresses for requested reference and type
-        return construct(await defaults.findAttachment(parentID, parentField, parentschema, schema));
+        return construct(await defaults.findAttachment(parentID, parentField, parentSchema, schema));
     },
     remove: async(id) => {
         await db.defaults.remove(id, schema)
