@@ -48,10 +48,10 @@ exports.getAll = async (req, res, next) => {
 exports.get = async (req, res, next) => {
   try {
     const {id} = req.params || {};
-    const results = await ceremoniesModel.findById(id);
+    const ceremony = await ceremoniesModel.findById(id);
     res.status(200).json({
       message: {},
-      result: results,
+      result: ceremony.data,
     });
   } catch (err) {
     return next(err);
@@ -84,7 +84,8 @@ exports.create = async (req, res, next) => {
           summary: 'Add Ceremony', 
           detail: 'New ceremony record created.'
         },
-        result:{ceremony}});
+        result: ceremony.data
+      });
     }
   } catch (err) {
     return next(err);
@@ -108,7 +109,7 @@ exports.update = async (req, res, next) => {
 
     // handle exception
     if (!ceremony) return next(Error('noRecord'));
-    ceremony.save();
+    await ceremony.save(data);
 
     res.status(200).json({
       message: {},
