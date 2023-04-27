@@ -67,7 +67,18 @@ const methods = db.generate(schema);
 
 // overload default methods
 methods.findAll = async (filter) => {
+    filter.active = null;
     return await db.awards.findAll(filter);
-}
+};
+
+methods.findByField = async(field, value, active=true) => {
+    // returns multiple
+    // - default filter for active record
+    const filter= {
+        [field]: value,
+        active: active
+    }
+    return await db.awards.findAll(filter);
+};
 
 module.exports = methods;

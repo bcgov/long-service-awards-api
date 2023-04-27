@@ -189,8 +189,6 @@ module.exports.sendResetPassword = async (data) => {
 
   const {email, link} = data || {};
 
-  console.log('Mail!!!', email, link)
-
   // send confirmation mail to supervisor
   return await sendMail(
       [email],

@@ -30,33 +30,26 @@ const awardsQueries = {
 
         // destructure filter for sort/order/offset/limit
         const {
-                orderby = null,
-                order = 'ASC',
-                offset = 0,
-                limit = null,
-                active=true
+                active=true,
+                milestone = null,
             } = filter || {};
 
         // (optional) order by attribute
-        const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : '';
-        const limitClause = limit ? `LIMIT ${limit}` : '';
+        // const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : '';
+        // const limitClause = limit ? `LIMIT ${limit}` : '';
 
         // build filter clause array
         const filterClauses = [];
         if (active) {
             filterClauses.push('active = true');
-            // include check for quantities
-            filterClauses.push('quantity != 0');
+            // quantity filter
+            filterClauses.push('(quantity < 0 OR quantity > selected)');
+        }
+        // milestone filter
+        if (milestone) {
+            filterClauses.push('milestone = $1::integer');
         }
 
-        // return {
-        //     sql: `SELECT * FROM awards
-        //         ${filterClauses.length > 0 ? ' WHERE ' + filterClauses.join(' AND ') : ''}
-        //         ${orderClause}
-        //         ${limitClause}
-        //           OFFSET ${offset};`,
-        //     data: [],
-        // };
 
         return {
             sql: `
@@ -84,38 +77,13 @@ const awardsQueries = {
                     FROM "award_selections" AS "awdsel"
                     GROUP BY awdsel.award
                 ) AS "selections" ON select_award_id = "awds"."id"  
+                ${filterClauses.length > 0 ? 'WHERE ' + filterClauses.join(' AND ') : ''}
             ;`,
-                data: []
+                data: milestone ? [milestone] : []
         }
 
     },
-    findByFields: (fields, values, schema, sort) => {
 
-        // (optional) order by attribute
-        const {orderby, order} = sort || {};
-        const orderClause = order && orderby ? `ORDER BY ${orderby} ${order || 'ASC'}` : '';
-
-        // build filter clause array
-        if (fields.includes('active')) {
-            filterClauses.push('active = true');
-            // include check for quantities
-            filterClauses.push('quantity != 0');
-        }
-
-        // construct where condition sql
-        const filterClauses = (fields || [])
-            .map((field, index) => {
-            return `"${field}" = $${index + 1}::${schema.attributes[field].dataType}`
-        });
-
-        return {
-            sql: `SELECT *
-                  FROM ${schema.modelName} 
-                      ${filterClauses.length > 0 ? ' WHERE ' + filterClauses.join(' AND ') : ''} 
-                  ${orderClause};`,
-            data: values,
-        };
-    },
 }
 exports.queries = awardsQueries;
 
@@ -128,5 +96,7 @@ exports.queries = awardsQueries;
  */
 
 exports.findAll = async (filter) => {
+    console.log(awardsQueries.findAll(filter))
     return await query(awardsQueries.findAll(filter));
 }
+
