@@ -32,6 +32,7 @@ const ceremoniesQueries = {
             data: [id]
         };
     },
+    
 }
 exports.queries = ceremoniesQueries;
 

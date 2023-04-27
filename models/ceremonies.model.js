@@ -84,7 +84,7 @@ module.exports = {
         return await db.defaults.findByFields([field, 'active'], [value, active], schema);
     },
     findById: async(id) => {
-        return await db.defaults.findById(id, schema);
+        return construct(await db.defaults.findById(id, schema));
     },
     findOneByField: async(field, value) => {
         return await db.defaults.findOneByField(field, value, schema);
@@ -93,9 +93,6 @@ module.exports = {
         // validate model init data
         const item = construct(data, schema);
         if (item) return construct(await db.ceremonies.insert(item.data, schema, ['id']));
-    },
-    update: async(data) => {
-        return construct(await db.defaults.update(data, schema));
     },
     remove: async(id) => {
         return await db.defaults.removeByFields( ['id'], [id], schema)

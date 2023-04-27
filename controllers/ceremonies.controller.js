@@ -104,8 +104,16 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const data = req.body;
-    const results = await ceremoniesModel.update(data);
-    res.status(200).json(results);
+    const ceremony = await ceremoniesModel.findById(data.id);
+
+    // handle exception
+    if (!ceremony) return next(Error('noRecord'));
+    ceremony.save();
+
+    res.status(200).json({
+      message: {},
+      result: ceremony.data
+    });  
   } catch (err) {
     return next(err);
   }
