@@ -75,14 +75,17 @@ exports.create = async (req, res, next) => {
     await ceremoniesModel.create({
       id: guid,
     });
-    const ceremony = await ceremoniesModel.findOneByField('id', guid);
-    res.status(200).json({
-      message: { 
-        severity: 'success', 
-        summary: 'Add Ceremony', 
-        detail: 'New ceremony record created.'
-      },
-      result:{ceremony}});
+    const ceremony = await ceremoniesModel.findById(guid);
+    if (ceremony != undefined)
+    {
+      res.status(200).json({
+        message: { 
+          severity: 'success', 
+          summary: 'Add Ceremony', 
+          detail: 'New ceremony record created.'
+        },
+        result:{ceremony}});
+    }
   } catch (err) {
     return next(err);
   }

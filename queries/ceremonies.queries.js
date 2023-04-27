@@ -36,7 +36,5 @@ const ceremoniesQueries = {
 exports.queries = ceremoniesQueries;
 
 exports.insert = async (data) => {
-    // generate UUID for recipient
-    data.id = uuid.v4();
     return await transactionOne([ceremoniesQueries.insert(data)]);
 }
