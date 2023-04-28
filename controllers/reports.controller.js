@@ -89,9 +89,7 @@ exports.servicePins = async (req, res, next) => {
     const cycle = await QualifyingYear.findCurrent();
 
     // define filter
-    const filter = {
-      confirmed: 'true'
-    };
+    const filter = {};
 
     // apply query filter to results
     const recipients = await Recipient.report(filter, res.locals.user, cycle);
