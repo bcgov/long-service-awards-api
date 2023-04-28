@@ -770,7 +770,10 @@ exports.delegate = async (data, user, cycle, schema) => {
 
     const { attachments=null } = schema || {};
     const { employees=[], supervisor={} } = data || {};
+    const { office_address={} } = supervisor || {};
     const q = [];
+
+    console.log(supervisor)
 
     // ensure supervisor contact info is not empty
     if (
@@ -798,6 +801,21 @@ exports.delegate = async (data, user, cycle, schema) => {
         const recipientID = uuid.v4();
         const contactID = uuid.v4();
         const supervisorID = uuid.v4();
+        const addressID = uuid.v4();
+
+        const addressModel = attachments.supervisor.model.schema.attachments.office_address.model;
+
+        // save supervisor address info
+        q.push(defaults.queries.upsert({
+            id: addressID,
+            pobox: office_address.pobox,
+            street1: office_address.street1,
+            street2: office_address.street2,
+            postal_code: office_address.postal_code,
+            community: office_address.community,
+            province: office_address.province,
+            country: office_address.country,
+        }, addressModel.schema));
 
         // save recipient contact data
         q.push(defaults.queries.upsert({
@@ -814,6 +832,16 @@ exports.delegate = async (data, user, cycle, schema) => {
             last_name: supervisor.last_name,
             office_email: supervisor.office_email
         }, attachments.supervisor.model.schema));
+
+        // save contact office address data
+        q.push(defaults.queries.updateAttachment(
+            contactID, addressID, 'office_address', attachments.contact.model.schema)
+        );
+
+        // save supervisor address data
+        q.push(defaults.queries.updateAttachment(
+            supervisorID, addressID, 'office_address', attachments.contact.model.schema)
+        );
 
         // create new recipient record (NOTE: generate UUID for GUID)
         q.push(recipientQueries.insert({
