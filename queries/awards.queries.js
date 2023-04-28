@@ -96,7 +96,7 @@ exports.queries = awardsQueries;
  */
 
 exports.findAll = async (filter) => {
-    console.log(awardsQueries.findAll(filter))
+    // console.log(awardsQueries.findAll(filter))
     return await query(awardsQueries.findAll(filter));
 }
 
