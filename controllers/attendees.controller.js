@@ -39,7 +39,7 @@ exports.getAll = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const {id} = req.params || {};
+    const { id } = req.params || {};
     const results = await attendeesModel.findById(id);
     res.status(200).json(results);
   } catch (err) {
@@ -59,7 +59,7 @@ exports.get = async (req, res, next) => {
 
 exports.getByCeremony = async (req, res, next) => {
   try {
-    const {id} = req.params || {};
+    const { id } = req.params || {};
     const results = await attendeesModel.findByCeremony(id);
     res.status(200).json(results);
   } catch (err) {

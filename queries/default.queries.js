@@ -205,7 +205,7 @@ const queries = {
 
     let sql = `UPDATE "${schema.modelName}"
                SET ${assignments.join(",")}
-               WHERE "${idKey}" = $1::integer
+               WHERE "${idKey}" = $1::${schema.attributes.id.dataType}
                RETURNING *;`;
 
     // init filtered Data

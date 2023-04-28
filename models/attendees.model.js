@@ -5,10 +5,10 @@
  * MIT Licensed
  */
 
-const db = require('../queries/index.queries');
-const {ModelConstructor} = require("./constructor.model");
+const db = require("../queries/index.queries");
+const { ModelConstructor } = require("./constructor.model");
 
-'use strict';
+("use strict");
 
 /**
  * Model schema
@@ -18,32 +18,35 @@ const {ModelConstructor} = require("./constructor.model");
  */
 
 const schema = {
-    modelName: 'attendees',
-    attributes: {
-        id: {
-            dataType: 'uuid',
-            required: true
-        },
-        recipient: {
-            dataType: 'integer',
-            required: true
-        },
-        ceremony: {
-            dataType: 'integer'
-        },
-        status: {
-            dataType: 'varchar'
-        },
-        guest: {
-            dataType: 'boolean'
-        },
-        created_at: {
-            dataType: 'timestamp'
-        },
-        updated_at: {
-            dataType: 'timestamp'
-        }
-    }
+  modelName: "attendees",
+  attributes: {
+    id: {
+      dataType: "uuid",
+      required: true,
+    },
+    recipient: {
+      dataType: "uuid",
+      editable: false,
+      required: true,
+    },
+    ceremony: {
+      dataType: "uuid",
+      editable: false,
+      required: true,
+    },
+    status: {
+      dataType: "varchar",
+    },
+    guest: {
+      dataType: "boolean",
+    },
+    created_at: {
+      dataType: "timestamp",
+    },
+    updated_at: {
+      dataType: "timestamp",
+    },
+  },
 };
 
 /**
@@ -56,21 +59,35 @@ const schema = {
  */
 
 const construct = (init, attach) => {
-    return ModelConstructor({
-        init: init,
-        schema: schema,
-        db: db.defaults,
-        attach: attach
-    });
-}
-
-module.exports =  {
+  return ModelConstructor({
+    init: init,
     schema: schema,
-    findAll: async(filter) => {return await db.defaults.findAll(filter, schema)},
-    findById: async(id) => { await db.defaults.findById(id, schema) },
-    findByCeremony: async(ceremony_id) => { await db.defaults.findByField('ceremony', ceremony_id, schema) },
-    create: async(data) => { await db.defaults.insert(data, schema) },
-    update: async(data) => { await db.defaults.update(data, schema) },
-    remove: async(id) => { await db.defaults.remove(id, schema) },
-    removeAll: async() => { await db.defaults.removeAll(schema) }
-}
+    db: db.defaults,
+    attach: attach,
+  });
+};
+
+module.exports = {
+  schema: schema,
+  findAll: async (filter) => {
+    return await db.defaults.findAll(filter, schema);
+  },
+  findById: async (id) => {
+    await db.defaults.findById(id, schema);
+  },
+  findByCeremony: async (ceremony_id) => {
+    await db.defaults.findByField("ceremony", ceremony_id, schema);
+  },
+  create: async (data) => {
+    await db.defaults.insert(data, schema);
+  },
+  update: async (data) => {
+    await db.defaults.update(data, schema);
+  },
+  remove: async (id) => {
+    await db.defaults.remove(id, schema);
+  },
+  removeAll: async () => {
+    await db.defaults.removeAll(schema);
+  },
+};
