@@ -7,6 +7,7 @@
 
 const db = require("../queries/index.queries");
 const { ModelConstructor } = require("./constructor.model");
+const Recipient = require("./recipients.model");
 
 ("use strict");
 
@@ -46,6 +47,18 @@ const schema = {
     updated_at: {
       dataType: "timestamp",
     },
+    attachments: {
+      recipient: {
+        model: Recipient,
+        required: true,
+        get: async (id) => {
+          return await Recipient.findByAttendee(id, schema);
+        },
+        attach: async (attendee, recipient) => {
+          await Recipient.attach(attendee, recipient, "recipient");
+        },
+      },
+    },
   },
 };
 
@@ -69,6 +82,24 @@ const construct = (init, attach) => {
 
 module.exports = {
   schema: schema,
+  attach: async (attendee, recipient, type) => {
+    if (!attendee || !recipient || !type) return null;
+
+    // if no attendee ID, create new UUID ID value and set recipient attribute
+    attendee.id =
+      recipient.hasOwnProperty(type) && recipient[type]
+        ? recipient[type]
+        : uuid.v4();
+    recipient[type] = attendee.id;
+
+    // ignore attach attendee if data is empty, otherwise upsert record
+    if (!isEmpty(attendee.data, ["id"])) {
+      await defaults.transact([
+        defaults.queries.upsert(attendee.data, schema),
+        db.recipients.queries.updateAttendee(recipient.id, attendee.id, type),
+      ]);
+    }
+  },
   findAll: async (filter) => {
     return await db.defaults.findAll(filter, schema);
   },
