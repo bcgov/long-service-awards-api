@@ -5,9 +5,8 @@
  * MIT Licensed
  */
 
-const path = require('path');
 const User = require('../models/users.model');
-const {resetToken} = require('../services/cache.services');
+const {resetToken, deleteToken, validateToken} = require('../services/cache.services');
 const {sendResetPassword} = require("../services/mail.services");
 
 /**
@@ -134,6 +133,42 @@ exports.logout = async (req, res, next) => {
 };
 
 /**
+ * Validate user token
+ *
+ * @param req
+ * @param res
+ * @param {Function} next
+ * @method post
+ * @src public
+ */
+
+exports.validateToken = async (req, res, next) => {
+  try {
+
+    // destructure reset token
+    const {userid, token} = req.params;
+
+    // find user by ID
+    const user = await User.findById(userid);
+
+    // check if user is a registered user
+    if (!user) return next(new Error('notFound'));
+
+    // check if token is valid
+    const isValid = await validateToken(userid, token);
+
+    res.status(200).json({
+      message: {},
+      result: isValid,
+    });
+  }
+  catch (e) {
+    console.error(e)
+    next(new Error('passwordResetFailed'));
+  }
+}
+
+/**
  * User request for password reset
  *
  * @param req
@@ -148,10 +183,13 @@ exports.requestResetPassword = async (req, res, next) => {
   // find user by email
   const { email } = req.body || {};
   const user = await User.findByEmail(email);
-  const expiry = 60;
+  const expiry = 60 * 60;
 
   // check if user is a registered user
   if (!user) return next(new Error('notFound'));
+
+  // get user ID
+  const {id} = user.data;
 
   // generate new token
   const token = await resetToken(user.id, expiry);
@@ -159,10 +197,8 @@ exports.requestResetPassword = async (req, res, next) => {
   // send reset link in email to user
   const response = await sendResetPassword({
     email,
-    link: path.join(process.env.LSA_APPS_ADMIN_URL, 'reset-password', token)
+    link: `${process.env.LSA_APPS_ADMIN_URL}/reset-password/${id}/${token}`
   });
-
-  console.log(response)
 
   res.status(200).json({
     message: {
@@ -170,7 +206,7 @@ exports.requestResetPassword = async (req, res, next) => {
       summary: 'Password Reset Request Sent!',
       detail: 'A reset link has been sent to your email account.'
     },
-    result: {},
+    result: response,
   });
 }
 
@@ -185,20 +221,39 @@ exports.requestResetPassword = async (req, res, next) => {
  */
 
 exports.resetPassword = async (req, res, next) => {
+  try {
 
-  // Explicitly save the session before returning
-  if (req.isAuthenticated()) {
+    // destructure reset token
+    const {userid, token} = req.params;
+
+    // find user by ID
+    const user = await User.findById(userid);
+
+    // check if user is a registered user
+    if (!user) return next(new Error('notFound'));
+
+    // check if token is valid
+    const isValid = await validateToken(userid, token);
+    if (!isValid) return next(new Error('passwordResetFailed'));
+
+    // reset password
+    const result = await User.resetPassword(req.body);
+
+    // delete token
+    await deleteToken(userid)
+
     res.status(200).json({
       message: {
         severity: 'success',
-        summary: 'Welcome',
-        detail: 'You are now signed in.'
+        summary: 'Success',
+        detail: 'Your password has been reset.'
       },
-      result: req.user,
+      result: !!result.id,
     });
   }
-  else {
-    next(new Error('noAuth'));
+  catch (e) {
+    console.error(e)
+    next(new Error('passwordResetFailed'));
   }
 }
 

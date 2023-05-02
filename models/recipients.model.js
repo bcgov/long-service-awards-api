@@ -140,7 +140,6 @@ const construct = (init) => {
     db: db.recipients,
   });
 };
-
 module.exports = {
   schema: schema,
   create: construct,
@@ -216,14 +215,19 @@ module.exports = {
   findByUser: async (user) => {
     return await db.defaults.findByField("user", user, schema);
   },
-  report: async (filter, user) => {
+  report: async (filter, user, currentCycle) => {
     // check if user is administrator (skip user-org filtering)
     const { role } = user || {};
     const isAdmin = ["super-administrator", "administrator"].includes(
       role.name
     );
     if (isAdmin) {
-      return await db.recipients.report(filter, ["created_at"], schema);
+      return await db.recipients.report(
+        filter,
+        ["created_at"],
+        currentCycle && currentCycle.name,
+        schema
+      );
     }
 
     // restrict available orgs to user assignment
@@ -250,6 +254,7 @@ module.exports = {
       return await db.recipients.report(
         filter,
         ["notes", "created_at"],
+        currentCycle && currentCycle.name,
         schema
       );
     }

@@ -108,7 +108,7 @@ module.exports =  {
         return construct(await db.users.insert(data));
     },
     resetPassword: async(data) => {
-        return construct(await db.users.insert(data));
+        return await db.users.resetPassword(data);
     },
     remove: async(id) => {
         return await db.defaults.removeByFields(['id'], [id], schema);

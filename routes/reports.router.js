@@ -14,6 +14,7 @@ const controller = require("../controllers/reports.controller");
  * Router endpoints
  */
 
+// DEBUG
 // router.get('/test', controller.test);
 
 router.get('/lsa', authorizeOrgContact, controller.lsa);

@@ -156,24 +156,35 @@ const recipientQueries = {
 
     // destructure filter for sort/order/offset/limit
     const {
-      orderby = null,
-      order = "ASC",
+      orderby = "last_name",
+      order = "DESC",
       offset = 0,
       limit = null,
     } = filter || {};
     // (optional) order by attribute
-    const orderClause =
-      order && orderby ? `ORDER BY recipients.${orderby} ${order}` : "";
+    let orderClause = "";
+    if (order && orderby) {
+      const table =
+        orderby === "first_name" || orderby === "last_name"
+          ? "contacts"
+          : "recipients";
+      orderClause = `ORDER BY ${table}.${orderby} ${order}`;
+    }
     const limitClause = limit ? `LIMIT ${limit}` : "";
 
     // get column filters
     const [filterStatements, filterValues] = getFilters(filter);
 
-    // get additional service filter
+    // get additional (inner join) service filter
+    const serviceFilters = [];
+    if (filter.hasOwnProperty("cycle"))
+      serviceFilters.push(`srv.cycle = ${filter.cycle}`);
+    if (filter.hasOwnProperty("milestones"))
+      serviceFilters.push(`srv.milestone IN (${filter.milestones})`);
+    if (filter.hasOwnProperty("confirmed"))
+      serviceFilters.push(`srv.confirmed = ${filter.confirmed}`);
     const serviceFilter =
-      filter.hasOwnProperty("cycle") && filter.hasOwnProperty("milestones")
-        ? `WHERE srv.milestone IN (${filter.milestones}) AND srv.cycle = ${filter.cycle} AND srv.confirmed = ${filter.confirmed}`
-        : `WHERE srv.confirmed = ${filter.confirmed}`;
+      serviceFilters.length > 0 ? `WHERE  ${serviceFilters.join(" AND ")}` : "";
 
     // get column selections
     const selections = Object.keys(schema.attributes)
@@ -183,12 +194,12 @@ const recipientQueries = {
 
     return {
       sql: `WITH rcps AS (
-                SELECT recipients.* FROM recipients
+                SELECT recipients.*, contacts.first_name as first_name, contacts.last_name as last_name FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements}
-                  GROUP BY recipients.id
+                  GROUP BY recipients.id, contacts.first_name, contacts.last_name
                                ${orderClause} ${limitClause}
                   OFFSET ${offset}
                   )
@@ -212,7 +223,6 @@ const recipientQueries = {
                       FROM "organizations" AS "o"
                       GROUP BY organization_id
                   ) AS "org" ON organization_id = "r"."organization"
-
                       -- Personal contact details
                            LEFT JOIN (
                       SELECT cp.id as contact_id,
@@ -251,7 +261,6 @@ const recipientQueries = {
                                LEFT JOIN "addresses" AS coa ON coa.id = cp."office_address"
                       GROUP BY contact_id, cpa.id, coa.id
                   ) AS "pcon" ON contact_id = "r"."contact"
-
                       -- Supervisor contact details
                            LEFT JOIN (
                       SELECT cs.id as supervisor_id,
@@ -318,7 +327,6 @@ const recipientQueries = {
                                -- Service Selection: award details
                                LEFT JOIN "award_selections" AS asel ON asel.id = srv."id"
                                LEFT JOIN "awards" AS awd ON awd.id = asel."award"
-
                           -- Service Selection: award option selections
                                LEFT JOIN (
                                   SELECT aoptsel.service as aopt_service_id, JSON_AGG(
@@ -354,6 +362,7 @@ const recipientQueries = {
                           -- ${serviceFilter}
                       GROUP BY recipient_id
                   ) AS "srvs" ON recipient_id = "r"."id"
+                  ORDER BY ${orderby} ${order}
             ;`,
       data: filterValues,
     };
@@ -501,7 +510,7 @@ const recipientQueries = {
     // apply update query
     return { sql: sql, data: filteredData };
   },
-  report: (filter, ignore = [], schema) => {
+  report: (filter, ignore = [], currentCycle, schema) => {
     /**
      * Generate query: Report recipients data
      *
@@ -515,11 +524,17 @@ const recipientQueries = {
     // get column filters
     const [filterStatements, filterValues] = getFilters(filter);
 
-    // get additional service filter
+    // get additional (inner join) service filter
+    const serviceFilters = [];
+    if (filter.hasOwnProperty("cycle"))
+      serviceFilters.push(`srv.cycle = ${filter.cycle}`);
+    if (filter.hasOwnProperty("milestones"))
+      serviceFilters.push(`srv.milestone IN (${filter.milestones})`);
+    if (filter.hasOwnProperty("confirmed"))
+      serviceFilters.push(`srv.confirmed = ${filter.confirmed}`);
+    if (currentCycle) serviceFilters.push(`srv.cycle = ${currentCycle}`);
     const serviceFilter =
-      filter.hasOwnProperty("cycle") && filter.hasOwnProperty("milestones")
-        ? `WHERE srv.milestone IN (${filter.milestones}) AND srv.cycle = ${filter.cycle} AND srv.confirmed = ${filter.confirmed}`
-        : `WHERE srv.confirmed = ${filter.confirmed}`;
+      serviceFilters.length > 0 ? `WHERE  ${serviceFilters.join(" AND ")}` : "";
 
     // get column selections
     const selections = Object.keys(schema.attributes)
@@ -530,27 +545,29 @@ const recipientQueries = {
     return {
       sql: `WITH rcps AS (
                 SELECT r.* FROM recipients as r
-                                    LEFT JOIN contacts ON contacts.id = r.contact
-                                    LEFT JOIN organizations ON organizations.id = r.organization
-                                    LEFT JOIN service_selections ON service_selections.recipient = r.id
+                        LEFT JOIN contacts ON contacts.id = r.contact
+                        LEFT JOIN organizations ON organizations.id = r.organization
+                        LEFT JOIN service_selections ON service_selections.recipient = r.id
                     ${filterStatements && " WHERE " + filterStatements}
                 GROUP BY r.id
             )
                   SELECT
                       ${selections},
-                      "org".*,
+                      "org".name AS organization_name,
+                      "org".abbreviation AS organization_abbreviation,
                       "pcon".*,
                       "scon".*,
+                      "retrosrvs".retroactive_milestones,
                       "srvs".*
                   FROM rcps AS "r"
                            -- Organization details
                            LEFT JOIN (
                       SELECT o.id as organization_id,
-                             concat_ws(', ', o.name, o.abbreviation) AS organization
+                             o.name, 
+                             o.abbreviation
                       FROM "organizations" AS "o"
-                      GROUP BY organization_id
+                      GROUP BY organization_id, o.name, o.abbreviation
                   ) AS "org" ON organization_id = "r"."organization"
-
                       -- Personal contact details
                            LEFT JOIN (
                       SELECT cp.id as contact_id,
@@ -573,12 +590,11 @@ const recipientQueries = {
                              coa.country AS office_address_country,
                              coa.postal_code AS office_address_postal_code
                       FROM "contacts" AS "cp"
-                               -- Contact: address details
-                               LEFT JOIN "addresses" AS "cpa" ON cpa.id = cp."personal_address"
-                               LEFT JOIN "addresses" AS coa ON coa.id = cp."office_address"
+                           -- Contact: address details
+                           LEFT JOIN "addresses" AS "cpa" ON cpa.id = cp."personal_address"
+                           LEFT JOIN "addresses" AS coa ON coa.id = cp."office_address"
                       GROUP BY contact_id, cpa.id, coa.id
                   ) AS "pcon" ON contact_id = "r"."contact"
-
                       -- Supervisor contact details
                            LEFT JOIN (
                       SELECT cs.id as supervisor_id,
@@ -600,7 +616,6 @@ const recipientQueries = {
                                LEFT JOIN "addresses" AS coa ON coa.id = cs."office_address"
                       GROUP BY supervisor_id, coa.id
                   ) AS "scon" ON supervisor_id = "r"."supervisor"
-
                       -- services details
                            LEFT JOIN (
                       SELECT srv.recipient AS recipient_id,
@@ -617,16 +632,31 @@ const recipientQueries = {
                              awd.short_code AS award_shortcode,
                              awd.label AS award_label,
                              string_agg(
-                                CASE WHEN awdopts.label IS NOT NULL THEN awdopts.label END, '; '
+                                CASE WHEN awdopts.type 
+                                    NOT IN ('engraving', 'certificate', 'pecsf-certificate', 'pecsf-charity') 
+                                    THEN awdopts.label END, '; '
                                  ) AS award_options,
                             string_agg(
-                                CASE WHEN awdopts.type IN ('engraving', 'pecsf-certificate', 'certificate') 
-                                    THEN concat_ws(': ', awdopts.label, awdoptsel.custom_value) END, '; '
+                                CASE WHEN awdopts.type IN ('engraving') THEN awdoptsel.custom_value END, '; '
                                 ) AS award_custom_engraving,
                              string_agg(
-                                CASE WHEN pecsf.label IS NOT NULL
-                                    THEN concat_ws(': ', pecsf.label, pecsf.region) END, '; '
-                                 ) AS pecsf_charities
+                                     CASE WHEN awdopts.type IN ('certificate') THEN awdoptsel.custom_value END, '; '
+                                 ) AS award_certificate_message,
+                             string_agg(
+                                     CASE WHEN awdopts.type IN ('pecsf-certificate') THEN awdoptsel.custom_value END, '; '
+                                 ) AS pecsf_certificate_message,
+                             string_agg(
+                                     CASE WHEN awdopts.name IN ('pecsf-charity-1') THEN pecsf.label END, '; '
+                                 ) AS pecsf_charity_1,
+                             string_agg(
+                                     CASE WHEN awdopts.name IN ('pecsf-charity-1') THEN pecsf.region END, '; '
+                                 ) AS pecsf_region_1,
+                             string_agg(
+                                     CASE WHEN awdopts.name IN ('pecsf-charity-2') THEN pecsf.label END, '; '
+                                 ) AS pecsf_charity_2,
+                             string_agg(
+                                     CASE WHEN awdopts.name IN ('pecsf-charity-2') THEN pecsf.region END, '; '
+                                 ) AS pecsf_region_2
                       FROM "service_selections" AS "srv"
                                -- Service Selection: award details
                                LEFT JOIN "award_selections" AS asel ON asel.id = srv."id"
@@ -637,6 +667,14 @@ const recipientQueries = {
                       ${serviceFilter}
                       GROUP BY srv.id, awd.id
                   ) AS "srvs" ON recipient_id = "r"."id"
+                    -- retroactive service pins details
+                    LEFT JOIN (
+                      SELECT retrosrv.recipient AS retro_recipient_id, 
+                             string_agg(retrosrv.milestone::varchar(255), ', ') AS retroactive_milestones
+                      FROM "service_selections" AS "retrosrv"
+                      WHERE retrosrv.cycle != ${currentCycle}
+                      GROUP BY retrosrv.recipient
+                    ) AS "retrosrvs" ON retro_recipient_id = "r"."id"
             ;`,
       data: filterValues,
     };
@@ -665,6 +703,15 @@ const recipientQueries = {
                      LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                      WHERE service_selections.milestone IN ( 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55)
                        AND service_selections.confirmed IS true;`,
+        data: [],
+      },
+      {
+        sql: `SELECT COUNT(*) as retroactive_service_pins_count FROM recipients
+                   LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                   WHERE service_selections.milestone IN ( 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55)
+                     AND service_selections.confirmed IS true
+                     AND service_selections.cycle < ${currentCycle}
+            ;`,
         data: [],
       },
       {
@@ -761,7 +808,6 @@ exports.updateAttendee = async (recipientID, attendeeID) => {
     recipientQueries.updateAttendee(recipientID, attendeeID),
   ]);
 };
-
 /**
  * Generate query: Report recipients data
  *
@@ -771,10 +817,12 @@ exports.updateAttendee = async (recipientID, attendeeID) => {
  * @public
  */
 
-exports.report = async (filter, ignore, schema) => {
+exports.report = async (filter, ignore, currentCycle, schema) => {
   // DEBUG SQL
-  // console.log(recipientQueries.report(filter, ignore, schema))
-  return await query(recipientQueries.report(filter, ignore, schema));
+  // console.log(recipientQueries.report(filter, ignore, currentCycle, schema))
+  return await query(
+    recipientQueries.report(filter, ignore, currentCycle, schema)
+  );
 };
 
 /**
@@ -789,7 +837,10 @@ exports.report = async (filter, ignore, schema) => {
 exports.delegate = async (data, user, cycle, schema) => {
   const { attachments = null } = schema || {};
   const { employees = [], supervisor = {} } = data || {};
+  const { office_address = {} } = supervisor || {};
   const q = [];
+
+  console.log(supervisor);
 
   // ensure supervisor contact info is not empty
   if (
@@ -818,6 +869,27 @@ exports.delegate = async (data, user, cycle, schema) => {
     const recipientID = uuid.v4();
     const contactID = uuid.v4();
     const supervisorID = uuid.v4();
+    const addressID = uuid.v4();
+
+    const addressModel =
+      attachments.supervisor.model.schema.attachments.office_address.model;
+
+    // save supervisor address info
+    q.push(
+      defaults.queries.upsert(
+        {
+          id: addressID,
+          pobox: office_address.pobox,
+          street1: office_address.street1,
+          street2: office_address.street2,
+          postal_code: office_address.postal_code,
+          community: office_address.community,
+          province: office_address.province,
+          country: office_address.country,
+        },
+        addressModel.schema
+      )
+    );
 
     // save recipient contact data
     q.push(
@@ -842,6 +914,26 @@ exports.delegate = async (data, user, cycle, schema) => {
           office_email: supervisor.office_email,
         },
         attachments.supervisor.model.schema
+      )
+    );
+
+    // save contact office address data
+    q.push(
+      defaults.queries.updateAttachment(
+        contactID,
+        addressID,
+        "office_address",
+        attachments.contact.model.schema
+      )
+    );
+
+    // save supervisor address data
+    q.push(
+      defaults.queries.updateAttachment(
+        supervisorID,
+        addressID,
+        "office_address",
+        attachments.contact.model.schema
       )
     );
 
@@ -927,7 +1019,7 @@ exports.delegate = async (data, user, cycle, schema) => {
  */
 
 exports.count = async (filter, user, schema) => {
-  console.log(recipientQueries.count(filter, schema));
+  // console.log(recipientQueries.count(filter, schema))
   return await queryOne(recipientQueries.count(filter, schema));
 };
 

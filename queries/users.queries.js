@@ -151,16 +151,17 @@ exports.resetPassword = async (data) => {
 
     const {id, password} = data || {};
 
-    // update user record
-    let queries = [{
+    // encrypt password
+    const encryptedPassword = await bcrypt.hash(password, 5);
+
+    // update user record with new password
+    return await queryOne({
         sql: `
                 UPDATE users
                 SET password=$2::varchar
                 WHERE id = $1::uuid
                 RETURNING *;
             `,
-        data: [id, password],
-    }
-    ];
-    return await transaction(queries);
+        data: [id, encryptedPassword]
+    });
 }

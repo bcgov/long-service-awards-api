@@ -156,6 +156,12 @@ const errors = {
     status: 422,
     type: 'error'
   },
+  passwordResetFailed: {
+    hint: 'User could not reset their password.',
+    msg: 'Password reset failed.',
+    status: 422,
+    type: 'error'
+  },
   alreadySubmitted: {
     hint: 'Registration has submitted status.',
     msg: 'Cannot update a submitted registration.',
