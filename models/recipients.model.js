@@ -215,6 +215,10 @@ module.exports = {
   findByUser: async (user) => {
     return await db.defaults.findByField("user", user, schema);
   },
+  findAttachment: async(parentID, parentField, parentSchema) => {
+    // look up addresses for requested reference and type
+    return construct(await db.defaults.findAttachment(parentID, parentField, parentSchema, schema));
+},
   report: async (filter, user, currentCycle) => {
     // check if user is administrator (skip user-org filtering)
     const { role } = user || {};
