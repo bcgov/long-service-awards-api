@@ -756,6 +756,12 @@ exports.updateContact = async (recipientID, contactID) => {
   ]);
 };
 
+exports.updateAttendee = async (recipientID, attendeeID) => {
+  return await transactionOne([
+    recipientQueries.updateAttendee(recipientID, attendeeID),
+  ]);
+};
+
 /**
  * Generate query: Report recipients data
  *
