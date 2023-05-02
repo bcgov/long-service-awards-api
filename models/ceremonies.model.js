@@ -92,7 +92,7 @@ module.exports = {
     );
   },
   findById: async (id) => {
-    return await db.defaults.findById(id, schema);
+    return construct(await db.defaults.findById(id, schema));
   },
   findOneByField: async (field, value) => {
     return await db.defaults.findOneByField(field, value, schema);
