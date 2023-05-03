@@ -212,6 +212,9 @@ module.exports = {
   findByGUID: async (guid) => {
     return construct(await db.defaults.findOneByField("guid", guid, schema));
   },
+  findByAttendee: async (id) => {
+    return construct(await db.defaults.findOneByField("id", id, schema));
+  },
   findByUser: async (user) => {
     return await db.defaults.findByField("user", user, schema);
   },
