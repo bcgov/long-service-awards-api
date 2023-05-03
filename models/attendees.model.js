@@ -23,15 +23,6 @@ const schema = {
   attributes: {
     id: {
       dataType: "uuid",
-      required: true,
-    },
-    recipient: {
-      dataType: "uuid",
-      editable: false,
-      required: true,
-    },
-    ceremony: {
-      dataType: "uuid",
       editable: false,
       required: true,
     },
@@ -39,7 +30,7 @@ const schema = {
       dataType: "varchar",
     },
     guest: {
-      dataType: "boolean",
+      dataType: "integer",
     },
     created_at: {
       dataType: "timestamp",
@@ -47,16 +38,16 @@ const schema = {
     updated_at: {
       dataType: "timestamp",
     },
-    attachments: {
-      recipient: {
-        model: Recipient,
-        required: true,
-        get: async (id) => {
-          return await Recipient.findByAttendee(id, schema);
-        },
-        attach: async (attendee, recipient) => {
-          await Recipient.attach(attendee, recipient, "recipient");
-        },
+  },
+  attachments: {
+    recipient: {
+      model: Recipient,
+      required: true,
+      get: async (id) => {
+        return await Recipient.findAttachment(id, "recipient", schema);
+      },
+      attach: async (attendee, recipient) => {
+        await Recipient.attach(attendee, recipient, "recipient");
       },
     },
   },
