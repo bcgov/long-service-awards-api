@@ -212,16 +212,20 @@ module.exports = {
   findByGUID: async (guid) => {
     return construct(await db.defaults.findOneByField("guid", guid, schema));
   },
-  findByAttendee: async (id) => {
-    return construct(await db.defaults.findOneByField("id", id, schema));
-  },
   findByUser: async (user) => {
     return await db.defaults.findByField("user", user, schema);
   },
-  findAttachment: async(parentID, parentField, parentSchema) => {
+  findAttachment: async (parentID, parentField, parentSchema) => {
     // look up addresses for requested reference and type
-    return construct(await db.defaults.findAttachment(parentID, parentField, parentSchema, schema));
-},
+    return construct(
+      await db.defaults.findAttachment(
+        parentID,
+        parentField,
+        parentSchema,
+        schema
+      )
+    );
+  },
   report: async (filter, user, currentCycle) => {
     // check if user is administrator (skip user-org filtering)
     const { role } = user || {};

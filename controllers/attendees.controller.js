@@ -6,6 +6,7 @@
  */
 
 const attendeesModel = require("../models/attendees.model.js");
+const uuid = require("uuid");
 
 /**
  * Retrieve all records.
@@ -80,8 +81,30 @@ exports.getByCeremony = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const data = req.body || {};
-    const results = await attendeesModel.create(data);
-    res.status(200).json(results);
+    const attendees = [];
+    // console.log(data);
+    data.recipients.forEach(async (r) => {
+      const id = uuid.v4();
+      await attendeesModel.create({
+        id: id,
+        recipient: r.id,
+        ceremony: data.ceremony,
+      });
+      // const attendee = await attendeesModel.findById(id);
+      // console.log(attendee);
+      // attendees.push(attendee);
+    });
+
+    // if (attendees != undefined) {
+    //   res.status(200).json({
+    //     message: {
+    //       severity: "success",
+    //       summary: "Add Attendee",
+    //       detail: "New Attendee record created.",
+    //     },
+    //     result: attendees,
+    //   });
+    // }
   } catch (err) {
     return next(err);
   }

@@ -8,6 +8,8 @@
 const db = require("../queries/index.queries");
 const { ModelConstructor } = require("./constructor.model");
 const Recipient = require("./recipients.model");
+const Contact = require("./contacts.model");
+const Ceremony = require("./ceremonies.model");
 
 ("use strict");
 
@@ -22,6 +24,16 @@ const schema = {
   modelName: "attendees",
   attributes: {
     id: {
+      dataType: "uuid",
+      editable: false,
+      required: true,
+    },
+    ceremony: {
+      dataType: "uuid",
+      editable: false,
+      required: true,
+    },
+    recipient: {
       dataType: "uuid",
       editable: false,
       required: true,
@@ -44,7 +56,14 @@ const schema = {
       model: Recipient,
       required: true,
       get: async (id) => {
-        return await Recipient.findAttachment(id, "recipient", schema);
+        const recipient = await Recipient.findAttachment(
+          id,
+          "recipient",
+          schema
+        );
+        const contact = await Contact.findByRecipient(recipient.id, "contact");
+        const data = { ...recipient.data, contact: { ...contact.data } };
+        return { data };
       },
       attach: async (attendee, recipient) => {
         await Recipient.attach(attendee, recipient, "recipient");
@@ -66,13 +85,14 @@ const construct = (init, attach) => {
   return ModelConstructor({
     init: init,
     schema: schema,
-    db: db.defaults,
+    db: db.attendees,
     attach: attach,
   });
 };
 
 module.exports = {
   schema: schema,
+  // create: construct,
   attach: async (attendee, recipient, type) => {
     if (!attendee || !recipient || !type) return null;
 
@@ -101,8 +121,16 @@ module.exports = {
     await db.defaults.findByField("ceremony", ceremony_id, schema);
   },
   create: async (data) => {
-    await db.defaults.insert(data, schema);
+    // validate model init data
+    const item = construct(data, schema);
+    console.log(data);
+    console.log(item);
+    if (item)
+      return construct(await db.attendees.insert(item.data, schema, ["id"]));
   },
+  // create: async (data) => {
+  //   return construct(await db.attendees.insert(data));
+  // },
   update: async (data) => {
     await db.defaults.update(data, schema);
   },
