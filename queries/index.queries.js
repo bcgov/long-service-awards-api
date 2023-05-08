@@ -14,6 +14,7 @@
 
 const defaults = require('./default.queries.js');
 const ceremonies = require('./ceremonies.queries.js');
+const attendees = require('./attendees.queries.js');
 const awards = require('./awards.queries.js');
 const users = require('./users.queries.js');
 const recipients = require('./recipients.queries.js');
@@ -37,6 +38,7 @@ module.exports = {
     users,
     recipients,
     ceremonies,
+    attendees,
     awards,
     organizations,
     settings,

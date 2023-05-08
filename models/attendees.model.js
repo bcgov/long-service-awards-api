@@ -28,16 +28,6 @@ const schema = {
       editable: false,
       required: true,
     },
-    ceremony: {
-      dataType: "uuid",
-      editable: false,
-      required: true,
-    },
-    recipient: {
-      dataType: "uuid",
-      editable: false,
-      required: true,
-    },
     status: {
       dataType: "varchar",
     },
@@ -69,6 +59,21 @@ const schema = {
         await Recipient.attach(attendee, recipient, "recipient");
       },
     },
+    ceremony: {
+      model: Ceremony,
+      required: true,
+      get: async (id) => {
+        const ceremony = await Ceremony.findAttachment(
+          id,
+          "ceremony",
+          schema
+        );
+        return ceremony.data;
+      },
+      attach: async (attendee, ceremony) => {
+        await Ceremony.attach(attendee, ceremony, "recipient");
+      },
+    },
   },
 };
 
@@ -81,11 +86,11 @@ const schema = {
  * @public
  */
 
-const construct = (init, attach) => {
+const construct = (init, attach = null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
-    db: db.attendees,
+    db: db.defaults,
     attach: attach,
   });
 };
@@ -107,7 +112,7 @@ module.exports = {
     if (!isEmpty(attendee.data, ["id"])) {
       await defaults.transact([
         defaults.queries.upsert(attendee.data, schema),
-        db.recipients.queries.updateAttendee(recipient.id, attendee.id, type),
+        //db.recipients.queries.updateAttendee(recipient.id, attendee.id, type),
       ]);
     }
   },
@@ -120,13 +125,28 @@ module.exports = {
   findByCeremony: async (ceremony_id) => {
     await db.defaults.findByField("ceremony", ceremony_id, schema);
   },
+  findAttachment: async (parentID, parentField, parentSchema) => {
+    // look up addresses for requested reference and type
+    return construct(
+      await db.defaults.findAttachment(
+        parentID,
+        parentField,
+        parentSchema,
+        schema
+      )
+    );
+  },
   create: async (data) => {
     // validate model init data
+    data.status = "Assigned";
+    const result = await db.attendees.insert(data);
+    const item2 = construct(await result);
+    return item2;
     const item = construct(data, schema);
     console.log(data);
     console.log(item);
     if (item)
-      return construct(await db.attendees.insert(item.data, schema, ["id"]));
+      return construct(await db.attendees.insert(data, schema, ["id"]));
   },
   // create: async (data) => {
   //   return construct(await db.attendees.insert(data));

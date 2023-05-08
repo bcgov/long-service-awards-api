@@ -97,6 +97,17 @@ module.exports = {
   findOneByField: async (field, value) => {
     return await db.defaults.findOneByField(field, value, schema);
   },
+  findAttachment: async (parentID, parentField, parentSchema) => {
+    // look up addresses for requested reference and type
+    return construct(
+      await db.defaults.findAttachment(
+        parentID,
+        parentField,
+        parentSchema,
+        schema
+      )
+    );
+  },
   create: async (data) => {
     // validate model init data
     const item = construct(data, schema);
