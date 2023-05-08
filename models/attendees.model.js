@@ -28,16 +28,6 @@ const schema = {
       editable: false,
       required: true,
     },
-    ceremony: {
-      dataType: "uuid",
-      editable: false,
-      required: true,
-    },
-    recipient: {
-      dataType: "uuid",
-      editable: false,
-      required: true,
-    },
     status: {
       dataType: "varchar",
     },
@@ -69,6 +59,20 @@ const schema = {
         await Recipient.attach(attendee, recipient, "recipient");
       },
     },
+    ceremony: {
+      model: Ceremony,
+      required: true,
+      get: async (id) => {
+        // const recipient = await Ceremony.findAttachment(id, "ceremony", schema);
+        // const contact = await Contact.findByRecipient(recipient.id, "contact");
+        // const data = { ...recipient.data, contact: { ...contact.data } };
+        // return { data };
+        return await Ceremony.findAttachment(id, "ceremony", schema);
+      },
+      // attach: async (attendee, recipient) => {
+      //   await Ceremony.attach(attendee, recipient, "recipient");
+      // },
+    },
   },
 };
 
@@ -85,14 +89,14 @@ const construct = (init, attach) => {
   return ModelConstructor({
     init: init,
     schema: schema,
-    db: db.attendees,
+    db: db.defaults,
     attach: attach,
   });
 };
 
 module.exports = {
-  schema: schema,
-  // create: construct,
+  // schema: schema,
+  create: construct,
   attach: async (attendee, recipient, type) => {
     if (!attendee || !recipient || !type) return null;
 
@@ -120,11 +124,12 @@ module.exports = {
   findByCeremony: async (ceremony_id) => {
     await db.defaults.findByField("ceremony", ceremony_id, schema);
   },
+
   create: async (data) => {
     // validate model init data
     const item = construct(data, schema);
-    console.log(data);
-    console.log(item);
+    // console.log(data);
+    // console.log(item);
     if (item)
       return construct(await db.attendees.insert(item.data, schema, ["id"]));
   },
