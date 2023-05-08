@@ -63,15 +63,12 @@ const schema = {
       model: Ceremony,
       required: true,
       get: async (id) => {
-        // const recipient = await Ceremony.findAttachment(id, "ceremony", schema);
-        // const contact = await Contact.findByRecipient(recipient.id, "contact");
-        // const data = { ...recipient.data, contact: { ...contact.data } };
-        // return { data };
-        return await Ceremony.findAttachment(id, "ceremony", schema);
+        const ceremony = await Ceremony.findAttachment(id, "ceremony", schema);
+        return ceremony;
       },
-      // attach: async (attendee, recipient) => {
-      //   await Ceremony.attach(attendee, recipient, "recipient");
-      // },
+      attach: async (attendee, ceremony) => {
+        await Ceremony.attach(attendee, ceremony, "recipient");
+      },
     },
   },
 };
@@ -85,7 +82,7 @@ const schema = {
  * @public
  */
 
-const construct = (init, attach) => {
+const construct = (init, attach = null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
@@ -95,8 +92,8 @@ const construct = (init, attach) => {
 };
 
 module.exports = {
-  // schema: schema,
-  create: construct,
+  schema: schema,
+  // create: construct,
   attach: async (attendee, recipient, type) => {
     if (!attendee || !recipient || !type) return null;
 
@@ -111,7 +108,7 @@ module.exports = {
     if (!isEmpty(attendee.data, ["id"])) {
       await defaults.transact([
         defaults.queries.upsert(attendee.data, schema),
-        db.recipients.queries.updateAttendee(recipient.id, attendee.id, type),
+        //db.recipients.queries.updateAttendee(recipient.id, attendee.id, type),
       ]);
     }
   },
@@ -119,25 +116,39 @@ module.exports = {
     return await db.defaults.findAll(filter, schema);
   },
   findById: async (id) => {
-    await db.defaults.findById(id, schema);
+    return construct(await db.defaults.findById(id, schema));
   },
   findByCeremony: async (ceremony_id) => {
     await db.defaults.findByField("ceremony", ceremony_id, schema);
   },
-
-  create: async (data) => {
-    // validate model init data
-    const item = construct(data, schema);
-    // console.log(data);
-    // console.log(item);
-    if (item)
-      return construct(await db.attendees.insert(item.data, schema, ["id"]));
+  findAttachment: async (parentID, parentField, parentSchema) => {
+    // look up addresses for requested reference and type
+    return construct(
+      await db.defaults.findAttachment(
+        parentID,
+        parentField,
+        parentSchema,
+        schema
+      )
+    );
   },
   // create: async (data) => {
-  //   return construct(await db.attendees.insert(data));
+  //   // validate model init data
+  //   data.status = "Assigned";
+  //   const result = await db.attendees.insert(data);
+  //   const item2 = construct(await result);
+  //   return item2;
+  //   const item = construct(data, schema);
+  //   // console.log(data);
+  //   // console.log(item);
+  //   if (item) return construct(await db.attendees.insert(data, schema, ["id"]));
   // },
+  create: async (data) => {
+    data.status = "Assigned";
+    return construct(await db.attendees.insert(data));
+  },
   update: async (data) => {
-    await db.defaults.update(data, schema);
+    return construct(await db.defaults.update(data, schema));
   },
   remove: async (id) => {
     await db.defaults.remove(id, schema);

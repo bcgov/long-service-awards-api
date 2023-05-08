@@ -82,7 +82,7 @@ exports.create = async (req, res, next) => {
   try {
     const data = req.body || {};
     const attendees = [];
-    // console.log(data);
+
     data.recipients.forEach(async (r) => {
       const id = uuid.v4();
       await attendeesModel.create({
@@ -90,21 +90,21 @@ exports.create = async (req, res, next) => {
         recipient: r.id,
         ceremony: data.ceremony,
       });
-      // const attendee = await attendeesModel.findById(id);
-      // console.log(attendee);
-      // attendees.push(attendee);
+      const attendee = await attendeesModel.findById(id);
+      console.log(`ATTENDEE : ${attendee}`);
+      attendees.push(attendee);
     });
 
-    // if (attendees != undefined) {
-    //   res.status(200).json({
-    //     message: {
-    //       severity: "success",
-    //       summary: "Add Attendee",
-    //       detail: "New Attendee record created.",
-    //     },
-    //     result: attendees,
-    //   });
-    // }
+    if (attendees != undefined) {
+      res.status(200).json({
+        message: {
+          severity: "success",
+          summary: "Add Attendee(s)",
+          detail: "New Attendee(s) record created.",
+        },
+        result: attendees,
+      });
+    }
   } catch (err) {
     return next(err);
   }
@@ -125,6 +125,7 @@ exports.update = async (req, res, next) => {
     const results = await attendeesModel.update(data);
     res.status(200).json(results);
   } catch (err) {
+    console.log(`ERR : ${err}`);
     return next(err);
   }
 };

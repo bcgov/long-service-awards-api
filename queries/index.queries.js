@@ -14,10 +14,10 @@
 
 const defaults = require("./default.queries.js");
 const ceremonies = require("./ceremonies.queries.js");
+const attendees = require("./attendees.queries.js");
 const awards = require("./awards.queries.js");
 const users = require("./users.queries.js");
 const recipients = require("./recipients.queries.js");
-const attendees = require("./attendees.queries.js");
 const organizations = require("./organizations.queries");
 const settings = require("./settings.queries");
 const { ModelConstructor } = require("../models/constructor.model");

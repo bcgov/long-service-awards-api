@@ -98,6 +98,7 @@ module.exports = {
     return await db.defaults.findOneByField(field, value, schema);
   },
   findAttachment: async (parentID, parentField, parentSchema) => {
+    // look up addresses for requested reference and type
     return construct(
       await db.defaults.findAttachment(
         parentID,
