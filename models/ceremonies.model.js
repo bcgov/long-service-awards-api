@@ -78,7 +78,7 @@ const construct = (init) => {
 
 module.exports = {
   schema: schema,
-  construct: construct,
+  create: construct,
   findAll: async (filter) => {
     // returns multiple
     return await db.defaults.findAll(filter, schema);
@@ -108,7 +108,7 @@ module.exports = {
       )
     );
   },
-  create: async (data) => {
+  register: async (data) => {
     // validate model init data
     const item = construct(data, schema);
     if (item)
