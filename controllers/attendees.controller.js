@@ -5,7 +5,7 @@
  * MIT Licensed
  */
 
-const attendeesModel = require("../models/attendees.model.js");
+const Attendees = require("../models/attendees.model.js");
 const uuid = require("uuid");
 
 /**
@@ -20,12 +20,32 @@ const uuid = require("uuid");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await attendeesModel.findAll();
+    const results = await Attendees.findAll();
     return res.status(200).json(results);
   } catch (err) {
     console.error(err);
     return next(err);
   }
+  // try {
+  //   // apply query filter to results
+  //   const attendees = await Attendees.findAll(req.query, res.locals.user);
+  //   const { total_filtered_records } = await Attendees.count(
+  //     req.query,
+  //     res.locals.user
+  //   );
+
+  //   // send response
+  //   res.status(200).json({
+  //     message: {
+  //       severity: "success",
+  //       summary: "Attendees Record(s) Found",
+  //       detail: "Attendees records found.",
+  //     },
+  //     result: { attendees, total_filtered_records },
+  //   });
+  // } catch (err) {
+  //   return next(err);
+  // }
 };
 
 /**
@@ -41,7 +61,7 @@ exports.getAll = async (req, res, next) => {
 exports.get = async (req, res, next) => {
   try {
     const { id } = req.params || {};
-    const results = await attendeesModel.findById(id);
+    const results = await Attendees.findById(id);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
@@ -61,7 +81,7 @@ exports.get = async (req, res, next) => {
 exports.getByCeremony = async (req, res, next) => {
   try {
     const { id } = req.params || {};
-    const results = await attendeesModel.findByCeremony(id);
+    const results = await Attendees.findByCeremony(id);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
@@ -85,12 +105,12 @@ exports.create = async (req, res, next) => {
 
     data.recipients.forEach(async (r) => {
       const id = uuid.v4();
-      await attendeesModel.create({
+      await Attendees.create({
         id: id,
         recipient: r.id,
         ceremony: data.ceremony,
       });
-      const attendee = await attendeesModel.findById(id);
+      const attendee = await Attendees.findById(id);
       console.log(`ATTENDEE : ${attendee}`);
       attendees.push(attendee);
     });
@@ -122,7 +142,7 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const data = req.body;
-    const results = await attendeesModel.update(data);
+    const results = await Attendees.update(data);
     res.status(200).json(results);
   } catch (err) {
     console.log(`ERR : ${err}`);
@@ -142,7 +162,7 @@ exports.update = async (req, res, next) => {
 exports.getRSVP = async (req, res, next) => {
   try {
     const data = req.body;
-    const results = await attendeesModel.update(data);
+    const results = await Attendees.update(data);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
@@ -161,7 +181,7 @@ exports.getRSVP = async (req, res, next) => {
 exports.setRSVP = async (req, res, next) => {
   try {
     const data = req.body;
-    const results = await attendeesModel.update(data);
+    const results = await Attendees.update(data);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
@@ -180,7 +200,7 @@ exports.setRSVP = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const results = await attendeesModel.remove(id);
+    const results = await Attendees.remove(id);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
@@ -198,7 +218,7 @@ exports.remove = async (req, res, next) => {
 
 exports.removeAll = async (req, res, next) => {
   try {
-    const results = await attendeesModel.removeAll();
+    const results = await Attendees.removeAll();
     res.status(200).json(results);
   } catch (err) {
     return next(err);

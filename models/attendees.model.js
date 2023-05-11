@@ -10,6 +10,7 @@ const { ModelConstructor } = require("./constructor.model");
 const Recipient = require("./recipients.model");
 const Contact = require("./contacts.model");
 const Ceremony = require("./ceremonies.model");
+const organizationsModel = require("./organizations.model");
 
 ("use strict");
 
@@ -86,7 +87,7 @@ const construct = (init, attach = null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
-    db: db.defaults,
+    db: db.attendees,
     attach: attach,
   });
 };
@@ -116,7 +117,7 @@ module.exports = {
     return await db.defaults.findAll(filter, schema);
   },
   findById: async (id) => {
-    return construct(await db.defaults.findById(id, schema));
+    return await db.defaults.findById(id, schema);
   },
   findByCeremony: async (ceremony_id) => {
     await db.defaults.findByField("ceremony", ceremony_id, schema);
