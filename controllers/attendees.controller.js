@@ -107,11 +107,10 @@ exports.create = async (req, res, next) => {
       const id = uuid.v4();
       await Attendees.create({
         id: id,
-        recipient: r.id,
+        recipient: r,
         ceremony: data.ceremony,
       });
       const attendee = await Attendees.findById(id);
-      console.log(`ATTENDEE : ${attendee}`);
       attendees.push(attendee);
     });
 

@@ -22,6 +22,7 @@ const defaults = require("./default.queries");
 
 const attendeesQueries = {
   insert: (data) => {
+    console.log("HERE", data);
     // destructure user stub data
     const {
       id = null,
