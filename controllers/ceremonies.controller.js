@@ -23,11 +23,11 @@ exports.getAll = async (req, res, next) => {
     const ceremonies = await ceremoniesModel.findAll();
     return res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Ceremony Record(s) Found',
-        detail: 'Ceremony records found.'
+        severity: "success",
+        summary: "Ceremony Record(s) Found",
+        detail: "Ceremony records found.",
       },
-      result: {ceremonies}
+      result: { ceremonies },
     });
   } catch (err) {
     console.error(err);
@@ -47,7 +47,7 @@ exports.getAll = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const {id} = req.params || {};
+    const { id } = req.params || {};
     const ceremony = await ceremoniesModel.findById(id);
     res.status(200).json({
       message: {},
@@ -76,15 +76,14 @@ exports.create = async (req, res, next) => {
       id: guid,
     });
     const ceremony = await ceremoniesModel.findById(guid);
-    if (ceremony != undefined)
-    {
+    if (ceremony != undefined) {
       res.status(200).json({
-        message: { 
-          severity: 'success', 
-          summary: 'Add Ceremony', 
-          detail: 'New ceremony record created.'
+        message: {
+          severity: "success",
+          summary: "Add Ceremony",
+          detail: "New ceremony record created.",
         },
-        result: ceremony.data
+        result: ceremony.data,
       });
     }
   } catch (err) {
@@ -108,13 +107,13 @@ exports.update = async (req, res, next) => {
     const ceremony = await ceremoniesModel.findById(data.id);
 
     // handle exception
-    if (!ceremony) return next(Error('noRecord'));
+    if (!ceremony) return next(Error("noRecord"));
     await ceremony.save(data);
 
     res.status(200).json({
       message: {},
-      result: ceremony.data
-    });  
+      result: ceremony.data,
+    });
   } catch (err) {
     return next(err);
   }

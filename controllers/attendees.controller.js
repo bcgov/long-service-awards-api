@@ -62,7 +62,7 @@ exports.get = async (req, res, next) => {
   try {
     const { id } = req.params || {};
     const results = await Attendees.findById(id);
-    res.status(200).json(results);
+    res.status(200).json(results.data);
   } catch (err) {
     return next(err);
   }
@@ -140,12 +140,27 @@ exports.create = async (req, res, next) => {
  */
 
 exports.update = async (req, res, next) => {
+  // try {
+  //   const data = req.body;
+  //   const results = await Attendees.update(data);
+  //   res.status(200).json(results);
+  // } catch (err) {
+  //   console.log(`ERR : ${err}`);
+  //   return next(err);
+  // }
   try {
     const data = req.body;
-    const results = await Attendees.update(data);
-    res.status(200).json(results);
+    const attendee = await Attendees.findById(data.id);
+
+    // handle exception
+    if (!attendee) return next(Error("noRecord"));
+    await attendee.save(data);
+
+    res.status(200).json({
+      message: {},
+      result: attendee.data,
+    });
   } catch (err) {
-    console.log(`ERR : ${err}`);
     return next(err);
   }
 };

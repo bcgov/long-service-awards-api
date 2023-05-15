@@ -132,7 +132,7 @@ module.exports = {
     return await db.defaults.findAll(filter, schema);
   },
   findById: async (id) => {
-    return await db.defaults.findById(id, schema);
+    return construct(await db.defaults.findById(id, schema));
   },
   findByCeremony: async (ceremony_id) => {
     await db.defaults.findByField("ceremony", ceremony_id, schema);
@@ -164,7 +164,7 @@ module.exports = {
     return construct(await db.attendees.insert(data));
   },
   update: async (data) => {
-    return construct(await db.defaults.update(data, schema));
+    // return construct(await db.defaults.update(data, schema));
   },
   remove: async (id) => {
     await db.defaults.remove(id, schema);
