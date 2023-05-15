@@ -22,7 +22,6 @@ const defaults = require("./default.queries");
 
 const attendeesQueries = {
   insert: (data) => {
-    console.log("HERE", data);
     // destructure user stub data
     const {
       id = null,
@@ -31,17 +30,19 @@ const attendeesQueries = {
       guest = 0,
       status = null,
     } = data || {};
+
     return {
-      sql: `INSERT INTO attendees (id, recipient, ceremony, guest, status)
-                  VALUES (
-                             $1::uuid,
-                             $2::uuid,
-                             $3::uuid,
-                             $4::integer,
-                             $5::varchar
-                         )
-                  ON CONFLICT DO NOTHING
-                  RETURNING *;`,
+      sql: `WITH upsert AS (
+            UPDATE attendees
+            SET ceremony = $3::uuid
+            WHERE attendees.recipient = $2::uuid
+            RETURNING *
+            )
+            INSERT INTO attendees (id, recipient, ceremony, guest, status) 
+            SELECT $1::uuid,$2::uuid,$3::uuid,$4::integer,$5::varchar
+            WHERE NOT EXISTS (SELECT * FROM upsert)
+            ON CONFLICT DO NOTHING
+            RETURNING *;`,
       data: [id, recipient, ceremony, guest, status],
     };
   },
