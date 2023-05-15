@@ -111,6 +111,7 @@ exports.create = async (req, res, next) => {
         ceremony: data.ceremony,
       });
       const attendee = await Attendees.findById(id);
+      console.log(`ATTENDEE : ${attendee}`);
       attendees.push(attendee);
     });
 

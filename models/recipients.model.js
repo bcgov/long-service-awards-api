@@ -215,6 +215,11 @@ module.exports = {
   findByUser: async (user) => {
     return await db.defaults.findByField("user", user, schema);
   },
+  findByAttendee: async (id, type) => {
+    // look up existing recipient contact/supervisor info
+    return construct(await db.attendees.findRecipient(id, type, schema));
+  },
+
   findAttachment: async (parentID, parentField, parentSchema) => {
     // look up addresses for requested reference and type
     return construct(

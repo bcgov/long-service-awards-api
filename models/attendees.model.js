@@ -47,13 +47,28 @@ const schema = {
       model: Recipient,
       required: true,
       get: async (id) => {
+        // return await Recipient.findByAttendee(id, "recipient");
+        // const recipient = await Recipient.findAttachment(
+        //   id,
+        //   "recipient",
+        //   schema
+        // );
+        // return recipient;
+
         const recipient = await Recipient.findAttachment(
           id,
           "recipient",
           schema
         );
         const contact = await Contact.findByRecipient(recipient.id, "contact");
-        const data = { ...recipient.data, contact: { ...contact.data } };
+        const organization = await organizationsModel.findById(
+          recipient.data.organization
+        );
+        const data = {
+          ...recipient.data,
+          contact: { ...contact.data },
+          organization: { ...organization.data },
+        };
         return { data };
       },
       attach: async (attendee, recipient) => {

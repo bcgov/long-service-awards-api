@@ -45,6 +45,14 @@ const attendeesQueries = {
       data: [id, recipient, ceremony, guest, status],
     };
   },
+  findRecipient: (id) => {
+    return {
+      sql: `SELECT recipients.* FROM recipients
+                  JOIN attendees ON recipients.id = ${id}
+                  WHERE attendees.id = $1::uuid;`,
+      data: [id],
+    };
+  },
 };
 exports.queries = attendeesQueries;
 
@@ -60,4 +68,9 @@ exports.insert = async (data) => {
   // generate UUID for recipient
   data.id = uuid.v4();
   return await transactionOne([attendeesQueries.insert(data)]);
+};
+
+exports.findRecipient = async (id, type, schema) => {
+  const result = await queryOne(attendeesQueries.findRecipient(id, type));
+  return await attachReferences(result, schema);
 };

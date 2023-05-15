@@ -72,7 +72,7 @@ exports.create = async (req, res, next) => {
   try {
     const guid = uuid.v4();
     const data = req.body || {};
-    await ceremoniesModel.create({
+    await ceremoniesModel.register({
       id: guid,
     });
     const ceremony = await ceremoniesModel.findById(guid);
