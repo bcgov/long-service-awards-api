@@ -160,6 +160,7 @@ module.exports = {
   //   if (item) return construct(await db.attendees.insert(data, schema, ["id"]));
   // },
   create: async (data) => {
+    console.log(`ATTENDEE : ${JSON.stringify(data)}`);
     data.status = "Assigned";
     return construct(await db.attendees.insert(data));
   },
