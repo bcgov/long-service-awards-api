@@ -29,11 +29,11 @@ const schema = {
       editable: false,
       required: true,
     },
-    status: {
-      dataType: "varchar",
-    },
     guest: {
       dataType: "integer",
+    },
+    status: {
+      dataType: "varchar",
     },
     created_at: {
       dataType: "timestamp",
@@ -164,7 +164,7 @@ module.exports = {
     return construct(await db.attendees.insert(data));
   },
   update: async (data) => {
-    // return construct(await db.defaults.update(data, schema));
+    return construct(await db.attendees.update(data));
   },
   remove: async (id) => {
     await db.defaults.remove(id, schema);

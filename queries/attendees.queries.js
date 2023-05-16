@@ -103,6 +103,24 @@ const attendeesQueries = {
       data: [id],
     };
   },
+  update: data => {
+    // destructure user stub data
+    const {
+      id = null,
+      recipient = null,
+      ceremony = null,
+      guest = 0,
+      status = null,
+    } = data || {};
+
+    return {
+      sql: `UPDATE attendees
+            SET ceremony = $2::uuid, guest = $3::integer, status = $4::varchar
+            WHERE attendees.recipient = $1::uuid
+            RETURNING *;`,
+      data: [recipient.id, ceremony.id, guest, status],
+    };    
+  }
 };
 exports.queries = attendeesQueries;
 
@@ -129,6 +147,9 @@ exports.findRecipient = async (id, type, schema) => {
   return await attachReferences(result, schema);
 };
 
+exports.update = async (data) => {
+  return await transactionOne([attendeesQueries.update(data)]);
+};
 /**
  * Default transactions
  * @public
