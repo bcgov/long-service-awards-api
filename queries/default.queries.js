@@ -384,6 +384,7 @@ exports.findById = async (id, schema, sort) => {
         ;`,
     data: [id],
   });
+
   // attach linked records to results
   return await attachReferences(result, schema);
 };
