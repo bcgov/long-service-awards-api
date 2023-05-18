@@ -5,9 +5,12 @@
  * MIT Licensed
  */
 
+const defaults = require("../queries/default.queries");
 const db = require("../queries/index.queries");
 const Address = require("./addresses.model");
+const { isEmpty } = require("../services/validation.services");
 const { ModelConstructor } = require("./constructor.model");
+const uuid = require("uuid");
 
 ("use strict");
 
@@ -68,17 +71,36 @@ const schema = {
  * @return {Object} model instance
  * @public
  */
-const construct = (init) => {
+const construct = (init, attach) => {
   return ModelConstructor({
     init: init,
     schema: schema,
     db: db.ceremonies,
+    attach: attach
   });
 };
 
 module.exports = {
   schema: schema,
   create: construct,
+  /**
+   * Updates a attendees selected ceremony 
+   * @param {Ceremony} ceremony Selected ceremony to be attached onto the attendee
+   * @param {Attendee} attendee Attendee data to be updated with new ceremony data (id)
+   *  */ 
+  attach: async (ceremony, attendee) => {
+
+    if (!ceremony || !attendee) return null;
+
+    // Add more validation here?
+
+    // ignore attaching ceremony if data is empty, otherwise upsert record
+    if (!isEmpty(ceremony.data, ['id'])) {
+        await defaults.transact([
+            db.attendees.queries.updateCeremony(attendee.id, ceremony.id)
+        ]);
+    }
+},
   findAll: async (filter) => {
     // returns multiple
     return await db.defaults.findAll(filter, schema);

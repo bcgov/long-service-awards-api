@@ -9,7 +9,7 @@
 
 const { transactionOne, query, queryOne } = require("../db");
 const uuid = require("uuid");
-const { findById, queries, attachReferences } = require("./default.queries");
+const { findById, update, queries, attachReferences } = require("./default.queries");
 const defaults = require("./default.queries");
 
 /**
@@ -103,24 +103,15 @@ const attendeesQueries = {
       data: [id],
     };
   },
-  update: data => {
-    // destructure user stub data
-    const {
-      id = null,
-      recipient = null,
-      ceremony = null,
-      guest = 0,
-      status = null,
-    } = data || {};
-
+  updateCeremony: (attendeeID, ceremonyID) => {
     return {
       sql: `UPDATE attendees
-            SET ceremony = $2::uuid, guest = $3::integer, status = $4::varchar
-            WHERE attendees.recipient = $1::uuid
-            RETURNING *;`,
-      data: [recipient.id, ceremony.id, guest, status],
-    };    
-  }
+                  SET ceremony = $2::uuid
+                  WHERE attendees.id = $1::uuid
+                  RETURNING *;`,
+      data: [attendeeID, ceremonyID],
+    };
+  },
 };
 exports.queries = attendeesQueries;
 

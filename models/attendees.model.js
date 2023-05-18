@@ -54,6 +54,7 @@ const schema = {
         //   schema
         // );
         // return recipient;
+        
 
         const recipient = await Recipient.findAttachment(
           id,
@@ -79,12 +80,9 @@ const schema = {
       model: Ceremony,
       required: true,
       get: async (id) => {
-        const ceremony = await Ceremony.findAttachment(id, "ceremony", schema);
-        return ceremony;
+        return await Ceremony.findAttachment(id, "ceremony", schema);
       },
-      attach: async (attendee, ceremony) => {
-        await Ceremony.attach(attendee, ceremony, "recipient");
-      },
+      attach: Ceremony.attach
     },
   },
 };
@@ -98,18 +96,17 @@ const schema = {
  * @public
  */
 
-const construct = (init, attach = null) => {
+const construct = (init, attach=null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
-    db: db.attendees,
+    db: db.defaults,
     attach: attach,
   });
 };
 
 module.exports = {
   schema: schema,
-  // create: construct,
   attach: async (attendee, recipient, type) => {
     if (!attendee || !recipient || !type) return null;
 
@@ -165,7 +162,7 @@ module.exports = {
     return construct(await db.attendees.insert(data));
   },
   update: async (data) => {
-    return construct(await db.attendees.update(data));
+    return construct(await db.defaults.update(data));
   },
   remove: async (id) => {
     await db.defaults.remove(id, schema);
