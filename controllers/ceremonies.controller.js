@@ -7,6 +7,7 @@
 
 const ceremoniesModel = require("../models/ceremonies.model.js");
 const uuid = require("uuid");
+const { convertDate } = require("../services/validation.services.js");
 
 /**
  * Retrieve all records.
@@ -108,6 +109,7 @@ exports.update = async (req, res, next) => {
 
     // handle exception
     if (!ceremony) return next(Error("noRecord"));
+    data['datetime'] = (convertDate(data.datetime));
     await ceremony.save(data);
 
     res.status(200).json({
