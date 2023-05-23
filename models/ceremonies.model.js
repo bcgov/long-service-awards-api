@@ -119,6 +119,11 @@ module.exports = {
   findOneByField: async (field, value) => {
     return await db.defaults.findOneByField(field, value, schema);
   },
+  findByAttendee: async(id, type) => {
+    // For attendees model attachment (get)
+    //  looks up existing ceremony info by attendee and constructs as full ceremony object to return back
+    return construct(await db.attendees.findCeremonyByAttendee(id, type, schema));
+},
   findAttachment: async (parentID, parentField, parentSchema) => {
     // look up addresses for requested reference and type
     return construct(

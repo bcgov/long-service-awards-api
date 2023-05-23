@@ -80,7 +80,7 @@ const schema = {
       model: Ceremony,
       required: true,
       get: async (id) => {
-        return await Ceremony.findAttachment(id, "ceremony", schema);
+        return await Ceremony.findByAttendee(id, "ceremony");
       },
       attach: Ceremony.attach
     },

@@ -103,6 +103,16 @@ const attendeesQueries = {
       data: [id],
     };
   },
+  findCeremonyByAttendee: (id, type) => {
+    const attendeeRef = "attendees.ceremony";
+    type === "attendee" ? "recipients.contact" : "recipients.supervisor";
+  return {
+    sql: `SELECT ceremonies.* FROM ceremonies
+                JOIN attendees ON ceremonies.id = ${attendeeRef}
+                WHERE attendees.id = $1::uuid;`,
+    data: [id],
+  };
+  },
   updateCeremony: (attendeeID, ceremonyID) => {
     return {
       sql: `UPDATE attendees
@@ -135,6 +145,11 @@ exports.update = async (data, schema) => {
 
 exports.findRecipient = async (id, type, schema) => {
   const result = await queryOne(attendeesQueries.findRecipient(id, type));
+  return await attachReferences(result, schema);
+};
+
+exports.findCeremonyByAttendee = async (id, type, schema) => {
+  const result = await queryOne(attendeesQueries.findCeremonyByAttendee(id, type));
   return await attachReferences(result, schema);
 };
 
