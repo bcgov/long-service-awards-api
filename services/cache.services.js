@@ -153,3 +153,42 @@ module.exports.resetToken = async (key, expiry) => {
   }
 
 }
+
+/**
+ * 
+ * @param {*} key 
+ * @param {*} expiry 
+ * @returns 
+ */
+module.exports.rsvpToken = async (key, expiry) => {
+  try {
+    // connect to redis
+    await client.connect();
+
+    // check if reset token already exists (delete if true)
+    const existingToken = await client.get(key);
+    // remove existing token (if exists)
+    if (existingToken) await client.del(key);
+    // generate new token
+    const rsvpToken = generateToken();
+    // hash token using global salt value
+    const hash = await hashToken(rsvpToken);
+
+    // cache the new token
+    // - use input expiry seconds
+    await client.set(key, hash, {
+      EX: expiry
+    });
+
+    // disconnect from redis
+    await client.disconnect();
+
+    // return URI-escaped hashed token value
+    return rsvpToken;
+
+  } catch (err) {
+      console.error(err)
+     return null
+  }
+
+}

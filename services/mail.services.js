@@ -201,3 +201,20 @@ module.exports.sendResetPassword = async (data) => {
       null
   );
 }
+
+module.exports.sendRSVP = async (data) => {
+
+  const {email, link} = data || {};
+
+  // send confirmation mail to supervisor
+  return await sendMail(
+      [email],
+      'Long Service Awards Invitation',
+      'email-recipient-ceremony-invitation.ejs',
+      {'link': link},
+      process.env.MAIL_FROM_ADDRESS,
+      process.env.MAIL_FROM_NAME,
+      [],
+      null
+  );
+}
