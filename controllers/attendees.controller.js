@@ -145,7 +145,6 @@ exports.update = async (req, res, next) => {
   //   const results = await Attendees.update(data);
   //   res.status(200).json(results);
   // } catch (err) {
-  //   console.log(`ERR : ${err}`);
   //   return next(err);
   // }
   try {

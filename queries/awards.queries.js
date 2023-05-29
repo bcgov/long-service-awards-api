@@ -5,10 +5,9 @@
  * MIT Licensed
  */
 
-'use strict';
+"use strict";
 
-const {query} = require("../db");
-
+const { query } = require("../db");
 
 /**
  * Awards custom queries
@@ -16,43 +15,38 @@ const {query} = require("../db");
  * */
 
 const awardsQueries = {
-    findAll: (filter) => {
+  findAll: (filter) => {
+    /**
+     * Generate query: Find all filtered records in table.
+     *
+     * @param schema
+     * @param {int} offset
+     * @param {String} order
+     * @return {Promise} results
+     * @public
+     */
 
-        /**
-         * Generate query: Find all filtered records in table.
-         *
-         * @param schema
-         * @param {int} offset
-         * @param {String} order
-         * @return {Promise} results
-         * @public
-         */
+    // destructure filter for sort/order/offset/limit
+    const { active = true, milestone = null } = filter || {};
 
-        // destructure filter for sort/order/offset/limit
-        const {
-                active=true,
-                milestone = null,
-            } = filter || {};
+    // (optional) order by attribute
+    // const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : '';
+    // const limitClause = limit ? `LIMIT ${limit}` : '';
 
-        // (optional) order by attribute
-        // const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : '';
-        // const limitClause = limit ? `LIMIT ${limit}` : '';
+    // build filter clause array
+    const filterClauses = [];
+    if (active) {
+      filterClauses.push("active = true");
+      // quantity filter
+      filterClauses.push("(quantity < 0 OR quantity > selected)");
+    }
+    // milestone filter
+    if (milestone) {
+      filterClauses.push("milestone = $1::integer");
+    }
 
-        // build filter clause array
-        const filterClauses = [];
-        if (active) {
-            filterClauses.push('active = true');
-            // quantity filter
-            filterClauses.push('(quantity < 0 OR quantity > selected)');
-        }
-        // milestone filter
-        if (milestone) {
-            filterClauses.push('milestone = $1::integer');
-        }
-
-
-        return {
-            sql: `
+    return {
+      sql: `
             SELECT * 
             FROM awards AS "awds"
                     -- award options details
@@ -77,14 +71,16 @@ const awardsQueries = {
                     FROM "award_selections" AS "awdsel"
                     GROUP BY awdsel.award
                 ) AS "selections" ON select_award_id = "awds"."id"  
-                ${filterClauses.length > 0 ? 'WHERE ' + filterClauses.join(' AND ') : ''}
+                ${
+                  filterClauses.length > 0
+                    ? "WHERE " + filterClauses.join(" AND ")
+                    : ""
+                }
             ;`,
-                data: milestone ? [milestone] : []
-        }
-
-    },
-
-}
+      data: milestone ? [milestone] : [],
+    };
+  },
+};
 exports.queries = awardsQueries;
 
 /**
@@ -96,7 +92,5 @@ exports.queries = awardsQueries;
  */
 
 exports.findAll = async (filter) => {
-    // console.log(awardsQueries.findAll(filter))
-    return await query(awardsQueries.findAll(filter));
-}
-
+  return await query(awardsQueries.findAll(filter));
+};

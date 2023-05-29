@@ -54,7 +54,6 @@ const schema = {
         //   schema
         // );
         // return recipient;
-        
 
         const recipient = await Recipient.findAttachment(
           id,
@@ -82,7 +81,7 @@ const schema = {
       get: async (id) => {
         return await Ceremony.findByAttendee(id, "ceremony");
       },
-      attach: Ceremony.attach
+      attach: Ceremony.attach,
     },
   },
 };
@@ -96,7 +95,7 @@ const schema = {
  * @public
  */
 
-const construct = (init, attach=null) => {
+const construct = (init, attach = null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
@@ -152,12 +151,9 @@ module.exports = {
   //   const item2 = construct(await result);
   //   return item2;
   //   const item = construct(data, schema);
-  //   // console.log(data);
-  //   // console.log(item);
   //   if (item) return construct(await db.attendees.insert(data, schema, ["id"]));
   // },
   create: async (data) => {
-    console.log(`ATTENDEE : ${JSON.stringify(data)}`);
     data.status = "Assigned";
     return construct(await db.attendees.insert(data));
   },

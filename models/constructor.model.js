@@ -242,8 +242,6 @@ exports.ModelConstructor = (props) => {
     },
   };
 
-  console.log(properties);
-
   const prototype = {
     sync: async function () {
       const syncData = await db.findById(this.id, schema);

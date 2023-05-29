@@ -19,9 +19,7 @@ const defaults = require("./default.queries");
 
 /**
  *  Accommodation-selections custom queries
- * - findall
  * - insert (stub)
- * - update
  * */
 
 const accommodationSelectionsQueries = {
@@ -30,17 +28,10 @@ const accommodationSelectionsQueries = {
     const { attendee = null, accommodation = null } = data || {};
 
     return {
-      sql: `WITH upsert AS (
-            UPDATE accommodation_selections
-            SET accommodation = $1::varchar
-            WHERE attendee = $2::uuid
-            RETURNING *
-            )
-            INSERT INTO accommodation_selections (accommodation, attendee) 
-            SELECT $1::varchar,$2::uuid,
-            WHERE NOT EXISTS (SELECT * FROM upsert)
-            ON CONFLICT DO NOTHING
-            RETURNING *;`,
+      sql: `INSERT INTO accommodation_selections (accommodation, attendee) VALUES (
+        $1::varchar,
+        $2::uuid
+    ) `,
       data: [accommodation, attendee],
     };
   },
