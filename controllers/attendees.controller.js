@@ -176,6 +176,7 @@ exports.update = async (req, res, next) => {
 exports.getRSVP = async (req, res, next) => {
   try {
     const data = req.body;
+    // GET Attendee manually to sanitize data
     const results = await Attendees.update(data);
     res.status(200).json(results);
   } catch (err) {

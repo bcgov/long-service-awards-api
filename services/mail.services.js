@@ -204,14 +204,15 @@ module.exports.sendResetPassword = async (data) => {
 
 module.exports.sendRSVP = async (data) => {
 
-  const {email, link} = data || {};
-
+  const {email, link, attendee} = data || {};
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + 14);
   // send confirmation mail to supervisor
   return await sendMail(
       [email],
       'Long Service Awards Invitation',
       'email-recipient-ceremony-invitation.ejs',
-      {'link': link},
+      {'link': link, 'attendee': attendee, 'expiry': expiry},
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
       [],

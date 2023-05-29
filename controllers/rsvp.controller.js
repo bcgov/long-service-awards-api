@@ -8,6 +8,7 @@
 
 const uuid = require("uuid");
 const {sendRSVP} = require("../services/mail.services");
+const Attendees = require("../models/attendees.model.js");
 
 const {rsvpToken, deleteToken, validateToken} = require('../services/cache.services');
 /**
@@ -32,14 +33,16 @@ exports.send = async (req, res, next) => {
     const recipient = data.recipient;
     const email = recipient.contact.office_email;
     const today = new Date();
+
+    // Create 48 hour grace period 
     today.setDate(today.getDate() - 2);
     if (recipient.retirement_date != null && recipient.retirement_date < today)
     {
         email = recipient.contact.personal_email;
     }
-    var token = await rsvpToken(recipient.id,1209600);
+    const token = await rsvpToken(data.id,1209600);
 
-    var valid = await validateToken(recipient.id, token)
+    const valid = await validateToken(data.id, token)
 
 
 
@@ -47,7 +50,8 @@ exports.send = async (req, res, next) => {
 
   const response = await sendRSVP({
     email,
-    link: `${process.env.LSA_APPS_ADMIN_URL}/reset-password/${recipient.id}/${token}`
+    link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
+    attendee: data
   });
 
     return res;
@@ -55,5 +59,27 @@ exports.send = async (req, res, next) => {
   } catch (err) {
     return next(err);
   }
+};
+
+exports.get = async (req, res, next) => {
+    try {
+
+    
+    const id = req.params.id;
+    const token = req.params.token;
+
+    const valid = await validateToken(id, token);
+
+    if (!valid) throw (err = "Not Valid");
+    
+    const results = await Attendees.findById(id);
+    if (!results) throw (err = "Not existing");
+
+    res.status(200).json(results.data);
+
+
+    } catch (err) {
+
+    }
 };
 
