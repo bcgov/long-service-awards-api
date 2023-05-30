@@ -31,7 +31,7 @@ const accommodationSelectionsQueries = {
       sql: `INSERT INTO accommodation_selections (accommodation, attendee) VALUES (
         $1::varchar,
         $2::uuid
-    ) `,
+    ) ON CONFLICT DO NOTHING`,
       data: [accommodation, attendee],
     };
   },

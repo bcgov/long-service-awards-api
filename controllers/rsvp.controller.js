@@ -9,6 +9,9 @@
 const uuid = require("uuid");
 const {sendRSVP} = require("../services/mail.services");
 const Attendees = require("../models/attendees.model.js");
+const Accommodations = require("../models/accommodations.model.js");
+const AccommodationSelections = require("../models/accommodation-selection.model.js");
+
 
 const {rsvpToken, deleteToken, validateToken} = require('../services/cache.services');
 /**
@@ -64,7 +67,6 @@ exports.send = async (req, res, next) => {
 exports.get = async (req, res, next) => {
     try {
 
-    
     const id = req.params.id;
     const token = req.params.token;
 
@@ -83,3 +85,52 @@ exports.get = async (req, res, next) => {
     }
 };
 
+exports.update = async (req, res, next) => {
+    try {
+        const data = req.body;
+        const id = req.params.id;
+        const token = req.params.token;
+        const valid = await validateToken(id, token);
+
+        if (!valid) throw (err = "Not Valid");
+        
+        const attendee = await Attendees.findById(data.id);
+    
+        // handle exception
+        if (!attendee) return next(Error("noRecord"));
+        await attendee.save(data);
+    
+        res.status(200).json({
+          message: {},
+          result: attendee.data,
+        });
+      } catch (err) {
+        return next(err);
+      }
+}
+
+exports.createAccomodation = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const token = req.params.token;
+
+    const valid = validateToken(id, token);
+    if (!valid) throw (err = 'Not Valid');
+
+    const data = req.body || {};
+    const results = await AccommodationSelections.create(data);
+    res.status(200).json(results);
+  } catch (err) {
+    return next(err);
+  }
+}
+
+exports.getAccomodations = async (req, res, next) => {
+  try {
+    const results = await Accommodations.findAll();
+    return res.status(200).json(results);
+  } catch (err) {
+    console.error(err);
+    return next(err);
+  }
+}
