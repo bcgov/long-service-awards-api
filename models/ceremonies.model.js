@@ -141,7 +141,7 @@ module.exports = {
     // const item = construct(data, schema);
     // if (item)
     //   return construct(await db.ceremonies.insert(item.data, schema, ["id"]));
-    return construct(await db.recipients.insert(data));
+    return construct(await db.ceremonies.insert(data));
   },
   update: async (data) => {
     return construct(await db.defaults.update(data, schema));

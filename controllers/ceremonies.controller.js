@@ -8,6 +8,8 @@
 const ceremoniesModel = require("../models/ceremonies.model.js");
 const uuid = require("uuid");
 const { convertDate } = require("../services/validation.services.js");
+const addressesModel = require("../models/addresses.model.js");
+const { add } = require("winston");
 
 /**
  * Retrieve all records.
@@ -92,8 +94,13 @@ exports.create = async (req, res, next) => {
   // }
   try {
     const data = req.body || {};
-    const results = await ceremoniesModel.register(data);
-    res.status(200).json(results);
+    const address = await addressesModel.create(data.address);
+
+    // const results = await ceremoniesModel.register({
+    //   ...data,
+    //   address: address,
+    // });
+    // res.status(200).json(results);
   } catch (err) {
     return next(err);
   }
