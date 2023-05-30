@@ -76,7 +76,7 @@ const construct = (init, attach) => {
     init: init,
     schema: schema,
     db: db.ceremonies,
-    attach: attach
+    attach: attach,
   });
 };
 
@@ -84,23 +84,22 @@ module.exports = {
   schema: schema,
   create: construct,
   /**
-   * Updates a attendees selected ceremony 
+   * Updates a attendees selected ceremony
    * @param {Ceremony} ceremony Selected ceremony to be attached onto the attendee
    * @param {Attendee} attendee Attendee data to be updated with new ceremony data (id)
-   *  */ 
+   *  */
   attach: async (ceremony, attendee) => {
-
     if (!ceremony || !attendee) return null;
 
     // Add more validation here?
 
     // ignore attaching ceremony if data is empty, otherwise upsert record
-    if (!isEmpty(ceremony.data, ['id'])) {
-        await defaults.transact([
-            db.attendees.queries.updateCeremony(attendee.id, ceremony.id)
-        ]);
+    if (!isEmpty(ceremony.data, ["id"])) {
+      await defaults.transact([
+        db.attendees.queries.updateCeremony(attendee.id, ceremony.id),
+      ]);
     }
-},
+  },
   findAll: async (filter) => {
     // returns multiple
     return await db.defaults.findAll(filter, schema);
@@ -119,11 +118,13 @@ module.exports = {
   findOneByField: async (field, value) => {
     return await db.defaults.findOneByField(field, value, schema);
   },
-  findByAttendee: async(id, type) => {
+  findByAttendee: async (id, type) => {
     // For attendees model attachment (get)
     //  looks up existing ceremony info by attendee and constructs as full ceremony object to return back
-    return construct(await db.attendees.findCeremonyByAttendee(id, type, schema));
-},
+    return construct(
+      await db.attendees.findCeremonyByAttendee(id, type, schema)
+    );
+  },
   findAttachment: async (parentID, parentField, parentSchema) => {
     // look up addresses for requested reference and type
     return construct(
@@ -137,9 +138,10 @@ module.exports = {
   },
   register: async (data) => {
     // validate model init data
-    const item = construct(data, schema);
-    if (item)
-      return construct(await db.ceremonies.insert(item.data, schema, ["id"]));
+    // const item = construct(data, schema);
+    // if (item)
+    //   return construct(await db.ceremonies.insert(item.data, schema, ["id"]));
+    return construct(await db.recipients.insert(data));
   },
   update: async (data) => {
     return construct(await db.defaults.update(data, schema));

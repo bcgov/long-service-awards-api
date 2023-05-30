@@ -13,21 +13,38 @@ const { findById, queries, attachReferences } = require("./default.queries");
 const defaults = require("./default.queries");
 
 const ceremoniesQueries = {
+  // insert: (data) => {
+  //   const { id = null } = data || {};
+  //   return {
+  //     sql: `INSERT INTO ceremonies (
+  //               id, venue, datetime, created_at, updated_at, active
+  //               ) VALUES (
+  //                   $1::uuid,
+  //                   '',
+  //                   NOW(),
+  //                   NOW(),
+  //                   NOW(),
+  //                   true
+  //               )
+  //           `,
+  //     data: [id],
+  //   };
+  // },
   insert: (data) => {
-    const { id = null } = data || {};
+    const { id = null, venue = null } = data || {};
     return {
       sql: `INSERT INTO ceremonies (
                 id, venue, datetime, created_at, updated_at, active
                 ) VALUES (
                     $1::uuid,
-                    '',
+                    $2::varchar,
                     NOW(),
                     NOW(),
                     NOW(),
                     true
                 )
             `,
-      data: [id],
+      data: [id, venue],
     };
   },
   update: (data, schema) => {
@@ -83,6 +100,7 @@ const ceremoniesQueries = {
 exports.queries = ceremoniesQueries;
 
 exports.insert = async (data) => {
+  data.id = uuid.v4();
   return await transactionOne([ceremoniesQueries.insert(data)]);
 };
 exports.update = async (data, schema) => {
