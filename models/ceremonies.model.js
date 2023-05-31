@@ -71,12 +71,12 @@ const schema = {
  * @return {Object} model instance
  * @public
  */
-const construct = (init, attach=null) => {
+const construct = (init, attach = null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
     db: db.ceremonies,
-    attach: attach
+    attach: attach,
   });
 };
 
@@ -147,7 +147,8 @@ module.exports = {
     return construct(await db.defaults.update(data, schema));
   },
   remove: async (id) => {
-    return await db.defaults.removeByFields(["id"], [id], schema);
+    // return await db.defaults.removeByFields(["id"], [id], schema);
+    return await db.defaults.remove(id, schema);
   },
   removeAll: async () => {
     return await db.defaults.removeAll(schema);

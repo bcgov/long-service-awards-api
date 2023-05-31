@@ -93,13 +93,9 @@ exports.create = async (req, res, next) => {
   //   return next(err);
   // }
   try {
-    const guid = uuid.v4();
     const data = req.body || {};
-    
     const results = await ceremoniesModel.register(data);
-    data.address.country = "Canada";
-    const results2 = await results.save(data);
-
+    await results.save(data);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
