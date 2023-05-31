@@ -43,7 +43,7 @@ const ceremoniesQueries = {
                     NOW(),
                     true
                 )
-            `,
+                RETURNING *;`,
       data: [id, venue],
     };
   },

@@ -95,17 +95,12 @@ exports.create = async (req, res, next) => {
   try {
     const guid = uuid.v4();
     const data = req.body || {};
-    const address = await addressesModel.register({
-      ...data.address,
-      id: guid,
-    });
+    
+    const results = await ceremoniesModel.register(data);
+    data.address.country = "Canada";
+    const results2 = await results.save(data);
 
-    // const results = await ceremoniesModel.register({
-    //   ...data,
-    //   address: address.data.id,
-    // });
-
-    // res.status(200).json(results);
+    res.status(200).json(results);
   } catch (err) {
     return next(err);
   }

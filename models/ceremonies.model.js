@@ -71,12 +71,12 @@ const schema = {
  * @return {Object} model instance
  * @public
  */
-const construct = (init, attach) => {
+const construct = (init, attach=null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
     db: db.ceremonies,
-    attach: attach,
+    attach: attach
   });
 };
 
