@@ -166,7 +166,7 @@ module.exports = {
   removeAll: async () => {
     await db.defaults.removeAll(schema);
   },
-  report: async (filter, user) => {
+  report: async (filter, user, currentCycle) => {
     // check if user is administrator (skip user-org filtering)
     const { role } = user || {};
     const isAdmin = ["super-administrator", "administrator"].includes(
@@ -206,6 +206,6 @@ module.exports = {
     // }
     // return [];
 
-    return await db.recipients.report(filter, ["created_at"], schema);
+    //return await db.recipients.report(filter, ["created_at"], schema);
   },
 };

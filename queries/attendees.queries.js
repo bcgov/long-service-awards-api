@@ -127,7 +127,7 @@ const attendeesQueries = {
       data: [attendeeID, ceremonyID],
     };
   },
-  report: (filter, ignore = [], schema) => {
+  report: (filter, ignore = [], currentCycle, schema) => {
     /**
      * Generate query: Report recipients data
      *
@@ -160,145 +160,103 @@ const attendeesQueries = {
       .join(", ");
 
     return {
-      sql: `WITH rcps AS (
-                SELECT a.* FROM recipients as r
-                        LEFT JOIN contacts ON contacts.id = r.contact
-                        LEFT JOIN organizations ON organizations.id = r.organization
-                        LEFT JOIN service_selections ON service_selections.recipient = r.id
-                    ${filterStatements && " WHERE " + filterStatements}
-                GROUP BY r.id
-            )
-                  SELECT
-                      ${selections},
-                      "org".name AS organization_name,
-                      "org".abbreviation AS organization_abbreviation,
-                      "pcon".*,
-                      "scon".*,
-                      "retrosrvs".retroactive_milestones,
-                      "srvs".*
-                  FROM rcps AS "r"
-                           -- Organization details
-                           LEFT JOIN (
-                      SELECT o.id as organization_id,
-                             o.name, 
-                             o.abbreviation
-                      FROM "organizations" AS "o"
-                      GROUP BY organization_id, o.name, o.abbreviation
-                  ) AS "org" ON organization_id = "r"."organization"
-                      -- Personal contact details
-                           LEFT JOIN (
-                      SELECT cp.id as contact_id,
-                             cp.first_name,
-                             cp.last_name,
-                             cp.office_email,
-                             cp.office_phone,
-                             cp.personal_email,
-                             cp.personal_phone,
-                             cpa.street1 AS personal_address_street_1,
-                             cpa.street2 AS personal_address_street_2,
-                             cpa.community AS personal_address_community,
-                             cpa.province AS personal_address_province,
-                             cpa.country AS personal_address_country,
-                             cpa.postal_code AS personal_address_postal_code,
-                             coa.street1 AS office_address_street_1,
-                             coa.street2 AS office_address_street_2,
-                             coa.community AS office_address_community,
-                             coa.province AS office_address_province,
-                             coa.country AS office_address_country,
-                             coa.postal_code AS office_address_postal_code
-                      FROM "contacts" AS "cp"
-                           -- Contact: address details
-                           LEFT JOIN "addresses" AS "cpa" ON cpa.id = cp."personal_address"
-                           LEFT JOIN "addresses" AS coa ON coa.id = cp."office_address"
-                      GROUP BY contact_id, cpa.id, coa.id
-                  ) AS "pcon" ON contact_id = "r"."contact"
-                      -- Supervisor contact details
-                           LEFT JOIN (
-                      SELECT cs.id as supervisor_id,
-                             cs.first_name AS supervisor_first_name,
-                             cs.last_name AS supervisor_last_name,
-                             cs.office_email AS supervisor_office_email,
-                             cs.office_phone AS supervisor_office_phone,
-                             cs.personal_email AS supervisor_personal_email,
-                             cs.personal_phone AS supervisor_personal_phone,
-                             coa.pobox AS supervisor_office_address_pobox,
-                             coa.street1 AS supervisor_office_address_street1,
-                             coa.street2 AS supervisor_office_address_street2,
-                             coa.community AS supervisor_office_address_community,
-                             coa.province AS supervisor_office_address_province,
-                             coa.country AS supervisor_office_address_country,
-                             coa.postal_code AS supervisor_office_address_postal_code
-                      FROM "contacts" AS "cs"
-                               -- Contact: address details
-                               LEFT JOIN "addresses" AS coa ON coa.id = cs."office_address"
-                      GROUP BY supervisor_id, coa.id
-                  ) AS "scon" ON supervisor_id = "r"."supervisor"
-                      -- services details
-                           LEFT JOIN (
-                      SELECT srv.recipient AS recipient_id,
-                             srv.milestone AS milestone,
-                             srv.qualifying_year AS qualifying_year,
-                             srv.service_years AS service_years,
-                             srv.cycle AS cycle,
-                             srv.previous_registration AS previous_registration,
-                             srv.previous_award AS previous_award,
-                             srv.delegated AS delegated,
-                             srv.confirmed AS confirmed,
-                             srv.ceremony_opt_out AS ceremony_opt_out,
-                             srv.survey_opt_in AS survey_opt_in,
-                             awd.short_code AS award_shortcode,
-                             awd.label AS award_label,
-                             string_agg(
-                                CASE WHEN awdopts.type 
-                                    NOT IN ('engraving', 'certificate', 'pecsf-certificate', 'pecsf-charity') 
-                                    THEN awdopts.label END, '; '
-                                 ) AS award_options,
-                            string_agg(
-                                CASE WHEN awdopts.type IN ('engraving') THEN awdoptsel.custom_value END, '; '
-                                ) AS award_custom_engraving,
-                             string_agg(
-                                     CASE WHEN awdopts.type IN ('certificate') THEN awdoptsel.custom_value END, '; '
-                                 ) AS award_certificate_message,
-                             string_agg(
-                                     CASE WHEN awdopts.type IN ('pecsf-certificate') THEN awdoptsel.custom_value END, '; '
-                                 ) AS pecsf_certificate_message,
-                             string_agg(
-                                     CASE WHEN awdopts.name IN ('pecsf-charity-1') THEN pecsf.label END, '; '
-                                 ) AS pecsf_charity_1,
-                             string_agg(
-                                     CASE WHEN awdopts.name IN ('pecsf-charity-1') THEN pecsf.region END, '; '
-                                 ) AS pecsf_region_1,
-                             string_agg(
-                                     CASE WHEN awdopts.name IN ('pecsf-charity-2') THEN pecsf.label END, '; '
-                                 ) AS pecsf_charity_2,
-                             string_agg(
-                                     CASE WHEN awdopts.name IN ('pecsf-charity-2') THEN pecsf.region END, '; '
-                                 ) AS pecsf_region_2
-                      FROM "service_selections" AS "srv"
-                               -- Service Selection: award details
-                               LEFT JOIN "award_selections" AS asel ON asel.id = srv."id"
-                               LEFT JOIN "awards" AS awd ON awd.id = asel."award"
-                               LEFT JOIN "award_option_selections" AS awdoptsel ON awdoptsel.service = srv.id
-                               LEFT JOIN "award_options" AS awdopts ON awdopts.id = awdoptsel."award_option"
-                               LEFT JOIN "pecsf_charities" AS pecsf ON pecsf.id = awdoptsel."pecsf_charity"
-                      ${serviceFilter}
-                      GROUP BY srv.id, awd.id
-                  ) AS "srvs" ON recipient_id = "r"."id"
-                    -- retroactive service pins details
-                    LEFT JOIN (
-                      SELECT retrosrv.recipient AS retro_recipient_id, 
-                             string_agg(retrosrv.milestone::varchar(255), ', ') AS retroactive_milestones
-                      FROM "service_selections" AS "retrosrv"
-                      WHERE retrosrv.cycle != ${currentCycle}
-                      GROUP BY retrosrv.recipient
-                    ) AS "retrosrvs" ON retro_recipient_id = "r"."id"
-            ;`,
-      data: filterValues,
+      sql: `SELECT 
+      attendees.id AS "attendee_id",
+      contacts.first_name,
+      contacts.last_name,
+      ceremonies.datetime AS "ceremony_datetime",
+      organizations.name AS "ministry",
+      recipients.branch,
+      attendees.status,
+      string_agg(accommodation_selections.accommodation::varchar,',') AS accomodations
+      
+      
+      FROM attendees
+      LEFT JOIN recipients ON attendees.recipient = recipients.id
+      LEFT JOIN contacts ON recipients.contact = contacts.id
+      LEFT JOIN ceremonies ON attendees.ceremony = ceremonies.id
+      LEFT JOIN organizations ON recipients.organization = organizations.id
+      LEFT JOIN accommodation_selections ON attendees.id = accommodation_selections.attendee
+      GROUP BY attendee_id, first_name, last_name, ceremony_datetime, ministry, branch, attendees.status`
     };
   },
 };
 exports.queries = attendeesQueries;
 
+const getFilters = (data) => {
+  // init
+  let values = [];
+  let index = 1;
+
+  /**
+   * List of filter options for recipients
+   * - Recipient first name
+   * - Recipient last name
+   * - Recipient Employee Number
+   * - Organization
+   * - Milestones
+   * - Confirmed
+   * - Ceremony Opt Out
+   * - Status
+   * */
+
+  const filters = {
+    first_name: () =>
+      `(contacts.first_name ILIKE '%' || $${index++}::varchar || '%')`,
+    last_name: () =>
+      `(contacts.last_name ILIKE '%' || $${index++}::varchar || '%')`,
+    idir: () => `(recipients.idir LIKE '%' || $${index++}::varchar || '%')`,
+    employee_number: () =>
+      `(recipients.employee_number LIKE '%' || $${index++}::varchar || '%')`,
+    organization: (range) =>
+      `(organizations.id IN (${(range || [])
+        .map(() => `$${index++}::integer`)
+        .join(",")}))`,
+    milestones: (range) =>
+      `(service_selections.milestone IN (${(range || [])
+        .map(() => `$${index++}::integer`)
+        .join(",")}))`,
+    cycle: (range) =>
+      `(service_selections.cycle IN (${(range || [])
+        .map(() => `$${index++}::integer`)
+        .join(",")}))`,
+    qualifying_year: (range) =>
+      `(service_selections.qualifying_year IN (${(range || [])
+        .map(() => `$${index++}::integer`)
+        .join(",")}))`,
+    confirmed: (value) => `(
+        service_selections.confirmed = $${index++}::boolean 
+        ${
+          value[0] === "false" ? "OR service_selections.confirmed IS NULL" : ""
+        } )`,
+    ceremony_opt_out: (value) => `(
+        service_selections.ceremony_opt_out = $${index++}::boolean 
+        ${
+          value[0] === "false"
+            ? "OR service_selections.ceremony_opt_out IS NULL"
+            : ""
+        } )`,
+    status: () => `(recipients.status = $${index++}::varchar)`,
+  };
+  // match filter with input data
+  let statements = "";
+  statements += Object.keys(data)
+    .filter((key) => filters.hasOwnProperty(key))
+    .reduce((o, key) => {
+      // explode comma-separated query array parameters into array
+      const datum = !!data[key] && data[key].split(",");
+      // ignore null/empty filter values
+      if (datum) {
+        o.push(filters[key](datum));
+        values.push.apply(values, datum);
+      }
+      return o;
+    }, [])
+    .join(" AND \n");
+
+  // return filter statements and values
+  return [statements, values];
+};
 /**
  * Generate query: Insert new record into database.
  *
@@ -342,10 +300,10 @@ exports.update = async (data) => {
  * @public
  */
 
-exports.report = async (filter, ignore, schema) => {
+exports.report = async (filter, ignore, currentCycle, schema) => {
   // DEBUG SQL
   // console.log(recipientQueries.report(filter, ignore, currentCycle, schema))
-  return await query(attendeesQueries.report(filter, ignore, schema));
+  return await query(attendeesQueries.report(filter, ignore, currentCycle, schema));
 };
 /**
  * Default transactions
@@ -353,3 +311,4 @@ exports.report = async (filter, ignore, schema) => {
  */
 
 exports.findById = findById;
+

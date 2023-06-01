@@ -112,6 +112,7 @@ exports.servicePins = async (req, res, next) => {
 
 exports.attendees = async (req, res, next) => {
   try {
+    const cycle = await QualifyingYear.findCurrent();
     // define filter
     const filter = {};
 
