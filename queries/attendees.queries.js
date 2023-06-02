@@ -33,26 +33,44 @@ const attendeesQueries = {
     order = "ASC",
     offset = 0,
     limit = null,
-    first_name = null,
-    last_name = null,
+
+
 
   } = filter || {};
+  
   // (optional) order by attribute
   //const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : "";
   const orderClause = order && orderby ? `ORDER BY attendees.id ${order}` : "";
   const limitClause = limit ? `LIMIT ${limit}` : "";
-
   const filters = [];
-  if (filter.hasOwnProperty("first_name"))
-    filters.push(`contacts.first_name = ${filter.first_name}`);
-  if (filter.hasOwnProperty("last_name"))
-    filters.push(`contacts.last_name IN (${filter.last_name})`);
-  if (filter.hasOwnProperty("ceremony"))
+  if (filter.hasOwnProperty("first_name") && filter.first_name)
+    filters.push(`LOWER(contacts.first_name) = LOWER('${filter.first_name}')`);
+  if (filter.hasOwnProperty("last_name") && filter.last_name)
+    filters.push(`LOWER(contacts.last_name) = LOWER('${filter.last_name}')`);
+  if (filter.hasOwnProperty("ceremony") && filter.ceremony)
     filters.push(`attendees.ceremony = '${filter.ceremony}'`);
-  if (filter.hasOwnProperty("status"))
-    filters.push(`attendees.status = ${filter.status}`);
-  if (filter.hasOwnProperty("organization"))
-    filters.push(`contacts.organization = ${filter.organization}`);
+  if (filter.hasOwnProperty("status") && filter.status)
+  {
+    //Multi-select field - create their own OR clause
+    const statuses = filter.status.split(',');
+    const statusFilters = [];
+    statuses.forEach(element => {
+      statusFilters.push(`attendees.status = '${element}'`);
+    });
+    const statusClause = statusFilters.length > 0 ? `(${statusFilters.join(" OR ")})` : "";
+    filters.push(statusClause);
+  }
+  if (filter.hasOwnProperty("organization") && filter.organization)
+  {
+    //Multi-select field - create their own OR clause 
+    const orgs = filter.organization.split(',');
+    const orgFilters = [];
+    orgs.forEach(element => {
+      orgFilters.push(`recipients.organization = '${element}'`);
+    });
+    const organizationClause = orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";
+    filters.push(organizationClause);
+  }
   const WHEREfilter =
     filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
 
@@ -63,6 +81,8 @@ const attendeesQueries = {
               FROM ${schema.modelName} 
               LEFT JOIN  
               ceremonies ON ceremonies.id = attendees.ceremony
+              LEFT JOIN recipients ON recipients.id = attendees.recipient
+              LEFT JOIN contacts ON contacts.id = recipients.contact
               ${WHEREfilter} 
               ${orderClause} ${limitClause}
               OFFSET ${offset};`,
