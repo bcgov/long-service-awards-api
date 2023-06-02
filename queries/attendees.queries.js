@@ -26,6 +26,50 @@ const defaults = require("./default.queries");
  * */
 
 const attendeesQueries = {
+  findAll: (filter, schema) => {
+      // destructure filter
+  const {
+    orderby = null,
+    order = "ASC",
+    offset = 0,
+    limit = null,
+    first_name = null,
+    last_name = null,
+
+  } = filter || {};
+  // (optional) order by attribute
+  //const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : "";
+  const orderClause = order && orderby ? `ORDER BY attendees.id ${order}` : "";
+  const limitClause = limit ? `LIMIT ${limit}` : "";
+
+  const filters = [];
+  if (filter.hasOwnProperty("first_name"))
+    filters.push(`contacts.first_name = ${filter.first_name}`);
+  if (filter.hasOwnProperty("last_name"))
+    filters.push(`contacts.last_name IN (${filter.last_name})`);
+  if (filter.hasOwnProperty("ceremony"))
+    filters.push(`attendees.ceremony = '${filter.ceremony}'`);
+  if (filter.hasOwnProperty("status"))
+    filters.push(`attendees.status = ${filter.status}`);
+  if (filter.hasOwnProperty("organization"))
+    filters.push(`contacts.organization = ${filter.organization}`);
+  const WHEREfilter =
+    filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
+
+
+  // get query results
+    return {
+    sql: `SELECT attendees.*
+              FROM ${schema.modelName} 
+              LEFT JOIN  
+              ceremonies ON ceremonies.id = attendees.ceremony
+              ${WHEREfilter} 
+              ${orderClause} ${limitClause}
+              OFFSET ${offset};`,
+    data: [],
+  };
+
+  },
   insert: (data) => {
     // destructure user stub data
     const {
@@ -257,6 +301,17 @@ const getFilters = (data) => {
   // return filter statements and values
   return [statements, values];
 };
+
+exports.findAll = async (filter, schema) => {
+  const result =  await query(attendeesQueries.findAll(filter, schema));
+
+    // attach linked records to results
+    return await Promise.all(
+      (result || []).map(async (item) => {
+        return await attachReferences(item, schema);
+      }));
+};
+
 /**
  * Generate query: Insert new record into database.
  *

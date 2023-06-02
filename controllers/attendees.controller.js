@@ -20,7 +20,7 @@ const uuid = require("uuid");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await Attendees.findAll();
+    const results = await Attendees.findAll(req.query);
     return res.status(200).json(results);
   } catch (err) {
     console.error(err);

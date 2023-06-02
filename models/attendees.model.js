@@ -125,7 +125,8 @@ module.exports = {
     }
   },
   findAll: async (filter) => {
-    return await db.defaults.findAll(filter, schema);
+    return await db.attendees.findAll(filter, schema);
+    //return await db.defaults.findAll(filter, schema);
   },
   findById: async (id) => {
     return construct(await db.defaults.findById(id, schema));
