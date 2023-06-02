@@ -123,4 +123,14 @@ module.exports = {
   removeAll: async () => {
     await db.defaults.removeAll(schema);
   },
+
+  register: async (data) => {
+    // validate model init data
+    const item = construct(data, schema);
+    if (item)
+      return construct(
+        await defaults.insert(item.data, schema, ["id"]),
+        schema
+      );
+  },
 };

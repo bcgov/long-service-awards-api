@@ -546,7 +546,6 @@ exports.findAttachment = async (
  */
 
 exports.insert = async (data, schema, ignore = ["id"]) => {
-  // console.log(queries.insert(data, schema, ignore))
   return await query(queries.insert(data, schema, ignore));
 };
 
@@ -574,7 +573,6 @@ exports.upsert = async (data, schema, conflict = ["id"]) => {
  */
 
 exports.update = async (data, schema, ignore, idKey) => {
-  // console.log('Update Record', queries.update(data, schema, ignore, idKey))
   return await query(queries.update(data, schema, ignore, idKey));
 };
 

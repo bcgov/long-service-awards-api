@@ -20,7 +20,5 @@ router.post('/create', authorizeAdmin, controller.create);
 router.get('/view/:id', authorizeAdmin, controller.get);
 router.post('/update/:id', authorizeAdmin, controller.update);
 router.get('/delete/:id', authorizeAdmin, controller.remove);
-router.get('/rsvp/:id/:token', controller.getRSVP);
-router.post('/rsvp/:id/:token', controller.setRSVP);
 
 module.exports = router;

@@ -54,7 +54,6 @@ const schema = {
         //   schema
         // );
         // return recipient;
-        
 
         const recipient = await Recipient.findAttachment(
           id,
@@ -80,9 +79,9 @@ const schema = {
       model: Ceremony,
       required: true,
       get: async (id) => {
-        return await Ceremony.findAttachment(id, "ceremony", schema);
+        return await Ceremony.findByAttendee(id, "ceremony");
       },
-      attach: Ceremony.attach
+      attach: Ceremony.attach,
     },
   },
 };
@@ -96,7 +95,7 @@ const schema = {
  * @public
  */
 
-const construct = (init, attach=null) => {
+const construct = (init, attach = null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
@@ -126,7 +125,8 @@ module.exports = {
     }
   },
   findAll: async (filter) => {
-    return await db.defaults.findAll(filter, schema);
+    return await db.attendees.findAll(filter, schema);
+    //return await db.defaults.findAll(filter, schema);
   },
   findById: async (id) => {
     return construct(await db.defaults.findById(id, schema));
@@ -152,12 +152,9 @@ module.exports = {
   //   const item2 = construct(await result);
   //   return item2;
   //   const item = construct(data, schema);
-  //   // console.log(data);
-  //   // console.log(item);
   //   if (item) return construct(await db.attendees.insert(data, schema, ["id"]));
   // },
   create: async (data) => {
-    console.log(`ATTENDEE : ${JSON.stringify(data)}`);
     data.status = "Assigned";
     return construct(await db.attendees.insert(data));
   },
@@ -169,5 +166,47 @@ module.exports = {
   },
   removeAll: async () => {
     await db.defaults.removeAll(schema);
+  },
+  report: async (filter, user, currentCycle) => {
+    // check if user is administrator (skip user-org filtering)
+    const { role } = user || {};
+    const isAdmin = ["super-administrator", "administrator"].includes(
+      role.name
+    );
+    if (isAdmin) {
+      return await db.attendees.report(
+        filter,
+        ["created_at"],
+        currentCycle && currentCycle.name,
+        schema
+      );
+    }
+
+    // // restrict available orgs to user assignment
+    // // - check filter overlap with user-assigned orgs
+    // const { organizations = [] } = user || {};
+    // const userFilter = (organizations || []).map(
+    //   ({ organization }) => organization.id
+    // );
+    // // if org-contact has no assigned organizations, return empty results
+    // if (["org-contact"].includes(role.name) && organizations.length > 0) {
+    //   // explode existing organization filter params
+    //   const orgFilter =
+    //     filter.hasOwnProperty("organization") &&
+    //     filter.organization.split(",").map((id) => parseInt(id));
+    //   // filter org params to be contained in user filter
+    //   const intersection = userFilter.filter((id) =>
+    //     (orgFilter || []).includes(parseInt(id))
+    //   );
+    //   // ensure org filter is not empty
+    //   filter.organization =
+    //     intersection.length === 0
+    //       ? userFilter.join(",")
+    //       : intersection.join(",");
+    //   return await db.recipients.report(filter, ["created_at"], schema);
+    // }
+    // return [];
+
+    //return await db.recipients.report(filter, ["created_at"], schema);
   },
 };

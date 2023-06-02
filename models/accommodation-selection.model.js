@@ -1,6 +1,6 @@
 /*!
- * Accommodations model
- * File: accommodations.model.js
+ * Accommodation Selection model
+ * File: accommodation-selection.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -18,25 +18,15 @@ const { ModelConstructor } = require("./constructor.model");
  */
 
 const schema = {
-  modelName: "accommodations",
+  modelName: "accommodation_selections",
   attributes: {
-    name: {
+    accommodation: {
       dataType: "varchar",
       required: true,
     },
-    label: {
-      dataType: "label",
-      required: true,
-    },
-    type: {
+    attendee: {
       dataType: "varchar",
       required: true,
-    },
-    description: {
-      dataType: "text",
-    },
-    active: {
-      dataType: "boolean",
     },
   },
 };
@@ -65,6 +55,9 @@ module.exports = {
   },
   findById: async (id) => {
     return construct(await db.defaults.findById(id, schema));
+  },
+  create: async (data) => {
+    return construct(await db.accommodation_selections.insert(data));
   },
   remove: async (id) => {
     await db.defaults.remove(id, schema);

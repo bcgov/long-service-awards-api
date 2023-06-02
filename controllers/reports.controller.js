@@ -6,8 +6,9 @@
  */
 
 const Recipient = require("../models/recipients.model.js");
+const Attendee = require("../models/attendees.model.js");
 const QualifyingYear = require("../models/qualifying-years.model.js");
-const {Readable} = require("stream");
+const { Readable } = require("stream");
 const Papa = require("papaparse");
 
 /**
@@ -21,21 +22,21 @@ const Papa = require("papaparse");
  */
 
 const pipeCSV = (res, data, filename) => {
-  res.set('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-  res.on('error', (err) => {
-    console.error('Error in write stream:', err);
+  res.set("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+  res.on("error", (err) => {
+    console.error("Error in write stream:", err);
   });
   let rs = new Readable();
 
   rs.pipe(res);
-  rs.on('error',function(err) {
-    console.error(err)
+  rs.on("error", function (err) {
+    console.error(err);
     res.status(404).end();
   });
   rs.push(data);
   rs.push(null);
-}
+};
 
 /**
  * Generate recipients report
@@ -49,14 +50,13 @@ const pipeCSV = (res, data, filename) => {
 
 exports.lsa = async (req, res, next) => {
   try {
-
     // get current LSA cycle
     const cycle = await QualifyingYear.findCurrent();
 
     // define filter
     const filter = {
-        cycle: String(cycle.name),
-        milestones: '25,30,35,40,45,50,55'
+      cycle: String(cycle.name),
+      milestones: "25,30,35,40,45,50,55",
     };
 
     // apply query filter to results
@@ -64,9 +64,8 @@ exports.lsa = async (req, res, next) => {
     const filename = `long-services-awards-report-${cycle}.csv`;
 
     // convert json results to csv format
-    const csvData = Papa.unparse(recipients, { newline: '\n' });
+    const csvData = Papa.unparse(recipients, { newline: "\n" });
     pipeCSV(res, csvData, filename);
-
   } catch (err) {
     return next(err);
   }
@@ -84,7 +83,6 @@ exports.lsa = async (req, res, next) => {
 
 exports.servicePins = async (req, res, next) => {
   try {
-
     // get current LSA cycle
     const cycle = await QualifyingYear.findCurrent();
 
@@ -95,9 +93,35 @@ exports.servicePins = async (req, res, next) => {
     const recipients = await Recipient.report(filter, res.locals.user, cycle);
     const filename = `service-pins-report-${cycle}.csv`;
     // convert json results to csv format
-    const csvData = Papa.unparse(recipients, { newline: '\n' });
+    const csvData = Papa.unparse(recipients, { newline: "\n" });
     pipeCSV(res, csvData, filename);
+  } catch (err) {
+    return next(err);
+  }
+};
 
+/**
+ * Generate attendees report
+ *
+ * @param req
+ * @param res
+ * @param {Function} next
+ * @method get
+ * @src public
+ */
+
+exports.attendees = async (req, res, next) => {
+  try {
+    const cycle = await QualifyingYear.findCurrent();
+    // define filter
+    const filter = {};
+
+    // apply query filter to results
+    const attendees = await Attendee.report(filter, res.locals.user, cycle);
+    const filename = `attendees-report-${cycle}.csv`;
+    // convert json results to csv format
+    const csvData = Papa.unparse(attendees, { newline: "\n" });
+    pipeCSV(res, csvData, filename);
   } catch (err) {
     return next(err);
   }

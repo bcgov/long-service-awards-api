@@ -8,6 +8,8 @@
 const ceremoniesModel = require("../models/ceremonies.model.js");
 const uuid = require("uuid");
 const { convertDate } = require("../services/validation.services.js");
+const addressesModel = require("../models/addresses.model.js");
+const { add } = require("winston");
 
 /**
  * Retrieve all records.
@@ -70,23 +72,31 @@ exports.get = async (req, res, next) => {
  */
 
 exports.create = async (req, res, next) => {
+  // try {
+  //   const guid = uuid.v4();
+  //   const data = req.body || {};
+  //   await ceremoniesModel.register({
+  //     id: guid,
+  //   });
+  //   const ceremony = await ceremoniesModel.findById(guid);
+  //   if (ceremony != undefined) {
+  //     res.status(200).json({
+  //       message: {
+  //         severity: "success",
+  //         summary: "Add Ceremony",
+  //         detail: "New ceremony record created.",
+  //       },
+  //       result: ceremony.data,
+  //     });
+  //   }
+  // } catch (err) {
+  //   return next(err);
+  // }
   try {
-    const guid = uuid.v4();
     const data = req.body || {};
-    await ceremoniesModel.register({
-      id: guid,
-    });
-    const ceremony = await ceremoniesModel.findById(guid);
-    if (ceremony != undefined) {
-      res.status(200).json({
-        message: {
-          severity: "success",
-          summary: "Add Ceremony",
-          detail: "New ceremony record created.",
-        },
-        result: ceremony.data,
-      });
-    }
+    const results = await ceremoniesModel.register(data);
+    await results.save(data);
+    res.status(200).json(results);
   } catch (err) {
     return next(err);
   }
@@ -109,7 +119,7 @@ exports.update = async (req, res, next) => {
 
     // handle exception
     if (!ceremony) return next(Error("noRecord"));
-    data['datetime'] = (convertDate(data.datetime));
+    data["datetime"] = convertDate(data.datetime);
     await ceremony.save(data);
 
     res.status(200).json({
