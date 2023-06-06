@@ -109,7 +109,7 @@ exports.update = async (req, res, next) => {
       }
 }
 
-exports.createAccomodation = async (req, res, next) => {
+exports.createAccommodation = async (req, res, next) => {
   try {
     const id = req.params.id;
     const token = req.params.token;
@@ -125,7 +125,7 @@ exports.createAccomodation = async (req, res, next) => {
   }
 }
 
-exports.getAccomodations = async (req, res, next) => {
+exports.getAccommodations = async (req, res, next) => {
   try {
     const results = await Accommodations.findAll();
     return res.status(200).json(results);
