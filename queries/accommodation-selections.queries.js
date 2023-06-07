@@ -25,14 +25,14 @@ const defaults = require("./default.queries");
 const accommodationSelectionsQueries = {
   insert: (data) => {
     // destructure  data
-    const { attendee = null, accommodation = null } = data || {};
+    const { attendee = null, accommodation = null, guest = 0 } = data || {};
 
     return {
-      sql: `INSERT INTO accommodation_selections (accommodation, attendee) VALUES (
+      sql: `INSERT INTO accommodation_selections (accommodation, attendee, guest) VALUES (
         $1::varchar,
         $2::uuid
     ) ON CONFLICT DO NOTHING`,
-      data: [accommodation, attendee],
+      data: [accommodation, attendee, guest],
     };
   },
 };

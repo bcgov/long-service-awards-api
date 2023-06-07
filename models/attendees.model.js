@@ -167,6 +167,12 @@ module.exports = {
   removeAll: async () => {
     await db.defaults.removeAll(schema);
   },
+  removeGuests: async (recipientID) => {
+    await db.attendees.removeGuests(recipientID);
+  },
+  saveGuest: async (data) => {
+    await db.attendees.insertGuest(data.recipient.id, data.ceremony.id, data.status);
+  },
   report: async (filter, user, currentCycle) => {
     // check if user is administrator (skip user-org filtering)
     const { role } = user || {};

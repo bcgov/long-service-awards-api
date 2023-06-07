@@ -19,8 +19,8 @@
                                 <th>Location
                                 <th>
                                 <td>
-                                    <% if(!(attendee.ceremony.venue) && !(attendee.ceremony.address.street1) && !(attendee.ceremony.address.community) &&
-                                    !(attendee.ceremony.address.province)) { %>
+                                    <% if(!!(attendee.ceremony.venue) && !!(attendee.ceremony.address.street1) && !!(attendee.ceremony.address.community) &&
+                                    !!(attendee.ceremony.address.province)) { %>
                                     <%= attendee.ceremony.venue %><br>
                                     <%= attendee.ceremony.address.street1 %><br>
                                     <% if (attendee.ceremony.address.street2) { %><%= attendee.ceremony.address.street2 %><br><% } %>
