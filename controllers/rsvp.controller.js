@@ -94,20 +94,32 @@ exports.update = async (req, res, next) => {
     const id = req.params.id;
     const token = req.params.token;
     const valid = await validateToken(id, token);
-    try {
-        const data = req.body;
-        const id = req.params.id;
-        const token = req.params.token;
-        const valid = await validateToken(id, token);
-        const accept = req.body.attendance_confirmed;
+    const accept = req.body.attendance_confirmed;
 
     if (!valid) throw (err = "Not Valid");
-
+    
     const attendee = await Attendees.findById(data.id);
 
     // handle exception
     if (!attendee) return next(Error("noRecord"));
     await attendee.save(data);
+
+    await Attendees.removeGuests(data.recipient.id);
+    await Attendees.saveGuest(data);
+
+    // Find guest if exists, or create new guest
+    // then, save guest (WHERE guest = 1)
+
+    const gracePeriod = new Date();
+    gracePeriod.setDate(gracePeriod.getDate() - 2);
+    // Create 48 hour grace period 
+    const email = attendee.data.recipient.contact.office_email;
+    
+    if (attendee.data.recipient.retirement_date != null && attendee.data.recipient.retirement_date < gracePeriod)
+      email = attendee.data.recipient.contact.personal_email;
+
+    // Send RSVP 
+    sendRSVPConfirmation(attendee.data, email, accept);
 
     res.status(200).json({
       message: {},
@@ -116,39 +128,6 @@ exports.update = async (req, res, next) => {
   } catch (err) {
     return next(err);
   }
-};
-        if (!valid) throw (err = "Not Valid");
-        
-        const attendee = await Attendees.findById(data.id);
-    
-        // handle exception
-        if (!attendee) return next(Error("noRecord"));
-        await attendee.save(data);
-
-        await Attendees.removeGuests(data.recipient.id);
-        await Attendees.saveGuest(data);
-
-        // Find guest if exists, or create new guest
-        // then, save guest (WHERE guest = 1)
-
-        const gracePeriod = new Date();
-        gracePeriod.setDate(gracePeriod.getDate() - 2);
-        // Create 48 hour grace period 
-        const email = attendee.data.recipient.contact.office_email;
-        
-        if (attendee.data.recipient.retirement_date != null && attendee.data.recipient.retirement_date < gracePeriod)
-          email = attendee.data.recipient.contact.personal_email;
-
-        // Send RSVP 
-        sendRSVPConfirmation(attendee.data, email, accept);
-    
-        res.status(200).json({
-          message: {},
-          result: attendee.data,
-        });
-      } catch (err) {
-        return next(err);
-      }
 }
 
 exports.createAccommodation = async (req, res, next) => {
