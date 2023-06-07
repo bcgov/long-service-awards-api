@@ -13,6 +13,7 @@ const controller = require("../controllers/rsvp.controller");
 /**
  * Router endpoints
  */
+router.get('/accommodations/list', controller.getAccommodations);
 
 // router.get('/list', authorizeAdmin, controller.getAll);
 // router.get('/list/:id', authorizeAdmin, controller.getByCeremony);

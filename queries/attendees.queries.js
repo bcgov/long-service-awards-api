@@ -200,6 +200,26 @@ const attendeesQueries = {
       data: [attendeeID, ceremonyID],
     };
   },
+  // Remove all guests by recipient ID 
+  removeGuests: (recipientID) => {
+    return {
+      // attendees.guest denotes if the attendee is a guest
+      // guest 0 =  , guest 1 = guest
+      sql: `DELETE FROM attendees 
+            WHERE attendees.recipient = $1::uuid 
+              AND attendees.guest > 0`,
+              data: [recipientID]
+    };
+  },
+  // Insert guest by recipient ID
+  insertGuest: (recipientID, ceremony, status) => {
+    const newAttendeeID = uuid.v4();
+    return {
+      sql: `INSERT INTO attendees (id, recipient, ceremony, status, guest)
+      VALUES ($1::uuid, $2::uuid, $3::uuid, $4::varchar, 1)`,
+      data: [newAttendeeID, recipientID, ceremony, status]
+    }
+  },
   report: (filter, ignore = [], currentCycle, schema) => {
     /**
      * Generate query: Report recipients data
@@ -382,6 +402,14 @@ exports.findAccommodationsByAttendee = async (id, schema) => {
 exports.update = async (data) => {
   return await transactionOne([attendeesQueries.update(data)]);
 };
+
+exports.removeGuests = async (recipientID) => {
+  return await transactionOne([attendeesQueries.removeGuests(recipientID)]);
+}
+
+exports.insertGuest = async(recipientID, ceremony, status) => {
+  return await transactionOne([attendeesQueries.insertGuest(recipientID, ceremony, status)]);
+}
 
 /**
  * Generate query: Report recipients data
