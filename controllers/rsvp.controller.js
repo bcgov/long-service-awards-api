@@ -5,15 +5,17 @@
  * MIT Licensed
  */
 
-
 const uuid = require("uuid");
-const {sendRSVP} = require("../services/mail.services");
+const { sendRSVP } = require("../services/mail.services");
 const Attendees = require("../models/attendees.model.js");
 const Accommodations = require("../models/accommodations.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
 
-
-const {rsvpToken, deleteToken, validateToken} = require('../services/cache.services');
+const {
+  rsvpToken,
+  deleteToken,
+  validateToken,
+} = require("../services/cache.services");
 /**
  * Send invite emails for selected recipients
  *
@@ -37,77 +39,71 @@ exports.send = async (req, res, next) => {
     const email = recipient.contact.office_email;
     const today = new Date();
 
-    // Create 48 hour grace period 
+    // Create 48 hour grace period
     today.setDate(today.getDate() - 2);
-    if (recipient.retirement_date != null && recipient.retirement_date < today)
-    {
-        email = recipient.contact.personal_email;
+    if (
+      recipient.retirement_date != null &&
+      recipient.retirement_date < today
+    ) {
+      email = recipient.contact.personal_email;
     }
-    const token = await rsvpToken(data.id,1209600);
+    const token = await rsvpToken(data.id, 1209600);
 
-    const valid = await validateToken(data.id, token)
+    const valid = await validateToken(data.id, token);
 
+    // get data:
 
-
-// get data:
-
-  const response = await sendRSVP({
-    email,
-    link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
-    attendee: data
-  });
+    const response = await sendRSVP({
+      email,
+      link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
+      attendee: data,
+    });
 
     return res;
-    
   } catch (err) {
     return next(err);
   }
 };
 
 exports.get = async (req, res, next) => {
-    try {
-
+  try {
     const id = req.params.id;
     const token = req.params.token;
 
     const valid = await validateToken(id, token);
 
     if (!valid) throw (err = "Not Valid");
-    
+
     const results = await Attendees.findById(id);
     if (!results) throw (err = "Not existing");
 
     res.status(200).json(results.data);
-
-
-    } catch (err) {
-
-    }
+  } catch (err) {}
 };
 
 exports.update = async (req, res, next) => {
-    try {
-        const data = req.body;
-        const id = req.params.id;
-        const token = req.params.token;
-        const valid = await validateToken(id, token);
+  try {
+    const data = req.body;
+    const id = req.params.id;
+    const token = req.params.token;
+    const valid = await validateToken(id, token);
 
-        if (!valid) throw (err = "Not Valid");
-        
-        const attendee = await Attendees.findById(data.id);
-    
-        // handle exception
-        if (!attendee) return next(Error("noRecord"));
-        await attendee.save(data);
-    
-        res.status(200).json({
-          message: {},
-          result: attendee.data,
-        });
-      } catch (err) {
-        return next(err);
-      }
-}
+    if (!valid) throw (err = "Not Valid");
+
+    const attendee = await Attendees.findById(data.id);
+
+    // handle exception
+    if (!attendee) return next(Error("noRecord"));
+    await attendee.save(data);
+
+    res.status(200).json({
+      message: {},
+      result: attendee.data,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
 
 exports.createAccommodation = async (req, res, next) => {
   try {
@@ -115,7 +111,7 @@ exports.createAccommodation = async (req, res, next) => {
     const token = req.params.token;
 
     const valid = validateToken(id, token);
-    if (!valid) throw (err = 'Not Valid');
+    if (!valid) throw (err = "Not Valid");
 
     const data = req.body || {};
     const results = await AccommodationSelections.create(data);
@@ -123,7 +119,7 @@ exports.createAccommodation = async (req, res, next) => {
   } catch (err) {
     return next(err);
   }
-}
+};
 
 exports.getAccommodations = async (req, res, next) => {
   try {
@@ -133,4 +129,4 @@ exports.getAccommodations = async (req, res, next) => {
     console.error(err);
     return next(err);
   }
-}
+};

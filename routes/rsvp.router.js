@@ -16,11 +16,11 @@ const controller = require("../controllers/rsvp.controller");
 
 // router.get('/list', authorizeAdmin, controller.getAll);
 // router.get('/list/:id', authorizeAdmin, controller.getByCeremony);
-router.post('/send', authorizeAdmin, controller.send);
-router.get('/:id/:token', controller.get);
-router.post('/:id/:token', controller.update);
-router.post('/create/:id/:token', controller.createAccommodation);
-router.get('/get/accommodations', controller.getAccommodations);
+router.post("/send", authorizeAdmin, controller.send);
+router.get("/:id/:token", controller.get);
+router.post("/:id/:token", controller.update);
+router.post("/create/:id/:token", controller.createAccommodation);
+router.get("/get/accommodations", controller.getAccommodations);
 // router.get('/delete/:id', authorizeAdmin, controller.remove);
 
 module.exports = router;
