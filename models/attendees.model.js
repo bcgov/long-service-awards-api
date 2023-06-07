@@ -10,6 +10,7 @@ const { ModelConstructor } = require("./constructor.model");
 const Recipient = require("./recipients.model");
 const Contact = require("./contacts.model");
 const Ceremony = require("./ceremonies.model");
+const Accommodations = require("./accommodation-selection.model");
 const organizationsModel = require("./organizations.model");
 
 ("use strict");
@@ -82,6 +83,14 @@ const schema = {
         return await Ceremony.findByAttendee(id, "ceremony");
       },
       attach: Ceremony.attach,
+    },
+    accommodations: {
+      model: Accommodations,
+      required: false,
+      get: async (id) => {
+        return await Accommodations.findByAttendee(id, "attendee");
+      },
+      attach: Accommodations.attach,
     },
   },
 };
