@@ -6,7 +6,7 @@
  */
 
 const uuid = require("uuid");
-const {sendRSVP, sendRSVPConfirmation} = require("../services/mail.services");
+const { sendRSVP, sendRSVPConfirmation } = require("../services/mail.services");
 const Attendees = require("../models/attendees.model.js");
 const Accommodations = require("../models/accommodations.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
@@ -53,15 +53,15 @@ exports.send = async (req, res, next) => {
 
     // get data:
 
-  const response = await sendRSVP({
-    email,
-    link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
-    attendee: data
-  });
+    const response = await sendRSVP({
+      email,
+      link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
+      attendee: data,
+    });
     return res.status(200).json({
       message: "success",
-      response: response
-    });    
+      response: response,
+    });
   } catch (err) {
     return next(err);
   }
@@ -80,12 +80,10 @@ exports.get = async (req, res, next) => {
     if (!results) throw (err = "Not existing");
 
     res.status(200).json(results.data);
-
-
-    } catch (err) {
-      next(err);
-      res.status(500);
-    }
+  } catch (err) {
+    next(err);
+    res.status(500);
+  }
 };
 
 exports.update = async (req, res, next) => {
@@ -97,7 +95,7 @@ exports.update = async (req, res, next) => {
     const accept = req.body.attendance_confirmed;
 
     if (!valid) throw (err = "Not Valid");
-    
+
     const attendee = await Attendees.findById(data.id);
 
     // handle exception
@@ -112,13 +110,16 @@ exports.update = async (req, res, next) => {
 
     const gracePeriod = new Date();
     gracePeriod.setDate(gracePeriod.getDate() - 2);
-    // Create 48 hour grace period 
+    // Create 48 hour grace period
     const email = attendee.data.recipient.contact.office_email;
-    
-    if (attendee.data.recipient.retirement_date != null && attendee.data.recipient.retirement_date < gracePeriod)
+
+    if (
+      attendee.data.recipient.retirement_date != null &&
+      attendee.data.recipient.retirement_date < gracePeriod
+    )
       email = attendee.data.recipient.contact.personal_email;
 
-    // Send RSVP 
+    // Send RSVP
     sendRSVPConfirmation(attendee.data, email, accept);
 
     res.status(200).json({
@@ -128,7 +129,7 @@ exports.update = async (req, res, next) => {
   } catch (err) {
     return next(err);
   }
-}
+};
 
 exports.createAccommodation = async (req, res, next) => {
   try {
