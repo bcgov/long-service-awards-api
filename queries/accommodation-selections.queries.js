@@ -28,12 +28,18 @@ const accommodationSelectionsQueries = {
     const { attendee = null, accommodation = null, guest = 0 } = data || {};
 
     return {
-      sql: `INSERT INTO accommodation_selections (accommodation, attendee, guest) VALUES (
+      sql: `INSERT INTO accommodation_selections (accommodation, attendee) VALUES (
         $1::varchar,
         $2::uuid
     ) ON CONFLICT DO NOTHING`,
-      data: [accommodation, attendee, guest],
+      data: [accommodation, attendee],
     };
+  },
+  remove: (id) => {
+      return { 
+        sql: `DELETE FROM accommodation_selections WHERE attendee = $1::uuid;`,
+        data: [id] 
+      };
   },
 };
 
@@ -50,6 +56,11 @@ exports.queries = accommodationSelectionsQueries;
 exports.insert = async (data) => {
   return await transactionOne([accommodationSelectionsQueries.insert(data)]);
 };
+
+exports.remove = async (id) => {
+  return await queryOne(accommodationSelectionsQueries.remove(id));
+};
+
 
 /**
  * Default transactions

@@ -101,9 +101,28 @@ exports.update = async (req, res, next) => {
     // handle exception
     if (!attendee) return next(Error("noRecord"));
     await attendee.save(data);
+    await AccommodationSelections.remove(attendee.id);
+
+    if (data.accommodations)
+    {
+      Object.keys(data.accommodations).forEach(async (key) => {
+        if (data.accommodations[key] === true)
+          await AccommodationSelections.create({ attendee: data.id, accommodation: key})
+    })
+    }
 
     await Attendees.removeGuests(data.recipient.id);
-    await Attendees.saveGuest(data);
+    let guestID = undefined;
+    if (data.guest_count > 0)
+      guestID = (await Attendees.saveGuest(data)).id;
+    if (data.guest_accommodations && guestID)
+    {
+      Object.keys(data.guest_accommodations).forEach(async (key) => {
+        if (data.guest_accommodations[key] === true)
+          await AccommodationSelections.create({ attendee: guestID, accommodation: key})
+      })
+    }
+
 
     // Find guest if exists, or create new guest
     // then, save guest (WHERE guest = 1)
@@ -126,22 +145,6 @@ exports.update = async (req, res, next) => {
       message: {},
       result: attendee.data,
     });
-  } catch (err) {
-    return next(err);
-  }
-};
-
-exports.createAccommodation = async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    const token = req.params.token;
-
-    const valid = validateToken(id, token);
-    if (!valid) throw (err = "Not Valid");
-
-    const data = req.body || {};
-    const results = await AccommodationSelections.create(data);
-    res.status(200).json(results);
   } catch (err) {
     return next(err);
   }

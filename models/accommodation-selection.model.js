@@ -66,7 +66,7 @@ module.exports = {
     return construct(await db.accommodation_selections.insert(data));
   },
   remove: async (id) => {
-    await db.defaults.remove(id, schema);
+    await db.accommodation_selections.remove(id);
   },
   removeAll: async () => {
     await db.defaults.removeAll(schema);

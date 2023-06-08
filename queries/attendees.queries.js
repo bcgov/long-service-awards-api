@@ -216,9 +216,10 @@ const attendeesQueries = {
     const newAttendeeID = uuid.v4();
     return {
       sql: `INSERT INTO attendees (id, recipient, ceremony, status, guest)
-      VALUES ($1::uuid, $2::uuid, $3::uuid, $4::varchar, 1)`,
-      data: [newAttendeeID, recipientID, ceremony, status],
-    };
+      VALUES ($1::uuid, $2::uuid, $3::uuid, $4::varchar, 1)
+      RETURNING *`,
+      data: [newAttendeeID, recipientID, ceremony, status]
+    }
   },
   report: (filter, ignore = [], currentCycle, schema) => {
     /**
