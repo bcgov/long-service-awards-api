@@ -156,7 +156,7 @@ module.exports = {
   },
   // create: async (data) => {
   //   // validate model init data
-  //   data.status = "Assigned";
+  //   data.status = "assigned";
   //   const result = await db.attendees.insert(data);
   //   const item2 = construct(await result);
   //   return item2;
@@ -164,7 +164,7 @@ module.exports = {
   //   if (item) return construct(await db.attendees.insert(data, schema, ["id"]));
   // },
   create: async (data) => {
-    data.status = "Assigned";
+    data.status = "assigned";
     return construct(await db.attendees.insert(data));
   },
   update: async (data) => {

@@ -103,26 +103,28 @@ exports.update = async (req, res, next) => {
     await attendee.save(data);
     await AccommodationSelections.remove(attendee.id);
 
-    if (data.accommodations)
-    {
+    if (data.accommodations) {
       Object.keys(data.accommodations).forEach(async (key) => {
         if (data.accommodations[key] === true)
-          await AccommodationSelections.create({ attendee: data.id, accommodation: key})
-    })
+          await AccommodationSelections.create({
+            attendee: data.id,
+            accommodation: key,
+          });
+      });
     }
 
     await Attendees.removeGuests(data.recipient.id);
     let guestID = undefined;
-    if (data.guest_count > 0)
-      guestID = (await Attendees.saveGuest(data)).id;
-    if (data.guest_accommodations && guestID)
-    {
+    if (data.guest_count > 0) guestID = (await Attendees.saveGuest(data)).id;
+    if (data.guest_accommodations && guestID) {
       Object.keys(data.guest_accommodations).forEach(async (key) => {
         if (data.guest_accommodations[key] === true)
-          await AccommodationSelections.create({ attendee: guestID, accommodation: key})
-      })
+          await AccommodationSelections.create({
+            attendee: guestID,
+            accommodation: key,
+          });
+      });
     }
-
 
     // Find guest if exists, or create new guest
     // then, save guest (WHERE guest = 1)
@@ -138,7 +140,7 @@ exports.update = async (req, res, next) => {
     )
       email = attendee.data.recipient.contact.personal_email;
 
-    // Send RSVP
+    // Send RSVP confirmation
     sendRSVPConfirmation(attendee.data, email, accept);
 
     res.status(200).json({

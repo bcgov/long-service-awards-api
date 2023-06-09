@@ -25,10 +25,13 @@ const dirPath = "/resources/email_templates/";
  */
 
 const _logMail = async (error, response, recipient) => {
-
-  const parsedError = error ? decodeError(error) : {hint: 'N/A', msg: 'Mail delivered successfully'};
-  const {hint, msg} = parsedError || {};
-  const {id, user} = !!recipient.recipient ? recipient.recipient : recipient || {};
+  const parsedError = error
+    ? decodeError(error)
+    : { hint: "N/A", msg: "Mail delivered successfully" };
+  const { hint, msg } = parsedError || {};
+  const { id, user } = !!recipient.recipient
+    ? recipient.recipient
+    : recipient || {};
   const transaction = {
     recipient: id,
     error: !!error,
@@ -201,14 +204,13 @@ module.exports.sendResetPassword = async (data) => {
 
 module.exports.sendRSVP = async (data) => {
   const { email, link, attendee } = data || {};
-  console.log(link);
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 14);
   // send confirmation mail to supervisor
   return await sendMail(
     [email],
     "Long Service Awards Invitation",
-    "email-recipient-ceremony-invitation.ejs",
+    "email-recipient-ceremony-invitation-updated.ejs",
     { link: link, attendee: attendee, expiry: expiry },
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
@@ -217,68 +219,60 @@ module.exports.sendRSVP = async (data) => {
   );
 };
 
+module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
+  const attendee = data || {};
+
+  // send confirmation mail to supervisor
+  if (accept) {
+    return await sendMail(
+      [email],
+      "Long Service Awards Invitation",
+      "email-recipient-ceremony-rsvp-accept-updated.ejs",
+      attendee,
+      process.env.MAIL_FROM_ADDRESS,
+      process.env.MAIL_FROM_NAME,
+      [],
+      null
+    );
+  } else {
+    return await sendMail(
+      [email],
+      "Long Service Awards Invitation",
+      "email-recipient-ceremony-rsvp-decline-updated.ejs",
+      attendee,
+      process.env.MAIL_FROM_ADDRESS,
+      process.env.MAIL_FROM_NAME,
+      [],
+      null
+    );
+  }
+};
 
 module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
   const attendee = data || {};
 
   // send confirmation mail to supervisor
-  if (accept)
-  {
-  return await sendMail(
-      [email],
-      'Long Service Awards Invitation',
-      'email-recipient-ceremony-rsvp-accept.ejs',
-      attendee,
-      process.env.MAIL_FROM_ADDRESS,
-      process.env.MAIL_FROM_NAME,
-      [],
-      null
-  );
-  }
-  else 
-  {
+  if (accept) {
     return await sendMail(
       [email],
-      'Long Service Awards Invitation',
-      'email-recipient-ceremony-rsvp-decline.ejs',
+      "Long Service Awards Invitation",
+      "email-recipient-ceremony-rsvp-accept.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
       [],
       null
-  );
-  }
-}
-
-
-module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
-  const attendee = data || {};
-
-  // send confirmation mail to supervisor
-  if (accept)
-  {
-  return await sendMail(
-      [email],
-      'Long Service Awards Invitation',
-      'email-recipient-ceremony-rsvp-accept.ejs',
-      attendee,
-      process.env.MAIL_FROM_ADDRESS,
-      process.env.MAIL_FROM_NAME,
-      [],
-      null
-  );
-  }
-  else 
-  {
+    );
+  } else {
     return await sendMail(
       [email],
-      'Long Service Awards Invitation',
-      'email-recipient-ceremony-rsvp-decline.ejs',
+      "Long Service Awards Invitation",
+      "email-recipient-ceremony-rsvp-decline.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
       [],
       null
-  );
+    );
   }
-}
+};
