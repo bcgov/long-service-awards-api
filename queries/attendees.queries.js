@@ -397,7 +397,7 @@ exports.findCeremonyByAttendee = async (id, type, schema) => {
 };
 
 exports.findAccommodationsByAttendee = async (id, schema) => {
-  const result = await queryOne(
+  const result = await query(
     attendeesQueries.findAccommodationsByAttendee(id)
   );
   return await result;
