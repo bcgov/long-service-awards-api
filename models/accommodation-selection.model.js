@@ -71,9 +71,10 @@ module.exports = {
   },
   findByAttendee: async (id) => {
     // For attendees model attachment (get)
-    return construct(
-      await db.attendees.findAccommodationsByAttendee(id, schema)
-    );
+    var results = await db.attendees.findAccommodationsByAttendee(id, schema);
+    return (results || []).map(accommodation => {
+      return construct(accommodation)
+  });
   },
   create: construct,
   insert: async (data) => {
