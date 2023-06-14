@@ -256,7 +256,7 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
     return await sendMail(
       [email],
       "Long Service Awards Invitation",
-      "email-recipient-ceremony-rsvp-accept.ejs",
+      "email-recipient-ceremony-rsvp-accept-updated.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
@@ -267,7 +267,7 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
     return await sendMail(
       [email],
       "Long Service Awards Invitation",
-      "email-recipient-ceremony-rsvp-decline.ejs",
+      "email-recipient-ceremony-rsvp-decline-updated.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,

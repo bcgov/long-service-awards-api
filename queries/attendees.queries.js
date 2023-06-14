@@ -218,8 +218,8 @@ const attendeesQueries = {
       sql: `INSERT INTO attendees (id, recipient, ceremony, status, guest)
       VALUES ($1::uuid, $2::uuid, $3::uuid, $4::varchar, 1)
       RETURNING *`,
-      data: [newAttendeeID, recipientID, ceremony, status]
-    }
+      data: [newAttendeeID, recipientID, ceremony, status],
+    };
   },
   report: (filter, ignore = [], currentCycle, schema) => {
     /**
@@ -256,8 +256,10 @@ const attendeesQueries = {
     return {
       sql: `SELECT 
       attendees.id AS "attendee_id",
+      recipients.employee_number as "employee_number",
       contacts.first_name,
       contacts.last_name,
+      service_selections.milestone as "milestone",
       ceremonies.datetime AS "ceremony_datetime",
       organizations.name AS "ministry",
       recipients.branch,
@@ -270,8 +272,9 @@ const attendeesQueries = {
       LEFT JOIN contacts ON recipients.contact = contacts.id
       LEFT JOIN ceremonies ON attendees.ceremony = ceremonies.id
       LEFT JOIN organizations ON recipients.organization = organizations.id
+      LEFT JOIN service_selections on attendees.recipient = service_selections.recipient
       LEFT JOIN accommodation_selections ON attendees.id = accommodation_selections.attendee
-      GROUP BY attendee_id, first_name, last_name, ceremony_datetime, ministry, branch, attendees.status`,
+      GROUP BY attendee_id, employee_number, first_name, last_name, milestone, ceremony_datetime, ministry, branch, attendees.status`,
     };
   },
 };

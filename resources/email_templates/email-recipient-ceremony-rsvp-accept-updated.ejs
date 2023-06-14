@@ -330,7 +330,7 @@
                                       <%= recipient.contact.first_name %> <%=
                                       recipient.contact.last_name %>,
                                     </p>
-                                    <p><%= recipient.organization %></p>
+                                    <p><%= recipient.contact.organization %></p>
                                     <p>
                                       We are excited to celebrate your career
                                       milestone at a Long Service Awards
@@ -350,10 +350,11 @@
                                       ceremony.address.street2 %>, <% } %><%=
                                       ceremony.address.community %>, <%=
                                       ceremony.address.province %>. <% } %>
-                                      Dress: Business attire. Doors open at <%=
-                                      ceremony.datetime %>.
                                     </p>
-
+                                    <p>Dress: Business attire.</p>
+                                    <p>
+                                      Doors open at <%= ceremony.datetime %>.
+                                    </p>
                                     <p>
                                       For information about travel reimbursement
                                       and taking time off, visit the
