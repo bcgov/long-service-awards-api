@@ -26,7 +26,7 @@ const accommodationSelectionsQueries = {
   insert: (data) => {
     // destructure  data
     const { attendee = null, accommodation = null, guest = 0 } = data || {};
-
+    
     return {
       sql: `INSERT INTO accommodation_selections (accommodation, attendee) VALUES (
         $1::varchar,

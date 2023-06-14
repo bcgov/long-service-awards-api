@@ -185,7 +185,7 @@ const attendeesQueries = {
   findAccommodationsByAttendee: (attendeeID) => {
     const attendeeRef = "attendees.id";
     return {
-      sql: `SELECT accommodation_selections.* FROM accommodation_selections
+      sql: `SELECT * FROM accommodation_selections
                 JOIN attendees ON accommodation_selections.attendee = ${attendeeRef}
                 WHERE attendees.id = $1::uuid;`,
       data: [attendeeID],
@@ -397,7 +397,7 @@ exports.findAccommodationsByAttendee = async (id, schema) => {
   const result = await queryOne(
     attendeesQueries.findAccommodationsByAttendee(id)
   );
-  return await attachReferences(result, schema);
+  return await result;
 };
 
 exports.update = async (data) => {

@@ -84,14 +84,12 @@ const schema = {
       },
       attach: Ceremony.attach,
     },
-    // accommodations: {
-    //   model: Accommodations,
-    //   required: false,
-    //   get: async (id) => {
-    //     return await Accommodations.findByAttendee(id, "attendee");
-    //   },
-    //   attach: Accommodations.attach,
-    // },
+    accommodations: {
+      model: [Accommodations],
+      required: false,
+      get: Accommodations.findByAttendee,
+      attach: Accommodations.attach,
+    },
   },
 };
 
@@ -180,11 +178,11 @@ module.exports = {
     await db.attendees.removeGuests(recipientID);
   },
   saveGuest: async (data) => {
-    await db.attendees.insertGuest(
+    return construct (await db.attendees.insertGuest(
       data.recipient.id,
       data.ceremony.id,
       data.status
-    );
+    ));
   },
   report: async (filter, user, currentCycle) => {
     // check if user is administrator (skip user-org filtering)

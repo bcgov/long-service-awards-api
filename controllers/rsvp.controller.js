@@ -100,30 +100,41 @@ exports.update = async (req, res, next) => {
 
     // handle exception
     if (!attendee) return next(Error("noRecord"));
-    await attendee.save(data);
+    
+    // recreate accommodations to have only attendee, accommodation fields to match the model
+    let accommodationsArr = [];
+    Object.keys(data.accommodations).forEach(async (key) => {
+      if (data.accommodations[key] === true)
+        {
+          accommodationsArr.push(JSON.parse('{"accommodation": "'+ key +'", "attendee": "'+ data.id +'"}'));
+        }
+    });
+    data.accommodations = accommodationsArr;
+
+    // Clear accommodations before saving
     await AccommodationSelections.remove(attendee.id);
-
-    if (data.accommodations) {
-      Object.keys(data.accommodations).forEach(async (key) => {
-        if (data.accommodations[key] === true)
-          await AccommodationSelections.create({
-            attendee: data.id,
-            accommodation: key,
-          });
-      });
-    }
-
+    await attendee.save(data);
+    
+    // Clear/reset guests
     await Attendees.removeGuests(data.recipient.id);
     let guestID = undefined;
+    // Create guest, and get ID for attaching accommodations to guestID
     if (data.guest_count > 0) guestID = (await Attendees.saveGuest(data)).id;
+
     if (data.guest_accommodations && guestID) {
+      
+      let guestAccommodationsArr = [];
       Object.keys(data.guest_accommodations).forEach(async (key) => {
         if (data.guest_accommodations[key] === true)
-          await AccommodationSelections.create({
-            attendee: guestID,
-            accommodation: key,
-          });
+          {
+            guestAccommodationsArr.push(JSON.parse('{"accommodation": "'+ key +'", "attendee": "'+ guestID +'"}'));
+          }
       });
+
+      const guest = await Attendees.findById(guestID);
+      let guestData = guest.data;
+      guestData.accommodations = guestAccommodationsArr;
+      await guest.save(guestData);
     }
 
     // Find guest if exists, or create new guest
