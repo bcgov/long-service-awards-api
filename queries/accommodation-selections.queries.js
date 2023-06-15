@@ -25,8 +25,8 @@ const defaults = require("./default.queries");
 const accommodationSelectionsQueries = {
   insert: (data) => {
     // destructure  data
-    const { attendee = null, accommodation = null } = data || {};
-
+    const { attendee = null, accommodation = null, guest = 0 } = data || {};
+    
     return {
       sql: `INSERT INTO accommodation_selections (accommodation, attendee) VALUES (
         $1::varchar,
@@ -34,6 +34,12 @@ const accommodationSelectionsQueries = {
     ) ON CONFLICT DO NOTHING`,
       data: [accommodation, attendee],
     };
+  },
+  remove: (id) => {
+      return { 
+        sql: `DELETE FROM accommodation_selections WHERE attendee = $1::uuid;`,
+        data: [id] 
+      };
   },
 };
 
@@ -50,6 +56,11 @@ exports.queries = accommodationSelectionsQueries;
 exports.insert = async (data) => {
   return await transactionOne([accommodationSelectionsQueries.insert(data)]);
 };
+
+exports.remove = async (id) => {
+  return await queryOne(accommodationSelectionsQueries.remove(id));
+};
+
 
 /**
  * Default transactions

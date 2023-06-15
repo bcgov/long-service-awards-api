@@ -7,6 +7,7 @@
 
 const db = require("../queries/index.queries");
 const { ModelConstructor } = require("./constructor.model");
+const { isEmpty } = require("../services/validation.services");
 
 ("use strict");
 
@@ -45,22 +46,42 @@ const construct = (init, attach = null) => {
     init: init,
     schema: schema,
     db: db.defaults,
+    attach: attach
   });
 };
 
 module.exports = {
   schema: schema,
+  /**
+   * Updates a attendees selected accommodation
+   * @param {Ceremony} accommodation Selected ceremony to be attached onto the attendee
+   * @param {Attendee} attendee Attendee data to be updated with new ceremony data (id)
+   *  */
+  attach: async (accommodation, attendee) => {
+    if (!accommodation || !attendee) return null;
+    
+    await db.accommodation_selections.insert(accommodation.data);
+    
+  },
   findAll: async (filter) => {
     return await db.defaults.findAll(filter, schema);
   },
   findById: async (id) => {
     return construct(await db.defaults.findById(id, schema));
   },
-  create: async (data) => {
-    return construct(await db.accommodation_selections.insert(data));
+  findByAttendee: async (id) => {
+    // For attendees model attachment (get)
+    var results = await db.attendees.findAccommodationsByAttendee(id, schema);
+    return (results || []).map(accommodation => {
+      return construct(accommodation)
+  });
+  },
+  create: construct,
+  insert: async (data) => {
+      return construct(await db.accommodation_selections.insert(data));
   },
   remove: async (id) => {
-    await db.defaults.remove(id, schema);
+    await db.accommodation_selections.remove(id);
   },
   removeAll: async () => {
     await db.defaults.removeAll(schema);

@@ -1,0 +1,46 @@
+<%- await include('email-doctype') %>
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <%- await include('email-head', {title: title}) %>
+
+<p>This is an automated email. No response is required.</p>
+
+<p><%= recipient.contact.first_name %> <%= recipient.contact.last_name %>,</p>
+<p><%= recipient.organization %></p>
+<p>We are excited to celebrate your career milestone at a Long Service Awards ceremony!</p>
+<p>Thank you for confirming your attendance.</p>
+
+
+<p>Your ceremony will take place on <%= ceremony.datetime %> at
+
+  <%if (!ceremony.venue && !ceremony.address)  {%>
+    (TBD).
+  <% } else { %> 
+    <%= ceremony.venue %>, <%= ceremony.address.street1 %>, <% if (ceremony.address.street2) {%><%= ceremony.address.street2 %>, <% } %><%= ceremony.address.community %>, <%= ceremony.address.province %>.
+  <% } %>
+
+  Dress: Business attire. Doors open at <%= ceremony.datetime %>.
+</p>
+
+
+<p>For information about travel reimbursement and taking time off, visit the
+  <a href="https://longserviceawards.gww.gov.bc.ca/travel/">Long Service Awards website</a>
+  or contact your workplace
+  <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">Long Service Awards contact</a>.
+  If you have questions about the ceremony, email the
+  <a href="mailto:longserviceawards@gov.bc.ca?subject=Question%20about%20LSA%20ceremony">
+    Long Service Awards team</a>.
+</p>
+
+<p>
+    If you need to make changes to your RSVP information or cancel your attendance,
+    please email the
+    <a href="mailto:LongServiceAwards@gov.bc.ca?subject=RSVP%20to%20ceremony">Long Service Awards</a>
+    team as soon as possible.
+  </p>
+
+<p>Please find your printable keepsake invitation attached. This is not required for entry.</p>
+
+
+<p>Thank you and congratulations,<br /><br />Long Service Awards Team</p>
+
+</html>

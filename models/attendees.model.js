@@ -10,6 +10,7 @@ const { ModelConstructor } = require("./constructor.model");
 const Recipient = require("./recipients.model");
 const Contact = require("./contacts.model");
 const Ceremony = require("./ceremonies.model");
+const Accommodations = require("./accommodation-selection.model");
 const organizationsModel = require("./organizations.model");
 
 ("use strict");
@@ -83,6 +84,12 @@ const schema = {
       },
       attach: Ceremony.attach,
     },
+    accommodations: {
+      model: [Accommodations],
+      required: false,
+      get: Accommodations.findByAttendee,
+      attach: Accommodations.attach,
+    },
   },
 };
 
@@ -147,7 +154,7 @@ module.exports = {
   },
   // create: async (data) => {
   //   // validate model init data
-  //   data.status = "Assigned";
+  //   data.status = "assigned";
   //   const result = await db.attendees.insert(data);
   //   const item2 = construct(await result);
   //   return item2;
@@ -155,7 +162,7 @@ module.exports = {
   //   if (item) return construct(await db.attendees.insert(data, schema, ["id"]));
   // },
   create: async (data) => {
-    data.status = "Assigned";
+    data.status = "assigned";
     return construct(await db.attendees.insert(data));
   },
   update: async (data) => {
@@ -166,6 +173,16 @@ module.exports = {
   },
   removeAll: async () => {
     await db.defaults.removeAll(schema);
+  },
+  removeGuests: async (recipientID) => {
+    await db.attendees.removeGuests(recipientID);
+  },
+  saveGuest: async (data) => {
+    return construct (await db.attendees.insertGuest(
+      data.recipient.id,
+      data.ceremony.id,
+      data.status
+    ));
   },
   report: async (filter, user, currentCycle) => {
     // check if user is administrator (skip user-org filtering)

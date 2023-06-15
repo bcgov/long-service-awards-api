@@ -1,74 +1,113 @@
 <%- await include('email-doctype') %>
-    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
-    <%- await include('email-head', {title: title}) %>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <%- await include('email-head', {title: title}) %>
 
-        <body class="body"
-            style="padding:0; margin:0; display:block; background:#ffffff; -webkit-text-size-adjust:none">
-            <div class="container">
-                <%- await include('email-banner'); %>
+  <body
+    class="body"
+    style="
+      padding: 0;
+      margin: 0;
+      display: block;
+      background: #ffffff;
+      -webkit-text-size-adjust: none;
+    "
+  >
+    <div class="container">
+      <%- await include('email-banner'); %>
 
-                    <h3>The Government of British Columbia is pleased to invite</h3>
+      <h3>The Government of British Columbia is pleased to invite</h3>
 
-                    <h2><%= attendee.recipient.contact.first_name %> <%= attendee.recipient.contact.last_name %></h2>
+      <h2>
+        <%= attendee.recipient.contact.first_name %> <%=
+        attendee.recipient.contact.last_name %>
+      </h2>
 
-                    <h4>to the Long Service Awards Ceremony</h4>
+      <h4>to the Long Service Awards Ceremony</h4>
 
-                    <table cellpadding="5" cellspacing="5" width="100%" bgcolor="#eeeeee">
-                        <tbody>
-                            <tr>
-                                <th>Location
-                                <th>
-                                <td>
-                                    <% if(!(attendee.ceremony.venue) && !(attendee.ceremony.address.street1) && !(attendee.ceremony.address.community) &&
-                                    !(attendee.ceremony.address.province)) { %>
-                                    <%= attendee.ceremony.venue %><br>
-                                    <%= attendee.ceremony.address.street1 %><br>
-                                    <% if (attendee.ceremony.address.street2) { %><%= attendee.ceremony.address.street2 %><br><% } %>
-                                    <%= attendee.ceremony.address.community %>, <%= attendee.ceremony.address.province %>
-                                    <% } else { %>
-                                    TBD
-                                    <% } %>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Date
-                                <th>
-                                <td><%= attendee.ceremony.datetime_formatted %></td>
-                            </tr>
-                        </tbody>
-                    </table>
+      <table cellpadding="5" cellspacing="5" width="100%" bgcolor="#eeeeee">
+        <tbody>
+          <tr>
+            <th>Location</th>
+            <th></th>
+            <td>
+              <% if(!!(attendee.ceremony.venue) &&
+              !!(attendee.ceremony.address.street1) &&
+              !!(attendee.ceremony.address.community) &&
+              !!(attendee.ceremony.address.province)) { %> <%=
+              attendee.ceremony.venue %><br />
+              <%= attendee.ceremony.address.street1 %><br />
+              <% if (attendee.ceremony.address.street2) { %><%=
+              attendee.ceremony.address.street2 %><br /><% } %> <%=
+              attendee.ceremony.address.community %>, <%=
+              attendee.ceremony.address.province %> <% } else { %> TBD <% } %>
+            </td>
+          </tr>
+          <tr>
+            <th>Date</th>
+            <th></th>
+            <td><%= attendee.ceremony.datetime_formatted %></td>
+          </tr>
+        </tbody>
+      </table>
 
-                    <p>This invitation is for the intended recipient and a guest.</p>
+      <p>This invitation is for the intended recipient and a guest.</p>
 
-                    <p>Dress: Business attire</p>
+      <p>Dress: Business attire</p>
 
-                    <p>Doors open at <%= attendee.ceremony.datetime_formatted %></p>
+      <p>Doors open at 5:45PM</p>
 
-                    <p>Please click one of the RSVP link below to respond to this ceremony invitation.</p>
+      <p>
+        Please click one of the RSVP link below to respond to this ceremony
+        invitation.
+      </p>
 
-                    <p>
-                        Please note: this RSVP link will expire at <%= expiry %>.
-                    </p>
+      <p>Please note: this RSVP link will expire at <%= expiry %>.</p>
 
-                    <table cellspacing="0" cellpadding="0" width="100%" bgcolor="#ffffff">
-                        <tr>
-                            <td style="background:#D84A38;text-align:center;">
-                                <div>
-                                    <a href="<%= link %>?accept=true"
-                                        style="background-color:#D84A38;color:#ffffff;display:inline-block;font-family:sans-serif;font-size:13px;font-weight:bold;line-height:26px;text-align:center;text-decoration:none;-webkit-text-size-adjust:none;">RSVP</a>
-                                </div>
-                            </td>
-                            <td width="25">&nbsp;</td>
-                            <td style="background:#D84A38;text-align:center">
-                                <div>
-                                    <a href="<%= link %>?accept=false"
-                                        style="background-color:#D84A38;color:#ffffff;display:inline-block;font-family:sans-serif;font-size:13px;font-weight:bold;line-height:26px;text-align:center;text-decoration:none;-webkit-text-size-adjust:none;">NO,
-                                        I will not be attending</a>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+      <table cellspacing="0" cellpadding="0" width="100%" bgcolor="#ffffff">
+        <tr>
+          <td style="background: #d84a38; text-align: center">
+            <div>
+              <a
+                href="<%= link %>?accept=true"
+                style="
+                  background-color: #d84a38;
+                  color: #ffffff;
+                  display: inline-block;
+                  font-family: sans-serif;
+                  font-size: 13px;
+                  font-weight: bold;
+                  line-height: 26px;
+                  text-align: center;
+                  text-decoration: none;
+                  -webkit-text-size-adjust: none;
+                "
+                >RSVP</a
+              >
             </div>
-        </body>
-
-    </html>
+          </td>
+          <td width="25">&nbsp;</td>
+          <td style="background: #d84a38; text-align: center">
+            <div>
+              <a
+                href="<%= link %>?accept=false"
+                style="
+                  background-color: #d84a38;
+                  color: #ffffff;
+                  display: inline-block;
+                  font-family: sans-serif;
+                  font-size: 13px;
+                  font-weight: bold;
+                  line-height: 26px;
+                  text-align: center;
+                  text-decoration: none;
+                  -webkit-text-size-adjust: none;
+                "
+                >NO, I will not be attending</a
+              >
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

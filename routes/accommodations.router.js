@@ -14,7 +14,7 @@ const controller = require("../controllers/accommodations.controller");
  * Router endpoints
  */
 
-router.get("/list", authorizeAdmin, controller.getAll);
+router.get("/list", controller.getAll);
 router.get("/list/:id", authorizeAdmin, controller.getByAttendee);
 router.post("/create", authorizeAdmin, controller.createSelection);
 router.get("/view/:id", authorizeAdmin, controller.get);

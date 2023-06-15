@@ -13,14 +13,12 @@ const controller = require("../controllers/rsvp.controller");
 /**
  * Router endpoints
  */
+router.post("/send", authorizeAdmin, controller.send);
 
-// router.get('/list', authorizeAdmin, controller.getAll);
-// router.get('/list/:id', authorizeAdmin, controller.getByCeremony);
-router.post('/send', authorizeAdmin, controller.send);
-router.get('/:id/:token', controller.get);
-router.post('/:id/:token', controller.update);
-router.post('/create/:id/:token', controller.createAccommodation);
-router.get('/get/accommodations', controller.getAccommodations);
-// router.get('/delete/:id', authorizeAdmin, controller.remove);
+// Public endpoints:
+router.get('/accommodations/list', controller.getAccommodations);
+router.get("/:id/:token", controller.get);
+router.post("/:id/:token", controller.update);
+
 
 module.exports = router;
