@@ -87,6 +87,7 @@ exports.get = async (req, res, next) => {
 };
 
 exports.update = async (req, res, next) => {
+  console.log(req.body);
   try {
     const data = req.body;
     const id = req.params.id;
@@ -100,21 +101,24 @@ exports.update = async (req, res, next) => {
 
     // handle exception
     if (!attendee) return next(Error("noRecord"));
-    
+
     // recreate accommodations to have only attendee, accommodation fields to match the model
     let accommodationsArr = [];
     Object.keys(data.accommodations).forEach(async (key) => {
-      if (data.accommodations[key] === true)
-        {
-          accommodationsArr.push(JSON.parse('{"accommodation": "'+ key +'", "attendee": "'+ data.id +'"}'));
-        }
+      if (data.accommodations[key] === true) {
+        accommodationsArr.push(
+          JSON.parse(
+            '{"accommodation": "' + key + '", "attendee": "' + data.id + '"}'
+          )
+        );
+      }
     });
     data.accommodations = accommodationsArr;
 
     // Clear accommodations before saving
     await AccommodationSelections.remove(attendee.id);
     await attendee.save(data);
-    
+
     // Clear/reset guests
     await Attendees.removeGuests(data.recipient.id);
     let guestID = undefined;
@@ -122,13 +126,15 @@ exports.update = async (req, res, next) => {
     if (data.guest_count > 0) guestID = (await Attendees.saveGuest(data)).id;
 
     if (data.guest_accommodations && guestID) {
-      
       let guestAccommodationsArr = [];
       Object.keys(data.guest_accommodations).forEach(async (key) => {
-        if (data.guest_accommodations[key] === true)
-          {
-            guestAccommodationsArr.push(JSON.parse('{"accommodation": "'+ key +'", "attendee": "'+ guestID +'"}'));
-          }
+        if (data.guest_accommodations[key] === true) {
+          guestAccommodationsArr.push(
+            JSON.parse(
+              '{"accommodation": "' + key + '", "attendee": "' + guestID + '"}'
+            )
+          );
+        }
       });
 
       const guest = await Attendees.findById(guestID);
