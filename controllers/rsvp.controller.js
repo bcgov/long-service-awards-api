@@ -104,8 +104,8 @@ exports.update = async (req, res, next) => {
 
     // recreate accommodations to have only attendee, accommodation fields to match the model
     let accommodationsArr = [];
-    Object.keys(data.accommodations).forEach(async (key) => {
-      if (data.accommodations[key] === true) {
+    Object.keys(data.recipient_accommodations).forEach(async (key) => {
+      if (data.recipient_accommodations[key] === true) {
         accommodationsArr.push(
           JSON.parse(
             '{"accommodation": "' + key + '", "attendee": "' + data.id + '"}'
