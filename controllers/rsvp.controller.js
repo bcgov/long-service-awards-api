@@ -47,7 +47,9 @@ exports.send = async (req, res, next) => {
     ) {
       email = recipient.contact.personal_email;
     }
-    const token = await rsvpToken(data.id, 1209600);
+    //const expiry = 60 * 60 * 24 * 14;
+    const expiry = 60;
+    const token = await rsvpToken(data.id, expiry);
 
     const valid = await validateToken(data.id, token);
 
@@ -74,15 +76,14 @@ exports.get = async (req, res, next) => {
 
     const valid = await validateToken(id, token);
 
-    if (!valid) throw (err = "Not Valid");
+    if (!valid) return next(Error('noToken'));
 
     const results = await Attendees.findById(id);
-    if (!results) throw (err = "Not existing");
+    if (!results) return next(Error('noToken'));
 
-    res.status(200).json(results.data);
+    else res.status(200).json(results.data);
   } catch (err) {
     next(err);
-    res.status(500);
   }
 };
 
