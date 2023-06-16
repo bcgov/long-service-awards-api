@@ -12,7 +12,7 @@ const path = require("path");
 // const fs = require("fs");
 const Transaction = require("../models/transactions.model");
 const { decodeError } = require("../error");
-const { convertDate } = require("../services/validation.services.js");
+const { format } = require("date-fns");
 
 // template directory
 const dirPath = "/resources/email_templates/";
@@ -226,7 +226,10 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
   //format ceremony date for email
   Object.assign(attendee.ceremony, {
     ...attendee.ceremony,
-    datetime_formatted: `${convertDate(attendee.ceremony.datetime)}`,
+    datetime_formatted: `${format(
+      new Date(attendee.ceremony.datetime),
+      `EEEE, MMMM dd, yyyy`
+    )}`,
   });
 
   // send confirmation mail to supervisor
