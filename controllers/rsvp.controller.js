@@ -47,13 +47,9 @@ exports.send = async (req, res, next) => {
     ) {
       email = recipient.contact.personal_email;
     }
-    //const expiry = 60 * 60 * 24 * 14;
-    const expiry = 60;
+    const expiry = 60 * 60 * 24 * 14;
     const token = await rsvpToken(data.id, expiry);
-
     const valid = await validateToken(data.id, token);
-
-    // get data:
 
     const response = await sendRSVP({
       email,
