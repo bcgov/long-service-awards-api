@@ -20,8 +20,9 @@ const uuid = require("uuid");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await Attendees.findAll(req.query);
-    return res.status(200).json(results);
+    const { total_filtered_records } = await Attendees.count(req.query, res.locals.user);
+    const attendees = await Attendees.findAll(req.query);
+    return res.status(200).json({attendees, total_filtered_records});
   } catch (err) {
     console.error(err);
     return next(err);
@@ -29,10 +30,7 @@ exports.getAll = async (req, res, next) => {
   // try {
   //   // apply query filter to results
   //   const attendees = await Attendees.findAll(req.query, res.locals.user);
-  //   const { total_filtered_records } = await Attendees.count(
-  //     req.query,
-  //     res.locals.user
-  //   );
+  
 
   //   // send response
   //   res.status(200).json({

@@ -90,6 +90,29 @@ const attendeesQueries = {
       data: [],
     };
   },
+  count: (filter) => {
+    /**
+     * Generate query: Count total filtered records in table.
+     *
+     * @param schema
+     * @param {int} offset
+     * @param {String} order
+     * @return {Promise} results
+     * @public
+     */
+
+    // get column filters
+    const [filterStatements, filterValues] = getFilters(filter);
+    return {
+      sql: `SELECT COUNT(*) as total_filtered_records
+                  FROM attendees
+                  LEFT JOIN ceremonies ON ceremonies.id = attendees.ceremony
+                  LEFT JOIN recipients ON recipients.id = attendees.recipient
+                  LEFT JOIN contacts ON contacts.id = recipients.contact
+                  ${filterStatements && " WHERE " + filterStatements};`,
+      data: filterValues,
+    };
+  },
   insert: (data) => {
     // destructure user stub data
     const {
@@ -399,6 +422,11 @@ exports.findAll = async (filter, schema) => {
       return await attachReferences(item, schema);
     })
   );
+};
+
+exports.count = async (filter, user, schema) => {
+  // console.log(recipientQueries.count(filter, schema))
+  return await queryOne(attendeesQueries.count(filter, schema));
 };
 
 /**
