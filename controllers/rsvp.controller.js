@@ -87,7 +87,7 @@ exports.get = async (req, res, next) => {
 };
 
 exports.update = async (req, res, next) => {
-  console.log(req.body);
+  console.log(req.body.ceremony);
   try {
     const data = req.body;
     const id = req.params.id;

@@ -12,6 +12,7 @@ const path = require("path");
 // const fs = require("fs");
 const Transaction = require("../models/transactions.model");
 const { decodeError } = require("../error");
+const { convertDate } = require("../services/validation.services.js");
 
 // template directory
 const dirPath = "/resources/email_templates/";
@@ -222,34 +223,11 @@ module.exports.sendRSVP = async (data) => {
 module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
   const attendee = data || {};
 
-  // send confirmation mail to supervisor
-  if (accept) {
-    return await sendMail(
-      [email],
-      "Long Service Awards Invitation",
-      "email-recipient-ceremony-rsvp-accept-updated.ejs",
-      attendee,
-      process.env.MAIL_FROM_ADDRESS,
-      process.env.MAIL_FROM_NAME,
-      [],
-      null
-    );
-  } else {
-    return await sendMail(
-      [email],
-      "Long Service Awards Invitation",
-      "email-recipient-ceremony-rsvp-decline-updated.ejs",
-      attendee,
-      process.env.MAIL_FROM_ADDRESS,
-      process.env.MAIL_FROM_NAME,
-      [],
-      null
-    );
-  }
-};
-
-module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
-  const attendee = data || {};
+  //format ceremony date for email
+  Object.assign(attendee.ceremony, {
+    ...attendee.ceremony,
+    datetime_formatted: `${convertDate(attendee.ceremony.datetime)}`,
+  });
 
   // send confirmation mail to supervisor
   if (accept) {

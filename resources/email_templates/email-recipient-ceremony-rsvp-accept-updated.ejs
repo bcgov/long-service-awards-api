@@ -342,7 +342,7 @@
 
                                     <p>
                                       Your ceremony will take place on <%=
-                                      ceremony.datetime %> at <%if
+                                      ceremony.datetime_formatted %> at <%if
                                       (!ceremony.venue && !ceremony.address) {%>
                                       (TBD). <% } else { %> <%= ceremony.venue
                                       %>, <%= ceremony.address.street1 %>, <% if
@@ -352,9 +352,7 @@
                                       ceremony.address.province %>. <% } %>
                                     </p>
                                     <p>Dress: Business attire.</p>
-                                    <p>
-                                      Doors open at <%= ceremony.datetime %>.
-                                    </p>
+                                    <p>Doors open at 5:45PM.</p>
                                     <p>
                                       For information about travel reimbursement
                                       and taking time off, visit the
