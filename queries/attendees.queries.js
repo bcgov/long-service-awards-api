@@ -41,40 +41,8 @@ const attendeesQueries = {
       order && orderby ? `ORDER BY attendees.id ${order}` : "";
     const limitClause = limit ? `LIMIT ${limit}` : "";
     const filters = [];
-    if (filter.hasOwnProperty("first_name") && filter.first_name)
-      filters.push(
-        `LOWER(contacts.first_name) = LOWER('${filter.first_name}')`
-      );
-    if (filter.hasOwnProperty("last_name") && filter.last_name)
-      filters.push(`LOWER(contacts.last_name) = LOWER('${filter.last_name}')`);
-    if (filter.hasOwnProperty("ceremony") && filter.ceremony)
-      filters.push(`attendees.ceremony = '${filter.ceremony}'`);
-    if (filter.hasOwnProperty("guest") && filter.guest)
-      filters.push(`attendees.guest = '${filter.guest}'`);
-    if (filter.hasOwnProperty("status") && filter.status) {
-      //Multi-select field - create their own OR clause
-      const statuses = filter.status.split(",");
-      const statusFilters = [];
-      statuses.forEach((element) => {
-        statusFilters.push(`attendees.status = '${element}'`);
-      });
-      const statusClause =
-        statusFilters.length > 0 ? `(${statusFilters.join(" OR ")})` : "";
-      filters.push(statusClause);
-    }
-    if (filter.hasOwnProperty("organization") && filter.organization) {
-      //Multi-select field - create their own OR clause
-      const orgs = filter.organization.split(",");
-      const orgFilters = [];
-      orgs.forEach((element) => {
-        orgFilters.push(`recipients.organization = '${element}'`);
-      });
-      const organizationClause =
-        orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";
-      filters.push(organizationClause);
-    }
-    const WHEREfilter =
-      filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
+    
+    const WHEREfilter = getFilters(filter);
 
     // get query results
     return {
@@ -102,15 +70,15 @@ const attendeesQueries = {
      */
 
     // get column filters
-    const [filterStatements, filterValues] = getFilters(filter);
+    const filterStatement = getFilters(filter);
     return {
       sql: `SELECT COUNT(*) as total_filtered_records
                   FROM attendees
                   LEFT JOIN ceremonies ON ceremonies.id = attendees.ceremony
                   LEFT JOIN recipients ON recipients.id = attendees.recipient
                   LEFT JOIN contacts ON contacts.id = recipients.contact
-                  ${filterStatements && " WHERE " + filterStatements};`,
-      data: filterValues,
+                  ${filterStatement};`,
+      
     };
   },
   insert: (data) => {
@@ -255,27 +223,6 @@ const attendeesQueries = {
      * @public
      */
 
-    // get column filters
-    const [filterStatements, filterValues] = getFilters(filter);
-
-    // get additional (inner join) service filter
-    const serviceFilters = [];
-    if (filter.hasOwnProperty("cycle"))
-      serviceFilters.push(`srv.cycle = ${filter.cycle}`);
-    if (filter.hasOwnProperty("milestones"))
-      serviceFilters.push(`srv.milestone IN (${filter.milestones})`);
-    if (filter.hasOwnProperty("confirmed"))
-      serviceFilters.push(`srv.confirmed = ${filter.confirmed}`);
-    if (currentCycle) serviceFilters.push(`srv.cycle = ${currentCycle}`);
-    const serviceFilter =
-      serviceFilters.length > 0 ? `WHERE  ${serviceFilters.join(" AND ")}` : "";
-
-    // get column selections
-    const selections = Object.keys(schema.attributes)
-      .filter((field) => !ignore.includes(field))
-      .map((field) => "r." + field)
-      .join(", ");
-
     return {
       sql: `--Separate CTE/WITH queries to get list of milestones for each recipient, get dietary/accessibility per recipient+guest columns
       WITH milestones_query AS
@@ -338,79 +285,41 @@ const attendeesQueries = {
 };
 exports.queries = attendeesQueries;
 
-const getFilters = (data) => {
-  // init
-  let values = [];
-  let index = 1;
-
-  /**
-   * List of filter options for recipients
-   * - Recipient first name
-   * - Recipient last name
-   * - Recipient Employee Number
-   * - Organization
-   * - Milestones
-   * - Confirmed
-   * - Ceremony Opt Out
-   * - Status
-   * */
-
-  const filters = {
-    first_name: () =>
-      `(contacts.first_name ILIKE '%' || $${index++}::varchar || '%')`,
-    last_name: () =>
-      `(contacts.last_name ILIKE '%' || $${index++}::varchar || '%')`,
-    idir: () => `(recipients.idir LIKE '%' || $${index++}::varchar || '%')`,
-    employee_number: () =>
-      `(recipients.employee_number LIKE '%' || $${index++}::varchar || '%')`,
-    organization: (range) =>
-      `(organizations.id IN (${(range || [])
-        .map(() => `$${index++}::integer`)
-        .join(",")}))`,
-    milestones: (range) =>
-      `(service_selections.milestone IN (${(range || [])
-        .map(() => `$${index++}::integer`)
-        .join(",")}))`,
-    cycle: (range) =>
-      `(service_selections.cycle IN (${(range || [])
-        .map(() => `$${index++}::integer`)
-        .join(",")}))`,
-    qualifying_year: (range) =>
-      `(service_selections.qualifying_year IN (${(range || [])
-        .map(() => `$${index++}::integer`)
-        .join(",")}))`,
-    confirmed: (value) => `(
-        service_selections.confirmed = $${index++}::boolean 
-        ${
-          value[0] === "false" ? "OR service_selections.confirmed IS NULL" : ""
-        } )`,
-    ceremony_opt_out: (value) => `(
-        service_selections.ceremony_opt_out = $${index++}::boolean 
-        ${
-          value[0] === "false"
-            ? "OR service_selections.ceremony_opt_out IS NULL"
-            : ""
-        } )`,
-    status: () => `(recipients.status = $${index++}::varchar)`,
-  };
-  // match filter with input data
-  let statements = "";
-  statements += Object.keys(data)
-    .filter((key) => filters.hasOwnProperty(key))
-    .reduce((o, key) => {
-      // explode comma-separated query array parameters into array
-      const datum = !!data[key] && data[key].split(",");
-      // ignore null/empty filter values
-      if (datum) {
-        o.push(filters[key](datum));
-        values.push.apply(values, datum);
-      }
-      return o;
-    }, [])
-    .join(" AND \n");
-
-  // return filter statements and values
-  return [statements, values];
+const getFilters = (filter) => {
+  let filters = [];
+  if (filter.hasOwnProperty("first_name") && filter.first_name)
+      filters.push(
+        `LOWER(contacts.first_name) = LOWER('${filter.first_name}')`
+      );
+    if (filter.hasOwnProperty("last_name") && filter.last_name)
+      filters.push(`LOWER(contacts.last_name) = LOWER('${filter.last_name}')`);
+    if (filter.hasOwnProperty("ceremony") && filter.ceremony)
+      filters.push(`attendees.ceremony = '${filter.ceremony}'`);
+    if (filter.hasOwnProperty("guest") && filter.guest)
+      filters.push(`attendees.guest = '${filter.guest}'`);
+    if (filter.hasOwnProperty("status") && filter.status) {
+      //Multi-select field - create their own OR clause
+      const statuses = filter.status.split(",");
+      const statusFilters = [];
+      statuses.forEach((element) => {
+        statusFilters.push(`attendees.status = '${element}'`);
+      });
+      const statusClause =
+        statusFilters.length > 0 ? `(${statusFilters.join(" OR ")})` : "";
+      filters.push(statusClause);
+    }
+    if (filter.hasOwnProperty("organization") && filter.organization) {
+      //Multi-select field - create their own OR clause
+      const orgs = filter.organization.split(",");
+      const orgFilters = [];
+      orgs.forEach((element) => {
+        orgFilters.push(`recipients.organization = '${element}'`);
+      });
+      const organizationClause =
+        orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";
+      filters.push(organizationClause);
+    }
+    return filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
 };
 
 exports.findAll = async (filter, schema) => {
