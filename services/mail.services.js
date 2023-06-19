@@ -210,7 +210,7 @@ module.exports.sendRSVP = async (data) => {
   // send confirmation mail to supervisor
   return await sendMail(
     [email],
-    "Long Service Awards Invitation",
+    "Your Long Service Awards Invitation",
     "email-recipient-ceremony-invitation-updated.ejs",
     { link: link, attendee: attendee, expiry: expiry },
     process.env.MAIL_FROM_ADDRESS,
@@ -234,9 +234,10 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
 
   // send confirmation mail to supervisor
   if (accept) {
+    console.log(attendee);
     return await sendMail(
       [email],
-      "Long Service Awards Invitation",
+      "Confirmation to Attend the Long Service Awards Ceremony",
       "email-recipient-ceremony-rsvp-accept-updated.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
@@ -247,7 +248,7 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
   } else {
     return await sendMail(
       [email],
-      "Long Service Awards Invitation",
+      "Confirmation to Not Attend the Long Service Awards Ceremony",
       "email-recipient-ceremony-rsvp-decline-updated.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
