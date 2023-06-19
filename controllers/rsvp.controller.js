@@ -101,6 +101,8 @@ exports.update = async (req, res, next) => {
 
     // recreate accommodations to have only attendee, accommodation fields to match the model
     let accommodationsArr = [];
+    if (data.recipient_accommodations)
+    {    
     Object.keys(data.recipient_accommodations).forEach(async (key) => {
       if (data.recipient_accommodations[key] === true) {
         accommodationsArr.push(
@@ -110,14 +112,15 @@ exports.update = async (req, res, next) => {
         );
       }
     });
+    
     data.accommodations = accommodationsArr;
+  }
 
     // Clear accommodations before saving
     await AccommodationSelections.remove(attendee.id);
     await attendee.save(data);
 
-    // Clear/reset guests
-    await Attendees.removeGuests(data.recipient.id);
+
     let guestID = undefined;
     // Create guest, and get ID for attaching accommodations to guestID
     if (data.guest_count > 0) guestID = (await Attendees.saveGuest(data)).id;
@@ -137,6 +140,8 @@ exports.update = async (req, res, next) => {
       const guest = await Attendees.findById(guestID);
       let guestData = guest.data;
       guestData.accommodations = guestAccommodationsArr;
+      // Clear/reset guests
+      await Attendees.removeGuests(data.recipient.id);
       await guest.save(guestData);
     }
 
@@ -156,6 +161,8 @@ exports.update = async (req, res, next) => {
 
     // Send RSVP confirmation
     sendRSVPConfirmation(attendee.data, email, accept);
+
+    if (await deleteToken(id) != 1) throw (err = "Key deletion failure");
 
     res.status(200).json({
       message: {},
