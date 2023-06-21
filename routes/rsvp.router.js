@@ -5,15 +5,12 @@
  * MIT Licensed
  */
 
-const express = require("express");
-const router = express.Router();
-const { authorizeAdmin } = require("../services/auth.services");
+const router = require('express').Router();
 const controller = require("../controllers/rsvp.controller");
 
 /**
- * Router endpoints
+ * Public endpoints - bypassed in AuthenticateSMS
  */
-router.post("/send", authorizeAdmin, controller.send);
 
 // Public endpoints:
 router.get('/accommodations/list', controller.getAccommodations);

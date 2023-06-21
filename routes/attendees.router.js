@@ -21,4 +21,7 @@ router.get('/view/:id', authorizeAdmin, controller.get);
 router.post('/update/:id', authorizeAdmin, controller.update);
 router.get('/delete/:id', authorizeAdmin, controller.remove);
 
+//Send RSVP email
+router.post("/send", authorizeAdmin, controller.send);
+
 module.exports = router;
