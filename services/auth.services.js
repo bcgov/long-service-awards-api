@@ -97,7 +97,7 @@ exports.initPassport = (passport) => {
 exports.authenticateSMS = async (req, res, next) => {
   try {
     // check if Public endpoints, API test, RSVP
-    if (req.url === '/' || req.url === '/accommodations/list/' || req.url.match('^\/(rsvp)\/[^\/]+\/[^\/]+$'))
+    if (req.url === '/' || req.url === '/accommodations/list' || req.url.match('^\/(rsvp)\/[^\/]+\/[^\/]+$'))
       return next();
 
     // [dev] skip authentication on test/local environments
