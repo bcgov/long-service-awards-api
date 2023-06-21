@@ -211,7 +211,7 @@ module.exports.sendRSVP = async (data) => {
   return await sendMail(
     [email],
     "Your Long Service Awards Invitation",
-    "email-recipient-ceremony-invitation-updated.ejs",
+    "email-recipient-ceremony-invitation.ejs",
     { link: link, attendee: attendee, expiry: expiry },
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
@@ -264,13 +264,12 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
  * @param link
  */
 module.exports.sendTEST = async () => {
-
   // send confirmation mail to supervisor
   return await sendMail(
     [process.env.MAIL_FROM_ADDRESS],
     "Long Service Awards: TEST EMAIL",
     "email-user-reset-password.ejs",
-    { link: 'https://nolink' },
+    { link: "https://nolink" },
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],
