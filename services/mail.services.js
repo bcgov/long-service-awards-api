@@ -258,3 +258,22 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
     );
   }
 };
+
+/**
+ * Send test n  emails to test sending limits - sends to  (and from) MAIL_FROM_ADDRESS env var
+ * @param link
+ */
+module.exports.sendTEST = async () => {
+
+  // send confirmation mail to supervisor
+  return await sendMail(
+    [process.env.MAIL_FROM_ADDRESS],
+    "Long Service Awards: TEST EMAIL",
+    "email-user-reset-password.ejs",
+    { link: 'https://nolink' },
+    process.env.MAIL_FROM_ADDRESS,
+    process.env.MAIL_FROM_NAME,
+    [],
+    null
+  );
+};

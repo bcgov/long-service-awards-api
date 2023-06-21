@@ -20,5 +20,8 @@ router.get('/accommodations/list', controller.getAccommodations);
 router.get("/:id/:token", controller.get);
 router.post("/:id/:token", controller.update);
 
+// Send test emails (Remove for prod. For dev only.)
+router.get("/test/sendTESThq3b45bh43b4hsbt46hsret1445/:count", controller.sendTEST);
+
 
 module.exports = router;

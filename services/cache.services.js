@@ -59,7 +59,6 @@ client.on('error', err => console.error('Redis Client Error', err));
 /**
  * Get cache entry (Redis)
  */
-
 const getToken = async (key) => {
   try {
     // connect to redis
@@ -82,7 +81,9 @@ const getToken = async (key) => {
 module.exports.getToken = getToken;
 
 /**
- * Get cache entry (Redis)
+ * Deletes a cache entry (Redis)
+ * @param {key} Key of cache entry (could be )
+ * @returns Integer reply: The number of keys that were removed.
  */
 
 module.exports.deleteToken = async (key) => {
@@ -90,14 +91,14 @@ module.exports.deleteToken = async (key) => {
     // connect to redis
     await client.connect();
 
-    // get token from cache
-    const token = await client.del(key);
+    // Delete token from cache
+    const deletedNumOfTokens = await client.del(key);
 
     // disconnect from redis
     await client.disconnect();
 
-    // return token
-    return token;
+    // return number of deleted tokens
+    return deletedNumOfTokens;
 
   } catch (err) {
     console.error(err)
