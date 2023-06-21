@@ -2,17 +2,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <%- await include('email-head', {title: title}) %>
 
-  <body
-    class="body"
-    style="
-      padding: 0;
-      margin: 0;
-      display: block;
-      background: #ffffff;
-      -webkit-text-size-adjust: none;
-    "
-  >
-    <div class="container">
+  <body class="body">
+    <div class="container" style="width: 600px">
       <%- await include('email-banner'); %>
 
       <h3>The Government of British Columbia is pleased to invite</h3>
@@ -22,9 +13,15 @@
         attendee.recipient.contact.last_name %>
       </h2>
 
-      <h4>to the Long Service Awards Ceremony</h4>
+      <h3>to the Long Service Awards Ceremony</h3>
 
-      <table cellpadding="5" cellspacing="5" width="100%" bgcolor="#eeeeee">
+      <table
+        cellpadding="5"
+        cellspacing="5"
+        width="100%"
+        bgcolor="#eeeeee"
+        style="margin-left: 0"
+      >
         <tbody>
           <tr>
             <th>Location</th>
@@ -56,53 +53,86 @@
 
       <p>Doors open at 5:45PM</p>
 
+      <p style="font-weight: 700">RSVP deadline: July 28, 2023</p>
+
       <p>
-        Please click one of the RSVP link below to respond to this ceremony
+        Please click one of the RSVP links below to respond to this ceremony
         invitation.
       </p>
 
-      <p>Please note: this RSVP link will expire at <%= expiry %>.</p>
-
-      <table cellspacing="0" cellpadding="0" width="100%" bgcolor="#ffffff">
+      <table
+        cellspacing="0"
+        cellpadding="0"
+        width="100%"
+        bgcolor="#ffffff"
+        style="margin-left: 0"
+      >
         <tr>
-          <td style="background: #d84a38; text-align: center">
+          <td style="text-align: center">
             <div>
               <a
                 href="<%= link %>?accept=true"
+                target="_blank"
                 style="
-                  background-color: #d84a38;
-                  color: #ffffff;
+                  box-sizing: border-box;
                   display: inline-block;
-                  font-family: sans-serif;
-                  font-size: 13px;
-                  font-weight: bold;
-                  line-height: 26px;
-                  text-align: center;
                   text-decoration: none;
                   -webkit-text-size-adjust: none;
+                  text-align: center;
+                  color: #ffffff;
+                  background-color: #9fdaa8;
+                  border-radius: 4px;
+                  -webkit-border-radius: 4px;
+                  -moz-border-radius: 4px;
+                  width: auto;
+                  max-width: 100%;
+                  overflow-wrap: break-word;
+                  word-break: break-word;
+                  word-wrap: break-word;
+                  mso-border-alt: none;
+                  font-size: 14px;
                 "
-                >RSVP</a
               >
+                <span
+                  style="display: block; padding: 10px 20px; line-height: 120%"
+                  ><p style="line-height: 120%; margin: 0">
+                    YES, I will be attending
+                  </p></span
+                >
+              </a>
             </div>
           </td>
-          <td width="25">&nbsp;</td>
-          <td style="background: #d84a38; text-align: center">
+          <td style="text-align: center">
             <div>
               <a
                 href="<%= link %>?accept=false"
+                target="_blank"
                 style="
-                  background-color: #d84a38;
-                  color: #ffffff;
+                  box-sizing: border-box;
                   display: inline-block;
-                  font-family: sans-serif;
-                  font-size: 13px;
-                  font-weight: bold;
-                  line-height: 26px;
-                  text-align: center;
                   text-decoration: none;
                   -webkit-text-size-adjust: none;
+                  text-align: center;
+                  color: #ffffff;
+                  background-color: #e97984;
+                  border-radius: 4px;
+                  -webkit-border-radius: 4px;
+                  -moz-border-radius: 4px;
+                  width: auto;
+                  max-width: 100%;
+                  overflow-wrap: break-word;
+                  word-break: break-word;
+                  word-wrap: break-word;
+                  mso-border-alt: none;
+                  font-size: 14px;
                 "
-                >NO, I will not be attending</a
+              >
+                <span
+                  style="display: block; padding: 10px 20px; line-height: 120%"
+                  ><p style="line-height: 120%; margin: 0">
+                    NO, I will not be attending
+                  </p></span
+                ></a
               >
             </div>
           </td>
