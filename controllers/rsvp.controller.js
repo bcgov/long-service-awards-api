@@ -5,18 +5,12 @@
  * MIT Licensed
  */
 
-const uuid = require("uuid");
-const {
-  sendRSVP,
-  sendRSVPConfirmation,
-  sendTEST,
-} = require("../services/mail.services");
+const { sendRSVPConfirmation, sendTEST } = require("../services/mail.services");
 const Attendees = require("../models/attendees.model.js");
 const Accommodations = require("../models/accommodations.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
 
 const {
-  rsvpToken,
   deleteToken,
   validateToken,
 } = require("../services/cache.services");
@@ -29,57 +23,6 @@ const {
  * @method get
  * @src public
  */
-
-exports.send = async (req, res, next) => {
-  try {
-    // const { id } = req.params || {};
-    // const ceremony = await ceremoniesModel.findById(id);
-    // res.status(200).json({
-    //   message: {},
-    //   result: ceremony.data,
-    // });
-    const data = req.body || {};
-    const recipient = data.recipient;
-    const email = recipient.contact.office_email;
-    const gracePeriod = new Date();
-
-    // Create 48 hour grace period
-    gracePeriod.setDate(gracePeriod.getDate() - 2);
-    if (
-      recipient.retirement_date != null &&
-      recipient.retirement_date < gracePeriod
-    ) {
-      email = recipient.contact.personal_email;
-    }
-
-    var RsvpSendDate = new Date(); //today
-    var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
-    const expiry = Math.ceil(
-      Math.abs(RsvpSendDate.getTime() - deadline.getTime()) / 1000
-    );
-    const token = await rsvpToken(data.id, expiry);
-    const valid = await validateToken(data.id, token);
-    if (valid) {
-      const response = await sendRSVP({
-        email,
-        link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
-        attendee: data,
-      });
-
-      return res.status(200).json({
-        message: "success",
-        response: response,
-      });
-    } else {
-      return res.status(500).json({
-        message: "failure",
-        response: response,
-      });
-    }
-  } catch (err) {
-    return next(err);
-  }
-};
 
 exports.get = async (req, res, next) => {
   try {

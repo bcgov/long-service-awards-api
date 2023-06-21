@@ -7,6 +7,8 @@
 
 const Attendees = require("../models/attendees.model.js");
 const uuid = require("uuid");
+const { sendRSVP } = require("../services/mail.services");
+const { rsvpToken, validateToken } = require("../services/cache.services");
 
 /**
  * Retrieve all records.
@@ -163,45 +165,6 @@ exports.update = async (req, res, next) => {
 };
 
 /**
- * Get RSVP info for attendee.
- *
- * @param req
- * @param res
- * @param next
- * @src public
- */
-
-exports.getRSVP = async (req, res, next) => {
-  try {
-    const data = req.body;
-    // GET Attendee manually to sanitize data
-    const results = await Attendees.update(data);
-    res.status(200).json(results);
-  } catch (err) {
-    return next(err);
-  }
-};
-
-/**
- * Set RSVP info for attendee.
- *
- * @param req
- * @param res
- * @param next
- * @src public
- */
-
-exports.setRSVP = async (req, res, next) => {
-  try {
-    const data = req.body;
-    const results = await Attendees.update(data);
-    res.status(200).json(results);
-  } catch (err) {
-    return next(err);
-  }
-};
-
-/**
  * Remove record.
  *
  * @param req
@@ -233,6 +196,58 @@ exports.removeAll = async (req, res, next) => {
   try {
     const results = await Attendees.removeAll();
     res.status(200).json(results);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.send = async (req, res, next) => {
+  try {
+    // const { id } = req.params || {};
+    // const ceremony = await ceremoniesModel.findById(id);
+    // res.status(200).json({
+    //   message: {},
+    //   result: ceremony.data,
+    // });
+    const data = req.body || {};
+    const recipient = data.recipient;
+    const email = recipient.contact.office_email;
+    const gracePeriod = new Date();
+
+    // Create 48 hour grace period
+    gracePeriod.setDate(gracePeriod.getDate() - 2);
+    if (
+      recipient.retirement_date != null &&
+      recipient.retirement_date < gracePeriod
+    ) {
+      email = recipient.contact.personal_email;
+    }
+
+    var RsvpSendDate = new Date(); //today
+    var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
+    const expiry = Math.ceil(Math.abs(RsvpSendDate.getTime() - deadline.getTime())/1000);
+    const token = await rsvpToken(data.id, expiry);
+    const valid = await validateToken(data.id, token);
+    if (valid)
+    {    
+      const response = await sendRSVP({
+        email,
+        link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
+        attendee: data,
+      });
+
+      return res.status(200).json({
+        message: "success",
+        response: response,
+      });
+  }
+  else
+  {
+    return res.status(500).json({
+      message: "failure",
+      response: response,
+    });
+  }
   } catch (err) {
     return next(err);
   }
