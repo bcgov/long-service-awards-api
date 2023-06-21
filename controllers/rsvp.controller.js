@@ -6,7 +6,11 @@
  */
 
 const uuid = require("uuid");
-const { sendRSVP, sendRSVPConfirmation, sendTEST } = require("../services/mail.services");
+const {
+  sendRSVP,
+  sendRSVPConfirmation,
+  sendTEST,
+} = require("../services/mail.services");
 const Attendees = require("../models/attendees.model.js");
 const Accommodations = require("../models/accommodations.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
@@ -14,7 +18,7 @@ const AccommodationSelections = require("../models/accommodation-selection.model
 const {
   rsvpToken,
   deleteToken,
-  validateToken
+  validateToken,
 } = require("../services/cache.services");
 /**
  * Send invite emails for selected recipients
@@ -50,11 +54,12 @@ exports.send = async (req, res, next) => {
 
     var RsvpSendDate = new Date(); //today
     var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
-    const expiry = Math.ceil(Math.abs(RsvpSendDate.getTime() - deadline.getTime())/1000);
+    const expiry = Math.ceil(
+      Math.abs(RsvpSendDate.getTime() - deadline.getTime()) / 1000
+    );
     const token = await rsvpToken(data.id, expiry);
     const valid = await validateToken(data.id, token);
-    if (valid)
-    {    
+    if (valid) {
       const response = await sendRSVP({
         email,
         link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
@@ -65,14 +70,12 @@ exports.send = async (req, res, next) => {
         message: "success",
         response: response,
       });
-  }
-  else
-  {
-    return res.status(500).json({
-      message: "failure",
-      response: response,
-    });
-  }
+    } else {
+      return res.status(500).json({
+        message: "failure",
+        response: response,
+      });
+    }
   } catch (err) {
     return next(err);
   }
@@ -85,11 +88,10 @@ exports.get = async (req, res, next) => {
 
     const valid = await validateToken(id, token);
 
-    if (!valid) return next(Error('noToken'));
+    if (!valid) return next(Error("noToken"));
 
     const results = await Attendees.findById(id);
-    if (!results) return next(Error('noToken'));
-
+    if (!results) return next(Error("noToken"));
     else res.status(200).json(results.data);
   } catch (err) {
     next(err);
@@ -97,7 +99,6 @@ exports.get = async (req, res, next) => {
 };
 
 exports.update = async (req, res, next) => {
-  console.log(req.body.ceremony);
   try {
     const data = req.body;
     const id = req.params.id;
@@ -114,25 +115,23 @@ exports.update = async (req, res, next) => {
 
     // recreate accommodations to have only attendee, accommodation fields to match the model
     let accommodationsArr = [];
-    if (data.recipient_accommodations)
-    {    
-    Object.keys(data.recipient_accommodations).forEach(async (key) => {
-      if (data.recipient_accommodations[key] === true) {
-        accommodationsArr.push(
-          JSON.parse(
-            '{"accommodation": "' + key + '", "attendee": "' + data.id + '"}'
-          )
-        );
-      }
-    });
-    
-    data.accommodations = accommodationsArr;
-  }
+    if (data.recipient_accommodations) {
+      Object.keys(data.recipient_accommodations).forEach(async (key) => {
+        if (data.recipient_accommodations[key] === true) {
+          accommodationsArr.push(
+            JSON.parse(
+              '{"accommodation": "' + key + '", "attendee": "' + data.id + '"}'
+            )
+          );
+        }
+      });
+
+      data.accommodations = accommodationsArr;
+    }
 
     // Clear accommodations before saving
     await AccommodationSelections.remove(attendee.id);
     await attendee.save(data);
-
 
     let guestID = undefined;
     // Create guest, and get ID for attaching accommodations to guestID
@@ -175,7 +174,7 @@ exports.update = async (req, res, next) => {
     // Send RSVP confirmation
     sendRSVPConfirmation(attendee.data, email, accept);
 
-    if (await deleteToken(id) != 1) throw (err = "Key deletion failure");
+    if ((await deleteToken(id)) != 1) throw (err = "Key deletion failure");
 
     res.status(200).json({
       message: {},
@@ -199,22 +198,18 @@ exports.getAccommodations = async (req, res, next) => {
 // Send test emails (Remove for prod. For dev only.)
 exports.sendTEST = async (req, res, next) => {
   try {
-      const n = req.params.count;
+    const n = req.params.count;
 
-      //Sends n emails at once!    
-      for (let i=0; i < n; i++)
-      {
+    //Sends n emails at once!
+    for (let i = 0; i < n; i++) {
       const response = await sendTEST();
       console.log("[EMAIL TEST]: " + JSON.stringify(response));
     }
 
-    
-      return res.status(200).json({
-        message: "success",
-        response: "See console",
-      });
-  
-
+    return res.status(200).json({
+      message: "success",
+      response: "See console",
+    });
   } catch (err) {
     return next(err);
   }
