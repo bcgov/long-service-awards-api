@@ -257,7 +257,7 @@ const attendeesQueries = {
             contacts.first_name,
             contacts.last_name,
             milestones_query.milestones,
-            CAST(DATE(ceremonies.datetime) as TEXT) AS "ceremony_date",
+            CAST(DATE(ceremonies.datetime at time zone 'America/Vancouver') as TEXT) AS "ceremony_date",
             organizations.name AS "ministry",
             outer_recipients.branch,
             attendees.status,
@@ -275,7 +275,7 @@ const attendeesQueries = {
           LEFT JOIN accessibility_query ON attendees.recipient = accessibility_query.recipient
           LEFT JOIN accessibility_guest_query ON attendees.recipient = accessibility_guest_query.recipient
           LEFT JOIN dietary_query ON attendees.recipient = dietary_query.recipient
-          LEFT JOIN dietary_guest_query ON attendees.recipient = dietary_query.recipient
+          LEFT JOIN dietary_guest_query ON attendees.recipient = dietary_guest_query.recipient
           WHERE attendees.guest = 0
             GROUP BY attendees.recipient, attendee_id, employee_number, first_name, last_name, milestones, 
           ceremony_date, ministry, branch, attendees.status, accessibility_query.recipient, outer_recipients.id, 
