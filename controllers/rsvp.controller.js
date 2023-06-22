@@ -76,7 +76,7 @@ exports.update = async (req, res, next) => {
     await AccommodationSelections.remove(attendee.id);
     await attendee.save(data);
 
-    // Clear any existing guests of the recipient
+    // Clear any existing guest attendees of the recipient, also removes it's selections 
     await Attendees.removeGuests(data.recipient.id);
     let guestID = undefined;
     // When form has guest data, create guest, and get ID for attaching accommodations to guestID
@@ -100,8 +100,6 @@ exports.update = async (req, res, next) => {
       const guest = await Attendees.findById(guestID);
       let guestData = guest.data;
       guestData.accommodations = guestAccommodationsArr;
-      // Clear/reset accommodations of existing guest
-      await AccommodationsSelections.remove(guest.id);
       await guest.save(guestData);
     }
 
