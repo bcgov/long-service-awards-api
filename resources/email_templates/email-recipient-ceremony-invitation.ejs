@@ -44,6 +44,11 @@
             <th></th>
             <td><%= attendee.ceremony.datetime_formatted %></td>
           </tr>
+          <tr>
+            <th>Organization</th>
+            <th></th>
+            <td><%= attendee.recipient.organization.name %></td>
+          </tr>
         </tbody>
       </table>
 
@@ -60,7 +65,68 @@
         invitation.
       </p>
 
-      <table
+      <div style="display: flex; justify-content: space-evenly">
+        <a
+          href="<%= link %>?accept=true"
+          target="_blank"
+          style="
+            box-sizing: border-box;
+            display: inline-block;
+            text-decoration: none;
+            -webkit-text-size-adjust: none;
+            text-align: center;
+            color: #ffffff;
+            background-color: #9fdaa8;
+            border-radius: 4px;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            width: auto;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            word-wrap: break-word;
+            mso-border-alt: none;
+            font-size: 14px;
+          "
+        >
+          <span style="display: block; padding: 10px 20px; line-height: 120%"
+            ><p style="line-height: 120%; margin: 0">
+              YES, I will be attending
+            </p></span
+          >
+        </a>
+        <a
+          href="<%= link %>?accept=false"
+          target="_blank"
+          style="
+            box-sizing: border-box;
+            display: inline-block;
+            text-decoration: none;
+            -webkit-text-size-adjust: none;
+            text-align: center;
+            color: #ffffff;
+            background-color: #e97984;
+            border-radius: 4px;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            width: auto;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            word-wrap: break-word;
+            mso-border-alt: none;
+            font-size: 14px;
+          "
+        >
+          <span style="display: block; padding: 10px 20px; line-height: 120%"
+            ><p style="line-height: 120%; margin: 0">
+              NO, I will not be attending
+            </p></span
+          ></a
+        >
+      </div>
+
+      <!-- <table
         cellspacing="0"
         cellpadding="0"
         width="100%"
@@ -137,7 +203,7 @@
             </div>
           </td>
         </tr>
-      </table>
+      </table> -->
     </div>
   </body>
 </html>
