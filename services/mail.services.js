@@ -223,14 +223,14 @@ module.exports.sendRSVP = async (data) => {
 module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
   const attendee = data || {};
 
-  //format ceremony date for email
-  Object.assign(attendee.ceremony, {
-    ...attendee.ceremony,
-    datetime_formatted: `${format(
-      new Date(attendee.ceremony.datetime),
-      `EEEE, MMMM dd, yyyy`
-    )}`,
-  });
+  // //format ceremony date for email
+  // Object.assign(attendee.ceremony, {
+  //   ...attendee.ceremony,
+  //   datetime_formatted: `${format(
+  //     new Date(attendee.ceremony.datetime),
+  //     `EEEE, MMMM dd, yyyy`
+  //   )}`,
+  // });
 
   // send confirmation mail to supervisor
   if (accept) {
@@ -264,12 +264,12 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
  * @param link
  */
 module.exports.sendTEST = async () => {
-  // send confirmation mail to supervisor
+  // send test emails
   return await sendMail(
-    [process.env.MAIL_FROM_ADDRESS],
+    [process.env.SUPER_ADMIN_EMAIL],
     "Long Service Awards: TEST EMAIL",
     "email-user-reset-password.ejs",
-    { link: "https://nolink" },
+    { link: "sendTEST EMAIL TEST" },
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],

@@ -10,10 +10,7 @@ const Attendees = require("../models/attendees.model.js");
 const Accommodations = require("../models/accommodations.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
 
-const {
-  deleteToken,
-  validateToken,
-} = require("../services/cache.services");
+const { deleteToken, validateToken } = require("../services/cache.services");
 /**
  * Send invite emails for selected recipients
  *
@@ -76,12 +73,11 @@ exports.update = async (req, res, next) => {
     await AccommodationSelections.remove(attendee.id);
     await attendee.save(data);
 
-    // Clear any existing guest attendees of the recipient, also removes it's selections 
+    // Clear any existing guest attendees of the recipient, also removes it's selections
     await Attendees.removeGuests(data.recipient.id);
     let guestID = undefined;
     // When form has guest data, create guest, and get ID for attaching accommodations to guestID
-    if (data.guest_count > 0) 
-    {
+    if (data.guest_count > 0) {
       guestID = (await Attendees.saveGuest(data)).id;
     }
 
@@ -118,7 +114,7 @@ exports.update = async (req, res, next) => {
       email = attendee.data.recipient.contact.personal_email;
 
     // Send RSVP confirmation
-    sendRSVPConfirmation(attendee.data, email, accept);
+    sendRSVPConfirmation(data, email, accept);
 
     if ((await deleteToken(id)) != 1) throw (err = "Key deletion failure");
 
