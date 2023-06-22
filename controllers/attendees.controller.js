@@ -9,6 +9,7 @@ const Attendees = require("../models/attendees.model.js");
 const uuid = require("uuid");
 const { sendRSVP } = require("../services/mail.services");
 const { rsvpToken, validateToken } = require("../services/cache.services");
+const { convertDate } = require("../services/validation.services.js");
 
 /**
  * Retrieve all records.
@@ -211,17 +212,17 @@ exports.send = async (req, res, next) => {
     // });
     const data = req.body || {};
     const recipient = data.recipient;
-    const email = recipient.contact.office_email;
-    const gracePeriod = new Date();
+    let email = recipient.contact.office_email;
     let response = null;
 
     // Create 48 hour grace period
-    gracePeriod.setDate(gracePeriod.getDate() - 2);
-    if (
-      recipient.retirement_date != null &&
-      recipient.retirement_date < gracePeriod
-    ) {
-      email = recipient.contact.personal_email;
+    const todayPlusGracePeriod = new Date();
+    todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
+    
+    if (recipient.retirement_date != null) {
+      let retirement_date = new Date(convertDate(recipient.retirement_date));
+      if (retirement_date < todayPlusGracePeriod)
+        email = recipient.contact.personal_email;
     }
 
     var RsvpSendDate = new Date(); //today
