@@ -257,7 +257,7 @@ const attendeesQueries = {
             contacts.first_name,
             contacts.last_name,
             milestones_query.milestones,
-            CAST(DATE(ceremonies.datetime) as TEXT) AS "ceremony_date",
+            CAST(DATE(ceremonies.datetime at time zone 'America/Vancouver') as TEXT) AS "ceremony_date",
             organizations.name AS "ministry",
             outer_recipients.branch,
             attendees.status,
