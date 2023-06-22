@@ -213,6 +213,7 @@ exports.send = async (req, res, next) => {
     const recipient = data.recipient;
     const email = recipient.contact.office_email;
     const gracePeriod = new Date();
+    let response = null;
 
     // Create 48 hour grace period
     gracePeriod.setDate(gracePeriod.getDate() - 2);
@@ -230,7 +231,7 @@ exports.send = async (req, res, next) => {
     const valid = await validateToken(data.id, token);
     if (valid)
     {    
-      const response = await sendRSVP({
+      response = await sendRSVP({
         email,
         link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
         attendee: data,

@@ -62,13 +62,10 @@ client.on('error', err => console.error('Redis Client Error', err));
 const getToken = async (key) => {
   try {
     // connect to redis
-    await client.connect();
+    if (!client.isReady) await client.connect();
 
     // get token from cache
     const token = await client.get(key);
-
-    // disconnect from redis
-    await client.disconnect();
 
     // return token
     return token;
@@ -89,13 +86,10 @@ module.exports.getToken = getToken;
 module.exports.deleteToken = async (key) => {
   try {
     // connect to redis
-    await client.connect();
+    if (!client.isReady) await client.connect();
 
     // Delete token from cache
     const deletedNumOfTokens = await client.del(key);
-
-    // disconnect from redis
-    await client.disconnect();
 
     // return number of deleted tokens
     return deletedNumOfTokens;
@@ -110,7 +104,7 @@ module.exports.deleteToken = async (key) => {
  * Compare input token with cached (Redis)
  */
 
-module.exports.validateToken = async (key, token) => {
+module.exports.   validateToken = async (key, token) => {
   // get current cached token for given key
   const storedToken = await getToken(key);
   // compare token with hashed in cache
@@ -124,8 +118,8 @@ module.exports.validateToken = async (key, token) => {
 
 module.exports.resetToken = async (key, expiry) => {
   try {
-    // connect to redis
-    await client.connect();
+    // connect to redis 
+    if (!client.isReady) await client.connect();
 
     // check if reset token already exists (delete if true)
     const existingToken = await client.get(key);
@@ -142,8 +136,6 @@ module.exports.resetToken = async (key, expiry) => {
       EX: expiry
     });
 
-    // disconnect from redis
-    await client.disconnect();
 
     // return URI-escaped hashed token value
     return resetToken;
@@ -164,7 +156,7 @@ module.exports.resetToken = async (key, expiry) => {
 module.exports.rsvpToken = async (key, expiry) => {
   try {
     // connect to redis
-    await client.connect();
+    if (!client.isReady) await client.connect();
 
     // check if reset token already exists (delete if true)
     const existingToken = await client.get(key);
@@ -180,9 +172,6 @@ module.exports.rsvpToken = async (key, expiry) => {
     await client.set(key, hash, {
       EX: expiry
     });
-
-    // disconnect from redis
-    await client.disconnect();
 
     // return URI-escaped hashed token value
     return rsvpToken;
