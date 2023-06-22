@@ -223,14 +223,14 @@ module.exports.sendRSVP = async (data) => {
 module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
   const attendee = data || {};
 
-  //format ceremony date for email
-  Object.assign(attendee.ceremony, {
-    ...attendee.ceremony,
-    datetime_formatted: `${format(
-      new Date(attendee.ceremony.datetime),
-      `EEEE, MMMM dd, yyyy`
-    )}`,
-  });
+  // //format ceremony date for email
+  // Object.assign(attendee.ceremony, {
+  //   ...attendee.ceremony,
+  //   datetime_formatted: `${format(
+  //     new Date(attendee.ceremony.datetime),
+  //     `EEEE, MMMM dd, yyyy`
+  //   )}`,
+  // });
 
   // send confirmation mail to supervisor
   if (accept) {
