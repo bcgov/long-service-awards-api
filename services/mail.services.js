@@ -264,12 +264,12 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
  * @param link
  */
 module.exports.sendTEST = async () => {
-  // send confirmation mail to supervisor
+  // send test emails
   return await sendMail(
-    [process.env.MAIL_FROM_ADDRESS],
+    [process.env.SUPER_ADMIN_EMAIL],
     "Long Service Awards: TEST EMAIL",
     "email-user-reset-password.ejs",
-    { link: "https://nolink" },
+    { link: "sendTEST EMAIL TEST" },
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],
