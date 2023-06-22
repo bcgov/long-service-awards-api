@@ -95,6 +95,7 @@ exports.create = async (req, res, next) => {
   try {
     const data = req.body || {};
     const results = await ceremoniesModel.register(data);
+    data["datetime"] = convertDate(data.datetime);
     await results.save(data);
     res.status(200).json(results);
   } catch (err) {
