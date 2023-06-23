@@ -88,7 +88,7 @@
       }
       #u_body a {
         color: #0000ff;
-        text-decoration: underline;
+        text-decoration: none;
       }
     </style>
 
@@ -223,7 +223,26 @@
                                       "
                                       align="center"
                                     >
-                                      <%- await include('email-banner'); %>
+                                      <img
+                                        align="center"
+                                        border="0"
+                                        src="https://assets.unlayer.com/stock-templates1686329244678-LSA_Sign_Small_Banner-scaled.jpg"
+                                        alt=""
+                                        title=""
+                                        style="
+                                          outline: none;
+                                          text-decoration: none;
+                                          -ms-interpolation-mode: bicubic;
+                                          clear: both;
+                                          display: inline-block !important;
+                                          border: none;
+                                          height: auto;
+                                          float: none;
+                                          width: 100%;
+                                          max-width: 600px;
+                                        "
+                                        width="600"
+                                      />
                                     </td>
                                   </tr>
                                 </table>
@@ -314,80 +333,134 @@
                                 <div
                                   style="
                                     font-size: 14px;
-                                    color: #000000;
-                                    line-height: 150%;
+                                    color: #444444;
+                                    line-height: 200%;
                                     text-align: center;
                                     word-wrap: break-word;
                                   "
                                 >
                                   <div style="text-align: left">
-                                    <p>
+                                    <div>
                                       This is an automated email. No response is
                                       required.
-                                    </p>
-
-                                    <p>
-                                      <%= recipient.contact.first_name %> <%=
-                                      recipient.contact.last_name %>, </br> <%= recipient.organization.name %>
-                                    </p>
-                         
-                                    <p>
-                                      We are excited to celebrate your career
-                                      milestone at a Long Service Awards
-                                      ceremony!
-                                    </p>
-                                    <p>
-                                      Thank you for confirming your attendance.
-                                    </p>
-
-                                    <p>
-                                      Your ceremony will take place on <%=
-                                      ceremony.datetime_formatted %> at <%if
-                                      (!ceremony.venue && !ceremony.address) {%>
-                                      (TBD). <% } else { %> <%= ceremony.venue
-                                      %>, <%= ceremony.address.street1 %>, <% if
-                                      (ceremony.address.street2) {%><%=
-                                      ceremony.address.street2 %>, <% } %><%=
-                                      ceremony.address.community %>, <%=
-                                      ceremony.address.province %>. <% } %>
-                                    </p>
-                                    <p>Dress: Business attire.</p>
-                                    <p>Doors open at 5:45PM.</p>
-                                    <p>
-                                      For information about travel reimbursement
-                                      and taking time off, visit the
-                                      <a
-                                        href="https://longserviceawards.gww.gov.bc.ca/travel/"
-                                        >Long Service Awards website</a
-                                      >
-                                      or contact your workplace
-                                      <a
-                                        href="https://longserviceawards.gww.gov.bc.ca/contacts/"
-                                        >Long Service Awards contact</a
-                                      >. If you have questions about the
-                                      ceremony, email the
-                                      <a
-                                        href="mailto:longserviceawards@gov.bc.ca?subject=Question%20about%20LSA%20ceremony"
-                                      >
-                                        Long Service Awards team</a
-                                      >.
-                                    </p>
-
-                                    <p>
-                                      If you need to make changes to your RSVP
-                                      information or cancel your attendance,
-                                      please email the
-                                      <a
-                                        href="mailto:LongServiceAwards@gov.bc.ca?subject=RSVP%20to%20ceremony"
-                                        >Long Service Awards</a
-                                      >
-                                      team as soon as possible.
-                                    </p>
-
-                                    <p>
-                                      Thank you and congratulations,<br />Long
-                                      Service Awards Team
-                                    </p>
+                                    </div>
+                                    <div>
+                                      <div>
+                                        &lt;%= recipient.contact.first_name
+                                        %&gt; &lt;%= recipient.contact.last_name
+                                        %&gt;,
+                                      </div>
+                                      <div>
+                                        <div>
+                                          &lt;%= recipient.organization %&gt;
+                                        </div>
+                                        <div>
+                                          <div>
+                                            We are excited to celebrate your
+                                            career milestone at a Long Service
+                                            Awards ceremony!
+                                          </div>
+                                          <div>
+                                            <div>
+                                              Thank you for confirming your
+                                              attendance.
+                                            </div>
+                                            <div> </div>
+                                            <div>
+                                              <div>
+                                                Your ceremony will take place on
+                                                &lt;%= ceremony.datetime %&gt;
+                                                at
+                                              </div>
+                                              <div>
+                                                &lt;%if (!ceremony.venue
+                                                &amp;&amp; !ceremony.address)
+                                                {%&gt;
+                                              </div>
+                                              <div>(TBD).</div>
+                                              <div>&lt;% } else { %&gt;</div>
+                                              <div>
+                                                &lt;%= ceremony.venue %&gt;,
+                                                &lt;%= ceremony.address.street1
+                                                %&gt;, &lt;% if
+                                                (ceremony.address.street2)
+                                                {%&gt;&lt;%=
+                                                ceremony.address.street2 %&gt;,
+                                                &lt;% } %&gt;&lt;%=
+                                                ceremony.address.community
+                                                %&gt;, &lt;%=
+                                                ceremony.address.province %&gt;.
+                                              </div>
+                                              <div>&lt;% } %&gt;</div>
+                                              <div>
+                                                Dress: Business attire. Doors
+                                                open at 5:45PM.
+                                              </div>
+                                              <div> </div>
+                                              <div>
+                                                <div>
+                                                  For information about travel
+                                                  reimbursement and taking time
+                                                  off, visit the<a
+                                                    rel="noopener"
+                                                    href="https://longserviceawards.gww.gov.bc.ca/travel/"
+                                                    target="_blank"
+                                                  >
+                                                    Long Service Awards</a
+                                                  >
+                                                  website or contact your
+                                                  workplace
+                                                  <a
+                                                    rel="noopener"
+                                                    href="https://longserviceawards.gww.gov.bc.ca/contacts/"
+                                                    target="_blank"
+                                                    >Long Service Awards
+                                                    contact</a
+                                                  >. If you have questions about
+                                                  the ceremony, email the
+                                                  <a
+                                                    rel="noopener"
+                                                    href="mailto:longserviceawards@gov.bc.ca?subject=Question%20about%20LSA%20ceremony?subject=Question%20about%20LSA%20ceremony"
+                                                    target="_blank"
+                                                    >Long Service Awards team</a
+                                                  >.
+                                                </div>
+                                                <div> </div>
+                                                <div>
+                                                  If you need to make changes to
+                                                  your RSVP information or
+                                                  cancel your attendance,
+                                                </div>
+                                                <div>
+                                                  please email the
+                                                  <a
+                                                    rel="noopener"
+                                                    href="mailto:LongServiceAwards@gov.bc.ca?subject=RSVP%20to%20ceremony"
+                                                    target="_blank"
+                                                    >Long Service Awards team</a
+                                                  >
+                                                  as soon as possible.
+                                                </div>
+                                                <div> </div>
+                                                <div>
+                                                  Please find your printable
+                                                  keepsake invitation attached.
+                                                  This is not required for
+                                                  entry.
+                                                </div>
+                                                <div> </div>
+                                                <div>
+                                                  Thank you and congratulations,
+                                                </div>
+                                                <div>
+                                                  Long Service Awards Team
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               </td>

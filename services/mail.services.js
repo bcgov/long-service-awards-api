@@ -208,7 +208,6 @@ module.exports.sendRSVP = async (data) => {
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 14);
   // send confirmation mail to supervisor
-  console.log(attendee);
   return await sendMail(
     [email],
     "Your Long Service Awards Invitation",
