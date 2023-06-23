@@ -9,7 +9,7 @@ const { sendRSVPConfirmation, sendTEST } = require("../services/mail.services");
 const Attendees = require("../models/attendees.model.js");
 const Accommodations = require("../models/accommodations.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
-
+const { convertDate } = require("../services/validation.services.js");
 const { deleteToken, validateToken } = require("../services/cache.services");
 /**
  * Send invite emails for selected recipients
@@ -48,10 +48,10 @@ exports.update = async (req, res, next) => {
 
     if (!valid) throw (err = "Not Valid");
 
-    const attendee = await Attendees.findById(data.id);
+    const recipient_attendee = await Attendees.findById(data.id);
 
     // handle exception
-    if (!attendee) return next(Error("noRecord"));
+    if (!recipient_attendee) return next(Error("noRecord"));
 
     // recreate accommodations to have only attendee, accommodation fields to match the model
     let accommodationsArr = [];
@@ -70,11 +70,12 @@ exports.update = async (req, res, next) => {
     }
 
     // Clear accommodations before saving
-    await AccommodationSelections.remove(attendee.id);
-    await attendee.save(data);
+    await AccommodationSelections.remove(recipient_attendee.id);
+    await recipient_attendee.save(data);
 
     // Clear any existing guest attendees of the recipient, also removes it's selections
     await Attendees.removeGuests(data.recipient.id);
+
     let guestID = undefined;
     // When form has guest data, create guest, and get ID for attaching accommodations to guestID
     if (data.guest_count > 0) {
@@ -93,34 +94,31 @@ exports.update = async (req, res, next) => {
         }
       });
 
-      const guest = await Attendees.findById(guestID);
-      let guestData = guest.data;
+      const guest_attendee = await Attendees.findById(guestID);
+      let guestData = guest_attendee.data;
       guestData.accommodations = guestAccommodationsArr;
-      await guest.save(guestData);
+      await guest_attendee.save(guestData);
+    }
+    
+    let email = recipient_attendee.data.recipient.contact.office_email;
+    // Create 48 hour grace period
+    const todayPlusGracePeriod = new Date();
+    todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
+    
+    if (recipient_attendee.data.recipient.retirement_date != null) {
+      let retirement_date = recipient_attendee.data.recipient.retirement_date;
+      if (retirement_date < todayPlusGracePeriod)
+        email = recipient_attendee.data.recipient.contact.personal_email;
     }
 
-    // Find guest if exists, or create new guest
-    // then, save guest (WHERE guest = 1)
-
-    const gracePeriod = new Date();
-    gracePeriod.setDate(gracePeriod.getDate() - 2);
-    // Create 48 hour grace period
-    const email = attendee.data.recipient.contact.office_email;
-
-    if (
-      attendee.data.recipient.retirement_date != null &&
-      attendee.data.recipient.retirement_date < gracePeriod
-    )
-      email = attendee.data.recipient.contact.personal_email;
-
     // Send RSVP confirmation
-    sendRSVPConfirmation(data, email, accept);
+    await sendRSVPConfirmation(data, email, accept);
 
     if ((await deleteToken(id)) != 1) throw (err = "Key deletion failure");
 
     res.status(200).json({
       message: {},
-      result: attendee.data,
+      result: recipient_attendee.data,
     });
   } catch (err) {
     return next(err);
