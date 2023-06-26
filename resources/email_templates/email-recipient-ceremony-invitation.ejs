@@ -1,0 +1,209 @@
+<%- await include('email-doctype') %>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <%- await include('email-head', {title: title}) %>
+
+  <body class="body">
+    <div class="container" style="width: 600px">
+      <%- await include('email-banner'); %>
+
+      <h3>The Government of British Columbia is pleased to invite</h3>
+
+      <h2>
+        <%= attendee.recipient.contact.first_name %> <%=
+        attendee.recipient.contact.last_name %>
+      </h2>
+
+      <h3>to the Long Service Awards Ceremony</h3>
+
+      <table
+        cellpadding="5"
+        cellspacing="5"
+        width="100%"
+        bgcolor="#eeeeee"
+        style="margin-left: 0"
+      >
+        <tbody>
+          <tr>
+            <th>Location</th>
+            <th></th>
+            <td>
+              <% if(!!(attendee.ceremony.venue) &&
+              !!(attendee.ceremony.address.street1) &&
+              !!(attendee.ceremony.address.community) &&
+              !!(attendee.ceremony.address.province)) { %> <%=
+              attendee.ceremony.venue %><br />
+              <%= attendee.ceremony.address.street1 %><br />
+              <% if (attendee.ceremony.address.street2) { %><%=
+              attendee.ceremony.address.street2 %><br /><% } %> <%=
+              attendee.ceremony.address.community %>, <%=
+              attendee.ceremony.address.province %> <% } else { %> TBD <% } %>
+            </td>
+          </tr>
+          <tr>
+            <th>Date</th>
+            <th></th>
+            <td><%= attendee.ceremony.datetime_formatted %></td>
+          </tr>
+          <tr>
+            <th>Organization</th>
+            <th></th>
+            <td><%= attendee.recipient.organization.name %></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>This invitation is for the intended recipient and a guest.</p>
+
+      <p>Dress: Business attire</p>
+
+      <p>Doors open at 5:45PM</p>
+
+      <p style="font-weight: 700">RSVP deadline: July 28, 2023</p>
+
+      <p>
+        Please click one of the RSVP links below to respond to this ceremony
+        invitation.
+      </p>
+
+      <div style="display: flex; justify-content: space-evenly">
+        <a
+          href="<%= link %>?accept=true"
+          target="_blank"
+          style="
+            box-sizing: border-box;
+            display: inline-block;
+            text-decoration: none;
+            -webkit-text-size-adjust: none;
+            text-align: center;
+            color: #ffffff;
+            background-color: #9fdaa8;
+            border-radius: 4px;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            width: auto;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            word-wrap: break-word;
+            mso-border-alt: none;
+            font-size: 14px;
+          "
+        >
+          <span style="display: block; padding: 10px 20px; line-height: 120%"
+            ><p style="line-height: 120%; margin: 0">
+              YES, I will be attending
+            </p></span
+          >
+        </a>
+        <a
+          href="<%= link %>?accept=false"
+          target="_blank"
+          style="
+            box-sizing: border-box;
+            display: inline-block;
+            text-decoration: none;
+            -webkit-text-size-adjust: none;
+            text-align: center;
+            color: #ffffff;
+            background-color: #e97984;
+            border-radius: 4px;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            width: auto;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            word-wrap: break-word;
+            mso-border-alt: none;
+            font-size: 14px;
+          "
+        >
+          <span style="display: block; padding: 10px 20px; line-height: 120%"
+            ><p style="line-height: 120%; margin: 0">
+              NO, I will not be attending
+            </p></span
+          ></a
+        >
+      </div>
+
+      <!-- <table
+        cellspacing="0"
+        cellpadding="0"
+        width="100%"
+        bgcolor="#ffffff"
+        style="margin-left: 0"
+      >
+        <tr>
+          <td style="text-align: center">
+            <div>
+              <a
+                href="<%= link %>?accept=true"
+                target="_blank"
+                style="
+                  box-sizing: border-box;
+                  display: inline-block;
+                  text-decoration: none;
+                  -webkit-text-size-adjust: none;
+                  text-align: center;
+                  color: #ffffff;
+                  background-color: #9fdaa8;
+                  border-radius: 4px;
+                  -webkit-border-radius: 4px;
+                  -moz-border-radius: 4px;
+                  width: auto;
+                  max-width: 100%;
+                  overflow-wrap: break-word;
+                  word-break: break-word;
+                  word-wrap: break-word;
+                  mso-border-alt: none;
+                  font-size: 14px;
+                "
+              >
+                <span
+                  style="display: block; padding: 10px 20px; line-height: 120%"
+                  ><p style="line-height: 120%; margin: 0">
+                    YES, I will be attending
+                  </p></span
+                >
+              </a>
+            </div>
+          </td>
+          <td style="text-align: center">
+            <div>
+              <a
+                href="<%= link %>?accept=false"
+                target="_blank"
+                style="
+                  box-sizing: border-box;
+                  display: inline-block;
+                  text-decoration: none;
+                  -webkit-text-size-adjust: none;
+                  text-align: center;
+                  color: #ffffff;
+                  background-color: #e97984;
+                  border-radius: 4px;
+                  -webkit-border-radius: 4px;
+                  -moz-border-radius: 4px;
+                  width: auto;
+                  max-width: 100%;
+                  overflow-wrap: break-word;
+                  word-break: break-word;
+                  word-wrap: break-word;
+                  mso-border-alt: none;
+                  font-size: 14px;
+                "
+              >
+                <span
+                  style="display: block; padding: 10px 20px; line-height: 120%"
+                  ><p style="line-height: 120%; margin: 0">
+                    NO, I will not be attending
+                  </p></span
+                ></a
+              >
+            </div>
+          </td>
+        </tr>
+      </table> -->
+    </div>
+  </body>
+</html>

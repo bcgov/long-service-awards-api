@@ -5,7 +5,8 @@
  * MIT Licensed
  */
 
-const attendeesModel = require("../models/accommodations.model.js");
+const Accommodations = require("../models/accommodations.model.js");
+const AccommodationSelections = require("../models/accommodation-selection.model.js");
 
 /**
  * Retrieve all records.
@@ -19,10 +20,30 @@ const attendeesModel = require("../models/accommodations.model.js");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await attendeesModel.findAll();
+    const results = await Accommodations.findAll();
     return res.status(200).json(results);
   } catch (err) {
     console.error(err);
+    return next(err);
+  }
+};
+
+exports.getAllSelections = async (req, res, next) => {
+  try {
+    const results = await AccommodationSelections.findAll();
+    return res.status(200).json(results);
+  } catch (err) {
+    console.error(err);
+    return next(err);
+  }
+};
+
+exports.createSelection = async (req, res, next) => {
+  try {
+    const data = req.body || {};
+    const results = await AccommodationSelections.create(data);
+    res.status(200).json(results);
+  } catch (err) {
     return next(err);
   }
 };
@@ -39,7 +60,7 @@ exports.getAll = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const {id} = req.params || {};
+    const { id } = req.params || {};
     const results = await attendeesModel.findById(id);
     res.status(200).json(results);
   } catch (err) {
@@ -59,7 +80,7 @@ exports.get = async (req, res, next) => {
 
 exports.getByAttendee = async (req, res, next) => {
   try {
-    const {id} = req.params || {};
+    const { id } = req.params || {};
     const results = await attendeesModel.findByAttendee(id);
     res.status(200).json(results);
   } catch (err) {

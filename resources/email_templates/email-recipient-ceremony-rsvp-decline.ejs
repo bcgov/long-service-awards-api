@@ -1,0 +1,21 @@
+<%- await include('email-doctype') %>
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <%- await include('email-head', {title: title}) %>
+
+    <p>This is an automated email. No response is required.</p>
+
+    <p><%= recipient.contact.first_name %> <%= recipient.contact.last_name %>,</p>
+
+    <p>Thank you for confirming you will not attend the Long Service Awards.</p>
+
+    <p>If you haven't received your award, it will be mailed to your organization following the ceremony.
+    Your <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">ministry/organization contact</a> will arrange to have your award presented to you.</p>
+
+    <p>If you have any questions, please connect with your workplace
+      <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">Long Service Awards contact</a> or email
+      the
+      <a href="mailto:longserviceawards@gov.bc.ca?subject=Question%20about%20LSA%20ceremony">
+        Long Service Awards team</a>.
+    </p>
+
+  </html>

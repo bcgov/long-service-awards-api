@@ -6,6 +6,10 @@
  */
 
 const ceremoniesModel = require("../models/ceremonies.model.js");
+const uuid = require("uuid");
+const { convertDate } = require("../services/validation.services.js");
+const addressesModel = require("../models/addresses.model.js");
+const { add } = require("winston");
 
 /**
  * Retrieve all records.
@@ -19,8 +23,15 @@ const ceremoniesModel = require("../models/ceremonies.model.js");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await ceremoniesModel.findAll();
-    return res.status(200).json(results);
+    const ceremonies = await ceremoniesModel.findAll();
+    return res.status(200).json({
+      message: {
+        severity: "success",
+        summary: "Ceremony Record(s) Found",
+        detail: "Ceremony records found.",
+      },
+      result: { ceremonies },
+    });
   } catch (err) {
     console.error(err);
     return next(err);
@@ -39,9 +50,12 @@ exports.getAll = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const {id} = req.params || {};
-    const results = await ceremoniesModel.findById(id);
-    res.status(200).json(results);
+    const { id } = req.params || {};
+    const ceremony = await ceremoniesModel.findById(id);
+    res.status(200).json({
+      message: {},
+      result: ceremony.data,
+    });
   } catch (err) {
     return next(err);
   }
@@ -58,9 +72,31 @@ exports.get = async (req, res, next) => {
  */
 
 exports.create = async (req, res, next) => {
+  // try {
+  //   const guid = uuid.v4();
+  //   const data = req.body || {};
+  //   await ceremoniesModel.register({
+  //     id: guid,
+  //   });
+  //   const ceremony = await ceremoniesModel.findById(guid);
+  //   if (ceremony != undefined) {
+  //     res.status(200).json({
+  //       message: {
+  //         severity: "success",
+  //         summary: "Add Ceremony",
+  //         detail: "New ceremony record created.",
+  //       },
+  //       result: ceremony.data,
+  //     });
+  //   }
+  // } catch (err) {
+  //   return next(err);
+  // }
   try {
     const data = req.body || {};
-    const results = await ceremoniesModel.create(data);
+    const results = await ceremoniesModel.register(data);
+    data["datetime"] = convertDate(data.datetime);
+    await results.save(data);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
@@ -76,11 +112,21 @@ exports.create = async (req, res, next) => {
  * @src public
  */
 
+// TODO: need to update address attachment
 exports.update = async (req, res, next) => {
   try {
     const data = req.body;
-    const results = await ceremoniesModel.update(data);
-    res.status(200).json(results);
+    const ceremony = await ceremoniesModel.findById(data.id);
+
+    // handle exception
+    if (!ceremony) return next(Error("noRecord"));
+    data["datetime"] = convertDate(data.datetime);
+    await ceremony.save(data);
+
+    res.status(200).json({
+      message: {},
+      result: ceremony.data,
+    });
   } catch (err) {
     return next(err);
   }

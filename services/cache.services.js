@@ -59,17 +59,13 @@ client.on('error', err => console.error('Redis Client Error', err));
 /**
  * Get cache entry (Redis)
  */
-
 const getToken = async (key) => {
   try {
     // connect to redis
-    await client.connect();
+    if (!client.isReady) await client.connect();
 
     // get token from cache
     const token = await client.get(key);
-
-    // disconnect from redis
-    await client.disconnect();
 
     // return token
     return token;
@@ -82,22 +78,21 @@ const getToken = async (key) => {
 module.exports.getToken = getToken;
 
 /**
- * Get cache entry (Redis)
+ * Deletes a cache entry (Redis)
+ * @param {key} Key of cache entry (could be )
+ * @returns Integer reply: The number of keys that were removed.
  */
 
 module.exports.deleteToken = async (key) => {
   try {
     // connect to redis
-    await client.connect();
+    if (!client.isReady) await client.connect();
 
-    // get token from cache
-    const token = await client.del(key);
+    // Delete token from cache
+    const deletedNumOfTokens = await client.del(key);
 
-    // disconnect from redis
-    await client.disconnect();
-
-    // return token
-    return token;
+    // return number of deleted tokens
+    return deletedNumOfTokens;
 
   } catch (err) {
     console.error(err)
@@ -109,7 +104,7 @@ module.exports.deleteToken = async (key) => {
  * Compare input token with cached (Redis)
  */
 
-module.exports.validateToken = async (key, token) => {
+module.exports.   validateToken = async (key, token) => {
   // get current cached token for given key
   const storedToken = await getToken(key);
   // compare token with hashed in cache
@@ -123,8 +118,8 @@ module.exports.validateToken = async (key, token) => {
 
 module.exports.resetToken = async (key, expiry) => {
   try {
-    // connect to redis
-    await client.connect();
+    // connect to redis 
+    if (!client.isReady) await client.connect();
 
     // check if reset token already exists (delete if true)
     const existingToken = await client.get(key);
@@ -141,11 +136,45 @@ module.exports.resetToken = async (key, expiry) => {
       EX: expiry
     });
 
-    // disconnect from redis
-    await client.disconnect();
 
     // return URI-escaped hashed token value
     return resetToken;
+
+  } catch (err) {
+      console.error(err)
+     return null
+  }
+
+}
+
+/**
+ * 
+ * @param {*} key 
+ * @param {*} expiry 
+ * @returns 
+ */
+module.exports.rsvpToken = async (key, expiry) => {
+  try {
+    // connect to redis
+    if (!client.isReady) await client.connect();
+
+    // check if reset token already exists (delete if true)
+    const existingToken = await client.get(key);
+    // remove existing token (if exists)
+    if (existingToken) await client.del(key);
+    // generate new token
+    const rsvpToken = generateToken();
+    // hash token using global salt value
+    const hash = await hashToken(rsvpToken);
+
+    // cache the new token
+    // - use input expiry seconds
+    await client.set(key, hash, {
+      EX: expiry
+    });
+
+    // return URI-escaped hashed token value
+    return rsvpToken;
 
   } catch (err) {
       console.error(err)

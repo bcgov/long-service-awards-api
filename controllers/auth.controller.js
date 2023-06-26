@@ -52,6 +52,7 @@ exports.info = async (req, res, next) => {
       });
     }
     else {
+      if (req.url.match('^\/(rsvp)\/[^\/]+\/[^\/]+$')) return res.status(200);
       return next(new Error('noAuth'));
     }
   } catch (err) {

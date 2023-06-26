@@ -19,6 +19,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "csurf": "^1.11.0",
+    "date-fns": "^2.30.0",
     "ejs": "^3.1.8",
     "express": "^4.17.1",
     "express-session": "^1.17.3",
@@ -26,6 +27,7 @@
     "helmet": "^5.0.1",
     "jwt-decode": "^3.1.2",
     "nodemailer": "^6.9.1",
+    "nodemon": "^2.0.22",
     "papaparse": "^5.4.1",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
@@ -38,7 +40,6 @@
     "cross-env": "^7.0.3",
     "cypress": "^11.1.0",
     "dotenv": "^16.0.3",
-    "nodemon": "^2.0.20",
     "supertest": "^6.3.1"
   },
   "eslintConfig": {

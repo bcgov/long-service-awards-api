@@ -5,7 +5,11 @@
  * MIT Licensed
  */
 
-const attendeesModel = require("../models/attendees.model.js");
+const Attendees = require("../models/attendees.model.js");
+const uuid = require("uuid");
+const { sendRSVP } = require("../services/mail.services");
+const { rsvpToken, validateToken } = require("../services/cache.services");
+const { convertDate } = require("../services/validation.services.js");
 
 /**
  * Retrieve all records.
@@ -19,12 +23,30 @@ const attendeesModel = require("../models/attendees.model.js");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const results = await attendeesModel.findAll();
-    return res.status(200).json(results);
+    const { total_filtered_records } = await Attendees.count(req.query, res.locals.user);
+    const attendees = await Attendees.findAll(req.query);
+    return res.status(200).json({attendees, total_filtered_records});
   } catch (err) {
     console.error(err);
     return next(err);
   }
+  // try {
+  //   // apply query filter to results
+  //   const attendees = await Attendees.findAll(req.query, res.locals.user);
+  
+
+  //   // send response
+  //   res.status(200).json({
+  //     message: {
+  //       severity: "success",
+  //       summary: "Attendees Record(s) Found",
+  //       detail: "Attendees records found.",
+  //     },
+  //     result: { attendees, total_filtered_records },
+  //   });
+  // } catch (err) {
+  //   return next(err);
+  // }
 };
 
 /**
@@ -39,9 +61,9 @@ exports.getAll = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const {id} = req.params || {};
-    const results = await attendeesModel.findById(id);
-    res.status(200).json(results);
+    const { id } = req.params || {};
+    const results = await Attendees.findById(id);
+    res.status(200).json(results.data);
   } catch (err) {
     return next(err);
   }
@@ -59,8 +81,8 @@ exports.get = async (req, res, next) => {
 
 exports.getByCeremony = async (req, res, next) => {
   try {
-    const {id} = req.params || {};
-    const results = await attendeesModel.findByCeremony(id);
+    const { id } = req.params || {};
+    const results = await Attendees.findByCeremony(id);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
@@ -80,8 +102,30 @@ exports.getByCeremony = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const data = req.body || {};
-    const results = await attendeesModel.create(data);
-    res.status(200).json(results);
+    const attendees = [];
+
+    data.recipients.forEach(async (r) => {
+      const id = uuid.v4();
+      await Attendees.create({
+        id: id,
+        recipient: r,
+        ceremony: data.ceremony.id,
+      });
+      const attendee = await Attendees.findById(id);
+
+      attendees.push(attendee);
+    });
+
+    if (attendees != undefined) {
+      res.status(200).json({
+        message: {
+          severity: "success",
+          summary: "Add Attendee(s)",
+          detail: "New Attendee(s) record created.",
+        },
+        result: attendees,
+      });
+    }
   } catch (err) {
     return next(err);
   }
@@ -97,48 +141,25 @@ exports.create = async (req, res, next) => {
  */
 
 exports.update = async (req, res, next) => {
+  // try {
+  //   const data = req.body;
+  //   const results = await Attendees.update(data);
+  //   res.status(200).json(results);
+  // } catch (err) {
+  //   return next(err);
+  // }
   try {
     const data = req.body;
-    const results = await attendeesModel.update(data);
-    res.status(200).json(results);
-  } catch (err) {
-    return next(err);
-  }
-};
+    const attendee = await Attendees.findById(data.id);
 
-/**
- * Get RSVP info for attendee.
- *
- * @param req
- * @param res
- * @param next
- * @src public
- */
+    // handle exception
+    if (!attendee) return next(Error("noRecord"));
+    await attendee.save(data);
 
-exports.getRSVP = async (req, res, next) => {
-  try {
-    const data = req.body;
-    const results = await attendeesModel.update(data);
-    res.status(200).json(results);
-  } catch (err) {
-    return next(err);
-  }
-};
-
-/**
- * Set RSVP info for attendee.
- *
- * @param req
- * @param res
- * @param next
- * @src public
- */
-
-exports.setRSVP = async (req, res, next) => {
-  try {
-    const data = req.body;
-    const results = await attendeesModel.update(data);
-    res.status(200).json(results);
+    res.status(200).json({
+      message: {},
+      result: attendee.data,
+    });
   } catch (err) {
     return next(err);
   }
@@ -156,7 +177,7 @@ exports.setRSVP = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const results = await attendeesModel.remove(id);
+    const results = await Attendees.remove(id);
     res.status(200).json(results);
   } catch (err) {
     return next(err);
@@ -174,8 +195,61 @@ exports.remove = async (req, res, next) => {
 
 exports.removeAll = async (req, res, next) => {
   try {
-    const results = await attendeesModel.removeAll();
+    const results = await Attendees.removeAll();
     res.status(200).json(results);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.send = async (req, res, next) => {
+  try {
+    // const { id } = req.params || {};
+    // const ceremony = await ceremoniesModel.findById(id);
+    // res.status(200).json({
+    //   message: {},
+    //   result: ceremony.data,
+    // });
+    const data = req.body || {};
+    const recipient = data.recipient;
+    let email = recipient.contact.office_email;
+    let response = null;
+
+    // Create 48 hour grace period
+    const todayPlusGracePeriod = new Date();
+    todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
+    
+    if (recipient.retirement_date != null) {
+      let retirement_date = new Date(convertDate(recipient.retirement_date));
+      if (retirement_date < todayPlusGracePeriod)
+        email = recipient.contact.personal_email;
+    }
+
+    var RsvpSendDate = new Date(); //today
+    var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
+    const expiry = Math.ceil(Math.abs(RsvpSendDate.getTime() - deadline.getTime())/1000);
+    const token = await rsvpToken(data.id, expiry);
+    const valid = await validateToken(data.id, token);
+    if (valid)
+    {    
+      response = await sendRSVP({
+        email,
+        link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
+        attendee: data,
+      });
+
+      return res.status(200).json({
+        message: "success",
+        response: response,
+      });
+  }
+  else
+  {
+    return res.status(500).json({
+      message: "failure",
+      response: response,
+    });
+  }
   } catch (err) {
     return next(err);
   }

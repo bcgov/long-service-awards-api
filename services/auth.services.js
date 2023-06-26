@@ -96,8 +96,10 @@ exports.initPassport = (passport) => {
 
 exports.authenticateSMS = async (req, res, next) => {
   try {
-    // check if API test
-    if (req.url === '/') return next();
+    // check if Public endpoints, API test, RSVP
+    if (req.url === '/' || req.url === '/accommodations/list' || req.url.match('^\/(rsvp)\/[^\/]+\/[^\/]+$'))
+      return next();
+
     // [dev] skip authentication on test/local environments
     if (nodeEnv === 'development' || nodeEnv === 'test') {
       // check for impersonate query parameters

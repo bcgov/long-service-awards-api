@@ -9,18 +9,19 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/ceremonies.controller");
 const { authorizeAdmin } = require("../services/auth.services");
+const { authorize } = require("passport");
 
 /**
  * Recipient admin endpoints
  */
 
-router.get('/list', authorizeAdmin, controller.get);
-router.post('/create', authorizeAdmin, controller.get);
+router.get('/list', authorizeAdmin, controller.getAll);
+router.post('/create', authorizeAdmin, controller.create);
 router.get('/view/:id', authorizeAdmin, controller.get);
-router.post('/update/:id', authorizeAdmin, controller.get);
-router.get('/delete/:id', authorizeAdmin, controller.get);
-router.post('/assign/:id', authorizeAdmin, controller.get);
-router.post('/remind/:id', authorizeAdmin, controller.get);
-router.post('/rsvp/confirm/', authorizeAdmin, controller.get);
+router.post('/update/:id', authorizeAdmin, controller.update);
+router.get('/delete/:id', authorizeAdmin, controller.remove);
+router.post('/assign/:id', authorizeAdmin, controller.get); // not implemented yet
+router.post('/remind/:id', authorizeAdmin, controller.get); // not implemented yet
+router.post('/rsvp/confirm/', authorizeAdmin, controller.get); // not implemented yet
 
 module.exports = router;
