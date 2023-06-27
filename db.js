@@ -27,7 +27,7 @@ const pool = new pg.Pool({
   password: process.env.DATABASE_PASSWORD,
   host: process.env.DATABASE_HOST,
   port: process.env.DATABASE_PORT,
-  max: 25, // max number of clients in the pool
+  max: 30, // max number of clients in the pool
   connectionTimeoutMillis: 0,
   idleTimeoutMillis: 10000
 });
@@ -71,7 +71,7 @@ exports.test = async () => {
     console.error('Database failed to initialize', err);
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
@@ -92,7 +92,7 @@ exports.query = async (query) => {
   } catch (err) {
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
@@ -113,7 +113,7 @@ exports.queryOne = async (query) => {
   } catch (err) {
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
@@ -143,7 +143,7 @@ exports.transaction = async (queries) => {
     await client.query('ROLLBACK');
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
@@ -173,7 +173,7 @@ exports.transactionOne = async (queries) => {
     await client.query('ROLLBACK');
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
