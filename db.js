@@ -71,7 +71,7 @@ exports.test = async () => {
     console.error('Database failed to initialize', err);
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
@@ -92,7 +92,7 @@ exports.query = async (query) => {
   } catch (err) {
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
@@ -113,7 +113,7 @@ exports.queryOne = async (query) => {
   } catch (err) {
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
@@ -143,7 +143,7 @@ exports.transaction = async (queries) => {
     await client.query('ROLLBACK');
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
@@ -173,7 +173,7 @@ exports.transactionOne = async (queries) => {
     await client.query('ROLLBACK');
     throw err;
   } finally {
-    await client.release(true);
+    client.release(true);
   }
 }
 
