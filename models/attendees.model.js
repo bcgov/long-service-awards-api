@@ -133,7 +133,6 @@ module.exports = {
   },
   findAll: async (filter) => {
     return await db.attendees.findAll(filter, schema);
-    //return await db.defaults.findAll(filter, schema);
   },
   count: async (filter, user) => {
     return await db.attendees.count(filter, user, schema);
