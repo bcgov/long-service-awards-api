@@ -83,16 +83,12 @@ exports.test = async () => {
  */
 
 exports.query = async (query) => {
-  // NOTE: client undefined if connection fails.
-  const client = await pool.connect();
   try {
-    const result = await client.query(query.sql, query.data);
-    const { rows=[] } = result || {}
+    const result = await pool.query(query.sql, query.data);
+    const { rows=[] } = result || {};
     return rows.length > 0 ? rows : null;
   } catch (err) {
     throw err;
-  } finally {
-    client.release(true);
   }
 }
 
@@ -104,17 +100,13 @@ exports.query = async (query) => {
  */
 
 exports.queryOne = async (query) => {
-  // NOTE: client undefined if connection fails.
-  const client = await pool.connect();
   try {
-    const result = await client.query(query.sql, query.data);
+    const result = await pool.query(query.sql, query.data);
     const {rows=[]} = result || {};
     return rows.length > 0 ? rows[0] : null;
   } catch (err) {
     throw err;
-  } finally {
-    client.release(true);
-  }
+  } 
 }
 
 /**
