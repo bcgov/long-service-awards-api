@@ -40,21 +40,53 @@ const attendeesQueries = {
     const orderClause =
       order && orderby ? `ORDER BY attendees.id ${order}` : "";
     const limitClause = limit ? `LIMIT ${limit}` : "";
-    const filters = [];
     
-    const WHEREfilter = getFilters(filter);
+    const filterStatement = getFilters(filter);
 
     // get query results
     return {
-      sql: `SELECT attendees.*
-              FROM ${schema.modelName} 
-              LEFT JOIN  
-              ceremonies ON ceremonies.id = attendees.ceremony
-              LEFT JOIN recipients ON recipients.id = attendees.recipient
-              LEFT JOIN contacts ON contacts.id = recipients.contact
-              ${WHEREfilter} 
+      sql: `WITH attendees_query AS(
+        SELECT attendees.*
+                      FROM attendees
+                      LEFT JOIN  
+                      ceremonies ON ceremonies.id = attendees.ceremony
+                      LEFT JOIN recipients ON recipients.id = attendees.recipient
+                      LEFT JOIN contacts ON contacts.id = recipients.contact
+                      ${filterStatement} 
               ${orderClause} ${limitClause}
-              OFFSET ${offset};`,
+              OFFSET ${offset}
+        )
+        ---------------------------------
+        SELECT attendees.id,attendees.guest,attendees.status,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations
+        FROM attendees_query as attendees
+        LEFT JOIN 
+          (SELECT c.id as "ceremony_id", 
+             json_build_object('id', c.id, 'venue', c.venue, 'datetime', c.datetime, 'address', 
+            json_build_object('id', ca.id,
+              'pobox', ca.pobox,
+              'street1', ca.street1,
+              'street2', ca.street2,
+              'community', ca.community,
+              'province', ca.province,
+              'country', ca.country,
+              'postal_code', ca.postal_code)) AS "ceremony" FROM ceremonies AS "c" LEFT JOIN addresses AS "ca" ON ca.id = c."address") 
+                AS "ceremony" ON ceremony.ceremony_id = attendees.ceremony
+                      
+        LEFT JOIN (SELECT r.id as "recipient_id",
+              json_build_object('id', r.id, 'employee_number', r.employee_number, 'division', r.division, 'branch', r.branch, 'contact',
+                json_build_object('first_name', cont.first_name, 'last_name', cont.last_name, 'office_email', cont.office_email, 'personal_email', cont.personal_email),
+                       'organization', json_build_object('name', org.name, 'abbreviation', org.abbreviation)) AS "recipient"
+                     FROM recipients AS "r" 
+               LEFT JOIN contacts AS "cont" ON cont.id = r."contact"
+               LEFT JOIN organizations AS "org" ON org.id = r."organization"
+              ) AS "recipient" ON recipient.recipient_id = attendees.recipient
+                      
+                LEFT JOIN 
+                (SELECT accomms.attendee as "accom_attendee", 
+                   JSON_AGG(json_build_object('attendee',accomms.attendee, 'accommodation',accomms.accommodation)) AS "accommodations"
+                 FROM accommodation_selections AS "accomms" GROUP BY accom_attendee) AS "accommodations" ON accommodations.accom_attendee = attendees.id
+                
+              ;`,
       data: [],
     };
   },
@@ -323,14 +355,7 @@ const getFilters = (filter) => {
 };
 
 exports.findAll = async (filter, schema) => {
-  const result = await query(attendeesQueries.findAll(filter, schema));
-
-  // attach linked records to results
-  return await Promise.all(
-    (result || []).map(async (item) => {
-      return await attachReferences(item, schema);
-    })
-  );
+  return await query(attendeesQueries.findAll(filter, schema));
 };
 
 exports.count = async (filter, user, schema) => {
