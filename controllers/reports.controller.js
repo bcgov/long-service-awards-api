@@ -7,6 +7,7 @@
 
 const Recipient = require("../models/recipients.model.js");
 const Attendee = require("../models/attendees.model.js");
+const Transactions = require("../models/transactions.model.js");
 const QualifyingYear = require("../models/qualifying-years.model.js");
 const { Readable } = require("stream");
 const Papa = require("papaparse");
@@ -126,3 +127,16 @@ exports.attendees = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.transactions = async( req, res, next) => {
+  try {
+    const cycle = await QualifyingYear.findCurrent();
+    const transactions = await Transactions.report(res.locals.user, cycle)
+    const filename = `attendees-report-${cycle}.csv`;
+    // convert json results to csv format
+    const csvData = Papa.unparse(transactions, { newline: "\n" });
+    pipeCSV(res, csvData, filename);
+  } catch (err) {
+    return next(err);
+  }
+}

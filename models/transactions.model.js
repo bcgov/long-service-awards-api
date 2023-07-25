@@ -51,3 +51,18 @@ const schema = {
 };
 
 module.exports = db.generate(schema);
+
+module.exports.report = async (user, cycle) => {
+    // check if user is administrator (skip user-org filtering)
+    const { role } = user || {};
+    const isAdmin = ["super-administrator", "administrator"].includes(
+        role.name
+    );
+    if (isAdmin) {
+        return await db.transactions.report(cycle);
+    }
+};
+
+
+
+
