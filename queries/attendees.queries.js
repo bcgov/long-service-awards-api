@@ -321,10 +321,10 @@ const getFilters = (filter) => {
   let filters = [];
   if (filter.hasOwnProperty("first_name") && filter.first_name)
       filters.push(
-        `LOWER(contacts.first_name) = LOWER('${filter.first_name}')`
+        `contacts.first_name ILIKE '%${filter.first_name}%'`
       );
     if (filter.hasOwnProperty("last_name") && filter.last_name)
-      filters.push(`LOWER(contacts.last_name) = LOWER('${filter.last_name}')`);
+      filters.push(`contacts.last_name ILIKE '%${filter.last_name}%'`);
     if (filter.hasOwnProperty("ceremony") && filter.ceremony)
       filters.push(`attendees.ceremony = '${filter.ceremony}'`);
     if (filter.hasOwnProperty("guest") && filter.guest)
