@@ -37,10 +37,17 @@ const attendeesQueries = {
 
     // (optional) order by attribute
     //const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : "";
-    const orderClause =
-      order && orderby ? `ORDER BY attendees.id ${order}` : "";
+    // const orderClause =
+    //   order && orderby ? `ORDER BY attendees.id ${order}` : "";
+    let orderClause = "";
+    if (order && orderby) {
+      const table =
+        orderby === "first_name" || orderby === "last_name"
+          ? "contacts"
+          : "ceremonies";
+      orderClause = `ORDER BY ${table}.${orderby} ${order}`;
+    }
     const limitClause = limit ? `LIMIT ${limit}` : "";
-    
     const filterStatement = getFilters(filter);
 
     // get query results
@@ -57,36 +64,54 @@ const attendeesQueries = {
               OFFSET ${offset}
         )
         ---------------------------------
-        SELECT attendees.id,attendees.guest,attendees.status,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations
+        SELECT attendees.id,recipient.first_name,recipient.last_name,attendees.guest,attendees.status,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations
         FROM attendees_query as attendees
-        LEFT JOIN 
-          (SELECT c.id as "ceremony_id", 
-             json_build_object('id', c.id, 'venue', c.venue, 'datetime', c.datetime, 'address', 
-            json_build_object('id', ca.id,
-              'pobox', ca.pobox,
-              'street1', ca.street1,
-              'street2', ca.street2,
-              'community', ca.community,
-              'province', ca.province,
-              'country', ca.country,
-              'postal_code', ca.postal_code)) AS "ceremony" FROM ceremonies AS "c" LEFT JOIN addresses AS "ca" ON ca.id = c."address") 
-                AS "ceremony" ON ceremony.ceremony_id = attendees.ceremony
+        
+        LEFT JOIN (
+          SELECT c.id as "ceremony_id", c.datetime as "datetime",
+            json_build_object(
+              'id', 
+              c.id, 
+              'venue', 
+              c.venue, 
+              'datetime', 
+              c.datetime, 
+              'address', 
+              json_build_object(
+                'id', ca.id,
+                'pobox', ca.pobox,
+                'street1', ca.street1,
+                'street2', ca.street2,
+                'community', ca.community,
+                'province', ca.province,
+                'country', ca.country,
+                'postal_code', ca.postal_code
+              )
+            ) AS "ceremony" 
+            FROM ceremonies AS "c" LEFT JOIN addresses AS "ca" ON ca.id = c."address"
+        ) AS "ceremony" ON ceremony.ceremony_id = attendees.ceremony
                       
-        LEFT JOIN (SELECT r.id as "recipient_id",
-              json_build_object('id', r.id, 'employee_number', r.employee_number, 'division', r.division, 'branch', r.branch, 'contact',
-                json_build_object('first_name', cont.first_name, 'last_name', cont.last_name, 'office_email', cont.office_email, 'personal_email', cont.personal_email),
-                       'organization', json_build_object('name', org.name, 'abbreviation', org.abbreviation)) AS "recipient"
-                     FROM recipients AS "r" 
-               LEFT JOIN contacts AS "cont" ON cont.id = r."contact"
-               LEFT JOIN organizations AS "org" ON org.id = r."organization"
-              ) AS "recipient" ON recipient.recipient_id = attendees.recipient
+        LEFT JOIN (
+          SELECT r.id as "recipient_id", cont.first_name AS first_name, cont.last_name AS last_name,
+            json_build_object(
+              'id', r.id, 'employee_number', r.employee_number, 'division', r.division, 'branch', r.branch, 'contact',
+              json_build_object(
+                'first_name', cont.first_name, 'last_name', cont.last_name, 'office_email', cont.office_email, 'personal_email', cont.personal_email
+              ), 'organization', json_build_object(
+                'name', org.name, 'abbreviation', org.abbreviation)
+            ) AS "recipient"
+          FROM recipients AS "r" 
+          LEFT JOIN contacts AS "cont" ON cont.id = r."contact"
+          LEFT JOIN organizations AS "org" ON org.id = r."organization"
+        ) AS "recipient" ON recipient.recipient_id = attendees.recipient
                       
-                LEFT JOIN 
-                (SELECT accomms.attendee as "accom_attendee", 
-                   JSON_AGG(json_build_object('attendee',accomms.attendee, 'accommodation',accomms.accommodation)) AS "accommodations"
-                 FROM accommodation_selections AS "accomms" GROUP BY accom_attendee) AS "accommodations" ON accommodations.accom_attendee = attendees.id
-                
-              ;`,
+        LEFT JOIN (
+          SELECT accomms.attendee as "accom_attendee", JSON_AGG(
+            json_build_object('attendee',accomms.attendee, 'accommodation',accomms.accommodation)
+          ) AS "accommodations"
+          FROM accommodation_selections AS "accomms" GROUP BY accom_attendee
+        ) AS "accommodations" ON accommodations.accom_attendee = attendees.id
+        ORDER BY ${orderby} ${order};`,
       data: [],
     };
   },
@@ -110,7 +135,6 @@ const attendeesQueries = {
                   LEFT JOIN recipients ON recipients.id = attendees.recipient
                   LEFT JOIN contacts ON contacts.id = recipients.contact
                   ${filterStatement};`,
-      
     };
   },
   insert: (data) => {
@@ -320,38 +344,36 @@ exports.queries = attendeesQueries;
 const getFilters = (filter) => {
   let filters = [];
   if (filter.hasOwnProperty("first_name") && filter.first_name)
-      filters.push(
-        `LOWER(contacts.first_name) = LOWER('${filter.first_name}')`
-      );
-    if (filter.hasOwnProperty("last_name") && filter.last_name)
-      filters.push(`LOWER(contacts.last_name) = LOWER('${filter.last_name}')`);
-    if (filter.hasOwnProperty("ceremony") && filter.ceremony)
-      filters.push(`attendees.ceremony = '${filter.ceremony}'`);
-    if (filter.hasOwnProperty("guest") && filter.guest)
-      filters.push(`attendees.guest = '${filter.guest}'`);
-    if (filter.hasOwnProperty("status") && filter.status) {
-      //Multi-select field - create their own OR clause
-      const statuses = filter.status.split(",");
-      const statusFilters = [];
-      statuses.forEach((element) => {
-        statusFilters.push(`attendees.status = '${element}'`);
-      });
-      const statusClause =
-        statusFilters.length > 0 ? `(${statusFilters.join(" OR ")})` : "";
-      filters.push(statusClause);
-    }
-    if (filter.hasOwnProperty("organization") && filter.organization) {
-      //Multi-select field - create their own OR clause
-      const orgs = filter.organization.split(",");
-      const orgFilters = [];
-      orgs.forEach((element) => {
-        orgFilters.push(`recipients.organization = '${element}'`);
-      });
-      const organizationClause =
-        orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";
-      filters.push(organizationClause);
-    }
-    return filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
+    filters.push(`contacts.first_name ILIKE '%${filter.first_name}%'`);
+  if (filter.hasOwnProperty("last_name") && filter.last_name)
+    filters.push(`contacts.last_name ILIKE '%${filter.last_name}%'`);
+  if (filter.hasOwnProperty("ceremony") && filter.ceremony)
+    filters.push(`attendees.ceremony = '${filter.ceremony}'`);
+  if (filter.hasOwnProperty("guest") && filter.guest)
+    filters.push(`attendees.guest = '${filter.guest}'`);
+  if (filter.hasOwnProperty("status") && filter.status) {
+    //Multi-select field - create their own OR clause
+    const statuses = filter.status.split(",");
+    const statusFilters = [];
+    statuses.forEach((element) => {
+      statusFilters.push(`attendees.status = '${element}'`);
+    });
+    const statusClause =
+      statusFilters.length > 0 ? `(${statusFilters.join(" OR ")})` : "";
+    filters.push(statusClause);
+  }
+  if (filter.hasOwnProperty("organization") && filter.organization) {
+    //Multi-select field - create their own OR clause
+    const orgs = filter.organization.split(",");
+    const orgFilters = [];
+    orgs.forEach((element) => {
+      orgFilters.push(`recipients.organization = '${element}'`);
+    });
+    const organizationClause =
+      orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";
+    filters.push(organizationClause);
+  }
+  return filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
 };
 
 exports.findAll = async (filter, schema) => {

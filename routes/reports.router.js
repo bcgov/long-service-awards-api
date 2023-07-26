@@ -23,7 +23,6 @@ const controller = require("../controllers/reports.controller");
 router.get("/lsa", authorizeOrgContact, controller.lsa);
 router.get("/service-pins", authorizeAdmin, controller.servicePins);
 router.get("/attendees", authorizeOrgContact, controller.attendees);
-
-// router.get('/ceremonies', authorizeAdmin, controller.ceremonies);
+router.get("/transactions", authorizeAdmin, controller.transactions);
 
 module.exports = router;
