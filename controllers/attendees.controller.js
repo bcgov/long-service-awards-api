@@ -23,9 +23,12 @@ const { convertDate } = require("../services/validation.services.js");
 
 exports.getAll = async (req, res, next) => {
   try {
-    const { total_filtered_records } = await Attendees.count(req.query, res.locals.user);
+    const { total_filtered_records } = await Attendees.count(
+      req.query,
+      res.locals.user
+    );
     const attendees = await Attendees.findAll(req.query);
-    return res.status(200).json({attendees, total_filtered_records});
+    return res.status(200).json({ attendees, total_filtered_records });
   } catch (err) {
     console.error(err);
     return next(err);
@@ -33,7 +36,6 @@ exports.getAll = async (req, res, next) => {
   // try {
   //   // apply query filter to results
   //   const attendees = await Attendees.findAll(req.query, res.locals.user);
-  
 
   //   // send response
   //   res.status(200).json({
@@ -218,7 +220,7 @@ exports.send = async (req, res, next) => {
     // Create 48 hour grace period
     const todayPlusGracePeriod = new Date();
     todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
-    
+
     if (recipient.retirement_date != null) {
       let retirement_date = new Date(convertDate(recipient.retirement_date));
       if (retirement_date < todayPlusGracePeriod)
@@ -227,11 +229,12 @@ exports.send = async (req, res, next) => {
 
     var RsvpSendDate = new Date(); //today
     var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
-    const expiry = Math.ceil(Math.abs(RsvpSendDate.getTime() - deadline.getTime())/1000);
+    const expiry = Math.ceil(
+      Math.abs(RsvpSendDate.getTime() - deadline.getTime()) / 1000
+    );
     const token = await rsvpToken(data.id, expiry);
     const valid = await validateToken(data.id, token);
-    if (valid)
-    {    
+    if (valid) {
       response = await sendRSVP({
         email,
         link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
@@ -242,14 +245,12 @@ exports.send = async (req, res, next) => {
         message: "success",
         response: response,
       });
-  }
-  else
-  {
-    return res.status(500).json({
-      message: "failure",
-      response: response,
-    });
-  }
+    } else {
+      return res.status(500).json({
+        message: "failure",
+        response: response,
+      });
+    }
   } catch (err) {
     return next(err);
   }

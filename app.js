@@ -12,12 +12,12 @@ const express = require("express");
 const expressSession = require("express-session");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const passport = require('passport');
-const { initPassport} = require("./services/auth.services");
-require('dotenv').config();
+const passport = require("passport");
+const { initPassport } = require("./services/auth.services");
+require("dotenv").config();
 
 // logging
-const { requestLogger} = require("./logger");
+const { requestLogger } = require("./logger");
 
 // initialize database
 const db = require("./db");
@@ -27,7 +27,7 @@ const { notFoundHandler, globalHandler } = require("./error");
 const { authenticateSMS, initAuth } = require("./services/auth.services");
 
 // session store
-const pgSession = require('connect-pg-simple')(expressSession);
+const pgSession = require("connect-pg-simple")(expressSession);
 
 /**
  * Express Security Middleware
@@ -52,62 +52,79 @@ const pgSession = require('connect-pg-simple')(expressSession);
 const baseURL = process.env.LSA_APPS_BASE_URL;
 const apiURL = process.env.LSA_APPS_API_URL;
 const apiPort = process.env.LSA_APPS_API_PORT || 3000;
-const appsURLs = [apiURL, process.env.LSA_APPS_ADMIN_URL, process.env.LSA_APPS_REGISTRATION_URL]
+const appsURLs = [
+  apiURL,
+  process.env.LSA_APPS_ADMIN_URL,
+  process.env.LSA_APPS_REGISTRATION_URL,
+];
 const nodeENV = process.env.NODE_ENV;
 
 // init API routes
 const indexRouter = require("./routes/auth.router");
 const authController = require("./controllers/auth.controller");
 const apiRouters = [
-    {path: '/users', router: require("./routes/users.router")},
-    {path: '/recipients/admin', router: require("./routes/recipients.admin.router")},
-    {path: '/recipients/self', router: require("./routes/recipients.self.router")},
-    {path: '/recipients/delegated', router: require("./routes/recipients.delegated.router")},
-    {path: '/awards', router: require("./routes/awards.router")},
-    {path: '/reports', router: require("./routes/reports.router")},
-    {path: '/attendees', router: require("./routes/attendees.router")},
-    {path: '/rsvp', router: require("./routes/rsvp.router")},
-    {path: '/accommodations', router: require("./routes/accommodations.router")},
-    {path: '/ceremonies', router: require("./routes/ceremonies.router")},
-    {path: '/mail', router: require("./routes/mail.router")},
-    {path: '/settings', router: require("./routes/settings.router")},
+  { path: "/users", router: require("./routes/users.router") },
+  {
+    path: "/recipients/admin",
+    router: require("./routes/recipients.admin.router"),
+  },
+  {
+    path: "/recipients/self",
+    router: require("./routes/recipients.self.router"),
+  },
+  {
+    path: "/recipients/delegated",
+    router: require("./routes/recipients.delegated.router"),
+  },
+  { path: "/awards", router: require("./routes/awards.router") },
+  { path: "/reports", router: require("./routes/reports.router") },
+  { path: "/attendees", router: require("./routes/attendees.router") },
+  { path: "/rsvp", router: require("./routes/rsvp.router") },
+  {
+    path: "/accommodations",
+    router: require("./routes/accommodations.router"),
+  },
+  { path: "/ceremonies", router: require("./routes/ceremonies.router") },
+  { path: "/mail", router: require("./routes/mail.router") },
+  { path: "/settings", router: require("./routes/settings.router") },
 ];
 
 // configure CORS allowed hostnames
-const allowedOrigins = process.env.NODE_ENV === "development" ? appsURLs : [baseURL];
+const allowedOrigins =
+  process.env.NODE_ENV === "development" ? appsURLs : [baseURL];
 
 const corsConfig = {
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg =
-                "The CORS policy for this site does not allow access from the specified origin: \n" +
-                origin;
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
-    methods: ["GET", "POST"],
-    credentials: true,
-    optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg =
+        "The CORS policy for this site does not allow access from the specified origin: \n" +
+        origin;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  methods: ["GET", "POST"],
+  credentials: true,
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
 // user session configuration
 const session = {
-    store: new pgSession({
-        pool : db.pool,
-        createTableIfMissing: true,
-        tableName : 'user_sessions'
-        // Insert connect-pg-simple options here
-    }),
-    secret: process.env.COOKIE_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 24 * 60 * 60 * 1000,
-        secure: nodeENV === 'production',
-    }
-    // Insert express-session options here
+  store: new pgSession({
+    pool: db.pool,
+    createTableIfMissing: true,
+    tableName: "user_sessions",
+    // Insert connect-pg-simple options here
+  }),
+  secret: process.env.COOKIE_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000,
+    secure: nodeENV === "production",
+  },
+  // Insert express-session options here
 };
 
 /**
@@ -124,7 +141,7 @@ app.use(express.urlencoded({ extended: true }));
 // 'trust proxy' = true, the client’s IP address is understood as the
 // left-most entry in the X-Forwarded-For header.
 // ref: https://expressjs.com/en/guide/behind-proxies.html
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 app.use(expressSession(session));
 
 // init CORS config
@@ -137,14 +154,15 @@ app.use(requestLogger);
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 // init Passport
-app.use(passport.initialize())
+app.use(passport.initialize());
 app.use(passport.session());
 
 // log into admin dashboard
 // - initialize passport serializer/deserializer
-app.post('/login',
-    initPassport(passport).authenticate('local', {}, null),
-    authController.login
+app.post(
+  "/login",
+  initPassport(passport).authenticate("local", {}, null),
+  authController.login
 );
 
 // authenticate SMS session
@@ -154,11 +172,11 @@ app.use(authenticateSMS);
 initAuth().catch(console.error);
 
 // init user routes (authentication not required)
-app.use('/', indexRouter);
+app.use("/", indexRouter);
 
 // init secure routes
-apiRouters.forEach(apiRouter => {
-    indexRouter.use(apiRouter.path, apiRouter.router);
+apiRouters.forEach((apiRouter) => {
+  indexRouter.use(apiRouter.path, apiRouter.router);
 });
 
 // handle generic errors
@@ -169,18 +187,18 @@ app.use(notFoundHandler);
 
 // Run API server
 app.listen(apiPort, async () => {
-    console.log(`============================================`);
-    console.log(`API running on port ${apiPort}`);
-    console.log(`\t- Node environment: ${nodeENV}`);
-    console.log(`\t- Available on a web browser at: ${apiURL}`);
-    console.log(`\t- Allowed origins:`, allowedOrigins.join(', '));
-    console.log('Mail Settings')
-    console.log(`\t- Server: ${process.env.MAIL_SERVER}`);
-    console.log(`\t- Port: ${process.env.MAIL_PORT}`);
-    console.log(`\t- From Email Address: ${process.env.MAIL_FROM_ADDRESS}`);
-    console.log(`\t- From Name: ${process.env.MAIL_FROM_NAME}`);
-    await db.test(); // check db init
-    console.log(`============================================`);
+  console.log(`============================================`);
+  console.log(`API running on port ${apiPort}`);
+  console.log(`\t- Node environment: ${nodeENV}`);
+  console.log(`\t- Available on a web browser at: ${apiURL}`);
+  console.log(`\t- Allowed origins:`, allowedOrigins.join(", "));
+  console.log("Mail Settings");
+  console.log(`\t- Server: ${process.env.MAIL_SERVER}`);
+  console.log(`\t- Port: ${process.env.MAIL_PORT}`);
+  console.log(`\t- From Email Address: ${process.env.MAIL_FROM_ADDRESS}`);
+  console.log(`\t- From Name: ${process.env.MAIL_FROM_NAME}`);
+  await db.test(); // check db init
+  console.log(`============================================`);
 });
 
 // expose API

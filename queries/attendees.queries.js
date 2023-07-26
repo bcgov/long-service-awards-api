@@ -37,10 +37,21 @@ const attendeesQueries = {
 
     // (optional) order by attribute
     //const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : "";
-    const orderClause =
-      order && orderby ? `ORDER BY attendees.id ${order}` : "";
+    // const orderClause =
+    //   order && orderby ? `ORDER BY attendees.id ${order}` : "";
+    let orderClause = "";
+    if (order && orderby) {
+      const table =
+        orderby === "first_name" || orderby === "last_name"
+          ? "contacts"
+          : "ceremonies";
+      orderClause = `ORDER BY ${table}.${orderby} ${order}`;
+    }
+
+    console.log(orderClause);
+
     const limitClause = limit ? `LIMIT ${limit}` : "";
-    
+
     const filterStatement = getFilters(filter);
 
     // get query results
@@ -110,7 +121,6 @@ const attendeesQueries = {
                   LEFT JOIN recipients ON recipients.id = attendees.recipient
                   LEFT JOIN contacts ON contacts.id = recipients.contact
                   ${filterStatement};`,
-      
     };
   },
   insert: (data) => {
@@ -320,38 +330,36 @@ exports.queries = attendeesQueries;
 const getFilters = (filter) => {
   let filters = [];
   if (filter.hasOwnProperty("first_name") && filter.first_name)
-      filters.push(
-        `contacts.first_name ILIKE '%${filter.first_name}%'`
-      );
-    if (filter.hasOwnProperty("last_name") && filter.last_name)
-      filters.push(`contacts.last_name ILIKE '%${filter.last_name}%'`);
-    if (filter.hasOwnProperty("ceremony") && filter.ceremony)
-      filters.push(`attendees.ceremony = '${filter.ceremony}'`);
-    if (filter.hasOwnProperty("guest") && filter.guest)
-      filters.push(`attendees.guest = '${filter.guest}'`);
-    if (filter.hasOwnProperty("status") && filter.status) {
-      //Multi-select field - create their own OR clause
-      const statuses = filter.status.split(",");
-      const statusFilters = [];
-      statuses.forEach((element) => {
-        statusFilters.push(`attendees.status = '${element}'`);
-      });
-      const statusClause =
-        statusFilters.length > 0 ? `(${statusFilters.join(" OR ")})` : "";
-      filters.push(statusClause);
-    }
-    if (filter.hasOwnProperty("organization") && filter.organization) {
-      //Multi-select field - create their own OR clause
-      const orgs = filter.organization.split(",");
-      const orgFilters = [];
-      orgs.forEach((element) => {
-        orgFilters.push(`recipients.organization = '${element}'`);
-      });
-      const organizationClause =
-        orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";
-      filters.push(organizationClause);
-    }
-    return filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
+    filters.push(`contacts.first_name ILIKE '%${filter.first_name}%'`);
+  if (filter.hasOwnProperty("last_name") && filter.last_name)
+    filters.push(`contacts.last_name ILIKE '%${filter.last_name}%'`);
+  if (filter.hasOwnProperty("ceremony") && filter.ceremony)
+    filters.push(`attendees.ceremony = '${filter.ceremony}'`);
+  if (filter.hasOwnProperty("guest") && filter.guest)
+    filters.push(`attendees.guest = '${filter.guest}'`);
+  if (filter.hasOwnProperty("status") && filter.status) {
+    //Multi-select field - create their own OR clause
+    const statuses = filter.status.split(",");
+    const statusFilters = [];
+    statuses.forEach((element) => {
+      statusFilters.push(`attendees.status = '${element}'`);
+    });
+    const statusClause =
+      statusFilters.length > 0 ? `(${statusFilters.join(" OR ")})` : "";
+    filters.push(statusClause);
+  }
+  if (filter.hasOwnProperty("organization") && filter.organization) {
+    //Multi-select field - create their own OR clause
+    const orgs = filter.organization.split(",");
+    const orgFilters = [];
+    orgs.forEach((element) => {
+      orgFilters.push(`recipients.organization = '${element}'`);
+    });
+    const organizationClause =
+      orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";
+    filters.push(organizationClause);
+  }
+  return filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
 };
 
 exports.findAll = async (filter, schema) => {
