@@ -29,7 +29,7 @@ const attendeesQueries = {
   findAll: (filter, schema) => {
     // destructure filter
     const {
-      orderby = null,
+      orderby = "id",
       order = "ASC",
       offset = 0,
       limit = null,
