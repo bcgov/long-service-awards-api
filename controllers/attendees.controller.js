@@ -6,6 +6,7 @@
  */
 
 const Attendees = require("../models/attendees.model.js");
+const AccommodationSelections = require("../models/accommodation-selection.model.js");
 const uuid = require("uuid");
 const { sendRSVP } = require("../services/mail.services");
 const { rsvpToken, validateToken } = require("../services/cache.services");
@@ -157,6 +158,25 @@ exports.update = async (req, res, next) => {
 
     // handle exception
     if (!attendee) return next(Error("noRecord"));
+
+    // recreate accommodations to have only attendee, accommodation fields to match the model
+    let accommodationsArr = [];
+    if (data.accommodation_selections[0]) {
+      Object.keys(data.accommodation_selections[0]).forEach(async (key) => {
+        if (data.accommodation_selections[0][key] === true) {
+          accommodationsArr.push(
+            JSON.parse(
+              '{"accommodation": "' + key + '", "attendee": "' + data.id + '"}'
+            )
+          );
+        }
+      });
+
+      data.accommodations = accommodationsArr;
+    }
+
+    // Clear accommodations before saving - otherwise saving is only additive (won't remove unchecked)
+    await AccommodationSelections.remove(attendee.id);
     await attendee.save(data);
 
     res.status(200).json({
