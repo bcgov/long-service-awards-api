@@ -234,6 +234,7 @@ const recipientQueries = {
                                      'office_phone', cp.office_phone,
                                      'personal_email', cp.personal_email,
                                      'personal_phone', cp.personal_phone,
+                                     'alternate_is_preferred', cp.alternate_is_preferred,
                                      'personal_address', json_build_object(
                                              'id', cpa.id,
                                              'pobox', cpa.pobox,
@@ -577,6 +578,7 @@ const recipientQueries = {
                              cp.office_phone,
                              cp.personal_email,
                              cp.personal_phone,
+                             cp.alternate_is_preferred,
                              cpa.street1 AS personal_address_street_1,
                              cpa.street2 AS personal_address_street_2,
                              cpa.community AS personal_address_community,

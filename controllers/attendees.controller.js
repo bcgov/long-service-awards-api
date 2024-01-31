@@ -65,6 +65,7 @@ exports.get = async (req, res, next) => {
   try {
     const { id } = req.params || {};
     const results = await Attendees.findById(id);
+
     res.status(200).json(results.data);
   } catch (err) {
     return next(err);
@@ -214,7 +215,13 @@ exports.send = async (req, res, next) => {
     // });
     const data = req.body || {};
     const recipient = data.recipient;
-    let email = recipient.contact.office_email;
+    // let email = recipient.contact.office_email;
+
+    let email =
+      recipient.contact.alternate_is_preferred === true
+        ? recipient.contact.personal_email
+        : recipient.contact.office_email;
+
     let response = null;
 
     // Create 48 hour grace period

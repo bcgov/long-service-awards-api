@@ -99,12 +99,12 @@ exports.update = async (req, res, next) => {
       guestData.accommodations = guestAccommodationsArr;
       await guest_attendee.save(guestData);
     }
-    
+
     let email = recipient_attendee.data.recipient.contact.office_email;
     // Create 48 hour grace period
     const todayPlusGracePeriod = new Date();
     todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
-    
+
     if (recipient_attendee.data.recipient.retirement_date != null) {
       let retirement_date = recipient_attendee.data.recipient.retirement_date;
       if (retirement_date < todayPlusGracePeriod)

@@ -96,7 +96,7 @@ const attendeesQueries = {
             json_build_object(
               'id', r.id, 'employee_number', r.employee_number, 'division', r.division, 'branch', r.branch, 'contact',
               json_build_object(
-                'first_name', cont.first_name, 'last_name', cont.last_name, 'office_email', cont.office_email, 'personal_email', cont.personal_email
+                'first_name', cont.first_name, 'last_name', cont.last_name, 'office_email', cont.office_email, 'personal_email', cont.personal_email, 'alternate_is_preferred', cont.alternate_is_preferred
               ), 'organization', json_build_object(
                 'name', org.name, 'abbreviation', org.abbreviation)
             ) AS "recipient"

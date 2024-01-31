@@ -20,19 +20,21 @@ const uuid = require("uuid");
 
 exports.getAll = async (req, res, next) => {
   try {
-
     // apply query filter to results
     const recipients = await Recipient.findAll(req.query, res.locals.user);
-    const {total_filtered_records} = await Recipient.count(req.query, res.locals.user);
+    const { total_filtered_records } = await Recipient.count(
+      req.query,
+      res.locals.user
+    );
 
     // send response
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Recipient Record(s) Found',
-        detail: 'Recipient records found.'
+        severity: "success",
+        summary: "Recipient Record(s) Found",
+        detail: "Recipient records found.",
       },
-      result: {recipients, total_filtered_records}
+      result: { recipients, total_filtered_records },
     });
   } catch (err) {
     return next(err);
@@ -51,13 +53,14 @@ exports.getAll = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-
     // check that recipient exists
-    const {id} = req.params || {};
+    const { id } = req.params || {};
     const recipient = await Recipient.findById(id, res.locals.user);
 
+    console.log(recipient.data);
+
     // handle exception
-    if (!recipient) return next(Error('noRecord'));
+    if (!recipient) return next(Error("noRecord"));
 
     res.status(200).json({
       message: {},
@@ -80,8 +83,7 @@ exports.get = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-
-    let { id=null } = res.locals.user || {};
+    let { id = null } = res.locals.user || {};
 
     // register recipient (creates stub record)
     // - create placeholder GUID for delegated registrations
@@ -89,18 +91,18 @@ exports.create = async (req, res, next) => {
     await Recipient.register({
       user: id,
       guid: guid,
-      status: 'delegated'
+      status: "delegated",
     });
     const recipient = await Recipient.findByGUID(guid);
 
     // handle exception
-    if (!recipient) return next(Error('createError'));
+    if (!recipient) return next(Error("createError"));
 
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Add Recipient',
-        detail: 'New recipient record created.'
+        severity: "success",
+        summary: "Add Recipient",
+        detail: "New recipient record created.",
       },
       result: recipient.data,
     });
@@ -120,22 +122,21 @@ exports.create = async (req, res, next) => {
 
 exports.save = async (req, res, next) => {
   try {
-
     // check that recipient exists
-    const {id} = req.params || {};
+    const { id } = req.params || {};
     const recipient = await Recipient.findById(id, res.locals.user);
 
     // handle exception
-    if (!recipient) return next(Error('noRecord'));
+    if (!recipient) return next(Error("noRecord"));
 
     // update record
     await recipient.save(req.body);
 
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Recipient Saved Successfully!',
-        detail: 'Recipient record saved.'
+        severity: "success",
+        summary: "Recipient Saved Successfully!",
+        detail: "Recipient record saved.",
       },
       result: recipient.data,
     });
@@ -157,7 +158,7 @@ exports.stats = async (req, res, next) => {
   try {
     res.status(200).json({
       message: {},
-      result: await Recipient.stats()
+      result: await Recipient.stats(),
     });
   } catch (err) {
     return next(err);
