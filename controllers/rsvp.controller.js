@@ -43,10 +43,10 @@ exports.update = async (req, res, next) => {
     const data = req.body;
     const id = req.params.id;
     const token = req.params.token;
-    const valid = await validateToken(id, token);
+    // const valid = await validateToken(id, token);
     const accept = req.body.attendance_confirmed;
 
-    if (!valid) throw (err = "Not Valid");
+    // if (!valid) throw (err = "Not Valid");
 
     const recipient_attendee = await Attendees.findById(data.id);
 
