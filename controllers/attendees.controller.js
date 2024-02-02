@@ -6,6 +6,7 @@
  */
 
 const Attendees = require("../models/attendees.model.js");
+const AccommodationSelections = require("../models/accommodation-selection.model.js");
 const uuid = require("uuid");
 const { sendRSVP } = require("../services/mail.services");
 const { rsvpToken, validateToken } = require("../services/cache.services");
@@ -156,6 +157,25 @@ exports.update = async (req, res, next) => {
 
     // handle exception
     if (!attendee) return next(Error("noRecord"));
+
+    // recreate accommodations to have only attendee, accommodation fields to match the model
+    let accommodationsArr = [];
+    if (data.accommodation_selections[0]) {
+      Object.keys(data.accommodation_selections[0]).forEach(async (key) => {
+        if (data.accommodation_selections[0][key] === true) {
+          accommodationsArr.push(
+            JSON.parse(
+              '{"accommodation": "' + key + '", "attendee": "' + data.id + '"}'
+            )
+          );
+        }
+      });
+
+      data.accommodations = accommodationsArr;
+    }
+
+    // Clear accommodations before saving - otherwise saving is only additive (won't remove unchecked)
+    await AccommodationSelections.remove(attendee.id);
     await attendee.save(data);
 
     res.status(200).json({
@@ -166,7 +186,53 @@ exports.update = async (req, res, next) => {
     return next(err);
   }
 };
+exports.addGuest = async (req, res, next) => {
+  try {
+    const data = req.body;
 
+    const recipient_attendee = await Attendees.findById(data.id);
+
+    // handle exception
+    if (!recipient_attendee) return next(Error("noRecord"));
+
+    const total_attendees = await Attendees.findByRecipient(data.recipient);
+    if (total_attendees > 2) return next(Error("guestExists"));
+
+    let guestID = undefined;
+    // When form has guest data, create guest, and get ID for attaching accommodations to guestID
+    if (data.guest_count > 0) {
+      guestID = (await Attendees.saveGuest(data)).id;
+    } else {
+      if (data.guest_accommodations && guestID) {
+        let guestAccommodationsArr = [];
+        Object.keys(data.guest_accommodations).forEach(async (key) => {
+          if (data.guest_accommodations[key] === true) {
+            guestAccommodationsArr.push(
+              JSON.parse(
+                '{"accommodation": "' +
+                  key +
+                  '", "attendee": "' +
+                  guestID +
+                  '"}'
+              )
+            );
+          }
+        });
+
+        const guest_attendee = await Attendees.findById(guestID);
+        let guestData = guest_attendee.data;
+        guestData.accommodations = guestAccommodationsArr;
+        await guest_attendee.save(guestData);
+      }
+    }
+    res.status(200).json({
+      message: {},
+      result: recipient_attendee.data,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
 /**
  * Remove record.
  *

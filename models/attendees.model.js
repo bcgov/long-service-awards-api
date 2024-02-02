@@ -140,6 +140,9 @@ module.exports = {
   findById: async (id) => {
     return construct(await db.defaults.findById(id, schema));
   },
+  findByRecipient: async (recipient) => {
+    return await db.defaults.findByField("recipient", recipient, schema);
+  },
   findByCeremony: async (ceremony_id) => {
     await db.defaults.findByField("ceremony", ceremony_id, schema);
   },
