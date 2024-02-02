@@ -64,7 +64,7 @@ const attendeesQueries = {
               OFFSET ${offset}
         )
         ---------------------------------
-        SELECT attendees.id,recipient.first_name,recipient.last_name,attendees.guest,attendees.status,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations
+        SELECT attendees.id,recipient.first_name,recipient.last_name,attendees.guest,attendees.status,attendees.ceremony_noshow,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations
         FROM attendees_query as attendees
         
         LEFT JOIN (
@@ -144,6 +144,7 @@ const attendeesQueries = {
       recipient = null,
       ceremony = null,
       guest = 0,
+      ceremony_noshow = false,
       status = null,
     } = data || {};
 
@@ -154,12 +155,12 @@ const attendeesQueries = {
             WHERE attendees.recipient = $2::uuid
             RETURNING *
             )
-            INSERT INTO attendees (id, recipient, ceremony, guest, status) 
+            INSERT INTO attendees (id, recipient, ceremony, guest, ceremony_noshow, status) 
             SELECT $1::uuid,$2::uuid,$3::uuid,$4::integer,$5::varchar
             WHERE NOT EXISTS (SELECT * FROM upsert)
             ON CONFLICT DO NOTHING
             RETURNING *;`,
-      data: [id, recipient, ceremony, guest, status],
+      data: [id, recipient, ceremony, guest, ceremony_noshow, status],
     };
   },
   update: (data, schema) => {
@@ -351,6 +352,8 @@ const getFilters = (filter) => {
     filters.push(`attendees.ceremony = '${filter.ceremony}'`);
   if (filter.hasOwnProperty("guest") && filter.guest)
     filters.push(`attendees.guest = '${filter.guest}'`);
+  if (filter.hasOwnProperty("ceremony_noshow") && filter.ceremony_noshow)
+    filters.push(`attendees.ceremony_noshow = '${filter.ceremony_noshow}'`);
   if (filter.hasOwnProperty("status") && filter.status) {
     //Multi-select field - create their own OR clause
     const statuses = filter.status.split(",");
@@ -428,9 +431,19 @@ exports.removeGuests = async (recipientID) => {
   return await transactionOne([attendeesQueries.removeGuests(recipientID)]);
 };
 
-exports.insertGuest = async (recipientID, ceremony, status) => {
+exports.insertGuest = async (
+  recipientID,
+  ceremony,
+  status,
+  ceremony_noshow
+) => {
   return await transactionOne([
-    attendeesQueries.insertGuest(recipientID, ceremony, status),
+    attendeesQueries.insertGuest(
+      recipientID,
+      ceremony,
+      status,
+      ceremony_noshow
+    ),
   ]);
 };
 

@@ -144,13 +144,6 @@ exports.create = async (req, res, next) => {
  */
 
 exports.update = async (req, res, next) => {
-  // try {
-  //   const data = req.body;
-  //   const results = await Attendees.update(data);
-  //   res.status(200).json(results);
-  // } catch (err) {
-  //   return next(err);
-  // }
   try {
     const data = req.body;
     const attendee = await Attendees.findById(data.id);

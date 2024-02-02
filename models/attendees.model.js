@@ -36,6 +36,10 @@ const schema = {
     status: {
       dataType: "varchar",
     },
+    ceremony_noshow: {
+      dataType: "boolean",
+    },
+
     created_at: {
       dataType: "timestamp",
     },
@@ -187,6 +191,7 @@ module.exports = {
       await db.attendees.insertGuest(
         data.recipient.id,
         data.ceremony.id,
+        data.ceremony_noshow,
         data.status
       )
     );
