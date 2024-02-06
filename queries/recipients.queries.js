@@ -201,7 +201,7 @@ const recipientQueries = {
                 SELECT recipients.*, contacts.first_name as first_name, contacts.last_name as last_name FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
-                           LEFT JOIN organizations ON organizations.id = recipients.attending_with_organization
+                           LEFT JOIN organizations AS attending_organization ON attending_organization.id = recipients.attending_with_organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements}
                   GROUP BY recipients.id, contacts.first_name, contacts.last_name
@@ -391,7 +391,7 @@ const recipientQueries = {
                   FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
-                           LEFT JOIN organizations ON organizations.id = recipients.attending_with_organization
+                           LEFT JOIN organizations AS attending_organization ON organizations.id = recipients.attending_with_organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements};`,
       data: filterValues,
@@ -557,7 +557,7 @@ const recipientQueries = {
                 SELECT r.* FROM recipients as r
                         LEFT JOIN contacts ON contacts.id = r.contact
                         LEFT JOIN organizations ON organizations.id = r.organization
-                        LEFT JOIN organizations ON organizations.id = r.attending_with_organization
+                        LEFT JOIN organizations AS attending_organization ON organizations.id = r.attending_with_organization
                         LEFT JOIN service_selections ON service_selections.recipient = r.id
                     ${filterStatements && " WHERE " + filterStatements}
                 GROUP BY r.id
