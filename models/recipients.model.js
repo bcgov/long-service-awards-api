@@ -70,6 +70,11 @@ const schema = {
       dataType: "varchar",
       required: true,
     },
+    attending_with_organization: {
+      dataType: "integer",
+      model: Organization,
+      required: false,
+    },
     retirement: {
       dataType: "boolean",
     },

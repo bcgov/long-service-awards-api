@@ -48,6 +48,10 @@ const getFilters = (data) => {
       `(organizations.id IN (${(range || [])
         .map(() => `$${index++}::integer`)
         .join(",")}))`,
+    attending_with_organization: (range) =>
+      `(organizations.id IN (${(range || [])
+        .map(() => `$${index++}::integer`)
+        .join(",")}))`,
     milestones: (range) =>
       `(service_selections.milestone IN (${(range || [])
         .map(() => `$${index++}::integer`)
@@ -197,6 +201,7 @@ const recipientQueries = {
                 SELECT recipients.*, contacts.first_name as first_name, contacts.last_name as last_name FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
+                           LEFT JOIN organizations ON organizations.id = recipients.attending_with_organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements}
                   GROUP BY recipients.id, contacts.first_name, contacts.last_name
@@ -386,6 +391,7 @@ const recipientQueries = {
                   FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
+                           LEFT JOIN organizations ON organizations.id = recipients.attending_with_organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements};`,
       data: filterValues,
@@ -429,12 +435,13 @@ const recipientQueries = {
       employee_number = null,
       status = null,
       organization = null,
+      attending_with_organization = null,
       contact = null,
       supervisor = null,
     } = data || {};
     return {
       sql: `INSERT INTO recipients (
-                id, guid, idir, "user", employee_number, status, organization, contact, supervisor
+                id, guid, idir, "user", employee_number, status, organization, contact, supervisor, attending_with_organization
             )
                   VALUES (
                              $1::uuid,
@@ -445,7 +452,8 @@ const recipientQueries = {
                              $6::varchar,
                              $7::integer,
                              $8::uuid,
-                             $9::uuid
+                             $9::uuid,
+                             $10::integer,
                          )
                   ON CONFLICT DO NOTHING
                   RETURNING *;`,
@@ -459,6 +467,7 @@ const recipientQueries = {
         organization,
         contact,
         supervisor,
+        attending_with_organization,
       ],
     };
   },
@@ -548,6 +557,7 @@ const recipientQueries = {
                 SELECT r.* FROM recipients as r
                         LEFT JOIN contacts ON contacts.id = r.contact
                         LEFT JOIN organizations ON organizations.id = r.organization
+                        LEFT JOIN organizations ON organizations.id = r.attending_with_organization
                         LEFT JOIN service_selections ON service_selections.recipient = r.id
                     ${filterStatements && " WHERE " + filterStatements}
                 GROUP BY r.id
