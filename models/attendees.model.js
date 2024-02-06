@@ -145,7 +145,7 @@ module.exports = {
     return construct(await db.defaults.findById(id, schema));
   },
   findByRecipient: async (recipient) => {
-    return await db.defaults.findByField("recipient", recipient, schema);
+    return await db.attendees.findByRecipient(recipient);
   },
   findByCeremony: async (ceremony_id) => {
     await db.defaults.findByField("ceremony", ceremony_id, schema);
@@ -191,8 +191,8 @@ module.exports = {
       await db.attendees.insertGuest(
         data.recipient.id,
         data.ceremony.id,
-        data.ceremony_noshow,
-        data.status
+        data.status,
+        data.ceremony_noshow
       )
     );
   },

@@ -239,6 +239,13 @@ const attendeesQueries = {
       data: [attendeeID],
     };
   },
+  findByRecipient: (recipientID) => {
+    return {
+      sql: `SELECT * FROM attendees
+      WHERE attendees.recipient = $1::uuid;`,
+      data: [recipientID],
+    };
+  },
   updateCeremony: (attendeeID, ceremonyID) => {
     return {
       sql: `UPDATE attendees
@@ -420,6 +427,11 @@ exports.findCeremonyByAttendee = async (id, type, schema) => {
 
 exports.findAccommodationsByAttendee = async (id, schema) => {
   const result = await query(attendeesQueries.findAccommodationsByAttendee(id));
+  return await result;
+};
+
+exports.findByRecipient = async (id) => {
+  const result = await query(attendeesQueries.findByRecipient(id));
   return await result;
 };
 
