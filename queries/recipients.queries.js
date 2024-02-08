@@ -195,13 +195,12 @@ const recipientQueries = {
       .filter((field) => !ignore.includes(field))
       .map((field) => "r." + field)
       .join(", ");
-
     return {
       sql: `WITH rcps AS (
                 SELECT recipients.*, contacts.first_name as first_name, contacts.last_name as last_name FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
-                           LEFT JOIN organizations AS attending_organization ON attending_organization.id = recipients.attending_with_organization
+                           LEFT JOIN organizations AS "attending_organization" ON "attending_organization".id = recipients.attending_with_organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements}
                   GROUP BY recipients.id, contacts.first_name, contacts.last_name
@@ -211,6 +210,7 @@ const recipientQueries = {
             SELECT
                 ${selections},
                       "org".*,
+                      "attending_org".*,
                       "pcon".*,
                       "scon".*,
                       "srvs".*
@@ -228,6 +228,17 @@ const recipientQueries = {
                       FROM "organizations" AS "o"
                       GROUP BY organization_id
                   ) AS "org" ON organization_id = "r"."organization"
+                      -- Attending organization details
+                  LEFT JOIN (
+                    SELECT ao.id as attending_organization_id,
+                    json_build_object('id', ao.id,
+                                     'name', ao.name,
+                                     'abbreviation', ao.abbreviation,
+                                     'previous_service_pins', ao.previous_service_pins,
+                                     'active', ao.active) AS attending_organization
+                    FROM "organizations" AS "ao"
+                    GROUP BY attending_organization_id
+                    ) AS "attending_org" ON attending_organization_id = "r"."attending_with_organization"
                       -- Personal contact details
                            LEFT JOIN (
                       SELECT cp.id as contact_id,
@@ -453,7 +464,7 @@ const recipientQueries = {
                              $7::integer,
                              $8::uuid,
                              $9::uuid,
-                             $10::integer,
+                             $10::integer
                          )
                   ON CONFLICT DO NOTHING
                   RETURNING *;`,
@@ -579,6 +590,14 @@ const recipientQueries = {
                       FROM "organizations" AS "o"
                       GROUP BY organization_id, o.name, o.abbreviation
                   ) AS "org" ON organization_id = "r"."organization"
+                  -- Attending Organization details
+                  LEFT JOIN (
+                    SELECT ao.id as attending_organization_id,
+                    ao.name,
+                    ao.abbreviation
+                    FROM "organizations" AS "ao"
+                    GROUP BY organization_id, ao.name, ao,abbreviation) AS "attending_org" ON attending_organization_id = "r"."attending_with_organization"
+                  )
                       -- Personal contact details
                            LEFT JOIN (
                       SELECT cp.id as contact_id,
