@@ -230,12 +230,10 @@ const recipientQueries = {
                   ) AS "org" ON organization_id = "r"."organization"
                       -- Attending organization details
                   LEFT JOIN (
-                    SELECT ao.id as attending_organization_id,
                     json_build_object('id', ao.id,
                                      'name', ao.name,
-                                     'abbreviation', ao.abbreviation,
-                                     'previous_service_pins', ao.previous_service_pins,
-                                     'active', ao.active) AS attending_organization
+                                     'abbreviation', ao.abbreviation
+                                     ) AS attending_organization
                     FROM "organizations" AS "ao"
                     GROUP BY attending_organization_id
                     ) AS "attending_org" ON attending_organization_id = "r"."attending_with_organization"
