@@ -575,6 +575,8 @@ const recipientQueries = {
                       ${selections},
                       "org".name AS organization_name,
                       "org".abbreviation AS organization_abbreviation,
+                      "attending_org".name AS attending_organization_name,
+                      "attending_org".abbreviation AS attending_organization_abbreviation,
                       "pcon".*,
                       "scon".*,
                       "retrosrvs".retroactive_milestones,
@@ -594,8 +596,7 @@ const recipientQueries = {
                     ao.name,
                     ao.abbreviation
                     FROM "organizations" AS "ao"
-                    GROUP BY organization_id, ao.name, ao,abbreviation) AS "attending_org" ON attending_organization_id = "r"."attending_with_organization"
-                  )
+                    GROUP BY attending_organization_id, ao.name, ao,abbreviation) AS "attending_org" ON attending_organization_id = "r"."attending_with_organization"
                       -- Personal contact details
                            LEFT JOIN (
                       SELECT cp.id as contact_id,
