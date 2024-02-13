@@ -98,11 +98,13 @@ const attendeesQueries = {
               json_build_object(
                 'first_name', cont.first_name, 'last_name', cont.last_name, 'office_email', cont.office_email, 'personal_email', cont.personal_email, 'alternate_is_preferred', cont.alternate_is_preferred
               ), 'organization', json_build_object(
-                'name', org.name, 'abbreviation', org.abbreviation)
+                'name', org.name, 'abbreviation', org.abbreviation), 'attending_organization', json_build_object(
+                'name', attending_org.name, 'abbreviation', attending_org.abbreviation)
             ) AS "recipient"
           FROM recipients AS "r" 
           LEFT JOIN contacts AS "cont" ON cont.id = r."contact"
           LEFT JOIN organizations AS "org" ON org.id = r."organization"
+          LEFT JOIN organizations AS "attending_org" ON attending_org.id = r."attending_with_organization"
         ) AS "recipient" ON recipient.recipient_id = attendees.recipient
                       
         LEFT JOIN (
