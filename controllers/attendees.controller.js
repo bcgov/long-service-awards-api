@@ -6,6 +6,7 @@
  */
 
 const Attendees = require("../models/attendees.model.js");
+const Settings = require("../models/settings.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
 const uuid = require("uuid");
 const { sendRSVP } = require("../services/mail.services");
@@ -290,9 +291,15 @@ exports.send = async (req, res, next) => {
     }
 
     var RsvpSendDate = new Date(); //today
-    var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
+    // var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
+
+    // const deadline = await Settings.findById("rsvp-deadline"); - WHY THIS DOESN'T WORK?
+
+    const settings = await Settings.findAll();
+    const deadline = settings.find((s) => s.name === "rsvp-deadline").value;
+
     const expiry = Math.ceil(
-      Math.abs(RsvpSendDate.getTime() - deadline.getTime()) / 1000
+      Math.abs(RsvpSendDate.getTime() - new Date(deadline).getTime()) / 1000
     );
     const token = await rsvpToken(data.id, expiry);
     const valid = await validateToken(data.id, token);

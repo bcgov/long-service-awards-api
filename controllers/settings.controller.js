@@ -17,7 +17,6 @@
 
 exports.getAll = async (req, res, next) => {
   try {
-
     // apply query filter to results
     const items = await res.locals.model.findAll(req.query);
 
@@ -43,7 +42,6 @@ exports.getAll = async (req, res, next) => {
 
 exports.getAllByUser = async (req, res, next) => {
   try {
-
     // apply query filter to results
     const items = await res.locals.model.findAll(req.query, res.locals.user);
 
@@ -57,7 +55,6 @@ exports.getAllByUser = async (req, res, next) => {
   }
 };
 
-
 /**
  * Retrieve record by ID.
  *
@@ -70,13 +67,13 @@ exports.getAllByUser = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-
     // retrieve item by ID
-    const {id} = req.params || {};
+    const { id } = req.params || {};
+    console.log(id);
     const item = await res.locals.model.findById(id);
 
     // handle exception
-    if (!item) return next(Error('noRecord'));
+    if (!item) return next(Error("noRecord"));
 
     // send response
     res.status(200).json({
@@ -100,7 +97,7 @@ exports.get = async (req, res, next) => {
 
 exports.filter = async (req, res, next) => {
   try {
-    const {field, value} = req.params || {};
+    const { field, value } = req.params || {};
     const results = await res.locals.model.findByField(field, value || null);
     res.status(200).json({
       message: null,
@@ -123,19 +120,18 @@ exports.filter = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-
     // create new item
     const item = await res.locals.model.create(req.body);
 
     // handle exception
-    if (!item) return next(Error('dbError'));
+    if (!item) return next(Error("dbError"));
 
     // send response
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Record Created Successfully!',
-        detail: 'New record was created.'
+        severity: "success",
+        summary: "Record Created Successfully!",
+        detail: "New record was created.",
       },
       result: item.data,
     });
@@ -155,18 +151,17 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-
     const item = await res.locals.model.update(req.body);
 
     // handle exception
-    if (!item) return next(Error('noRecord'));
+    if (!item) return next(Error("noRecord"));
 
     // send response
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Update Successful!',
-        detail: 'Record was updated.'
+        severity: "success",
+        summary: "Update Successful!",
+        detail: "Record was updated.",
       },
       result: item.data,
     });
@@ -192,9 +187,9 @@ exports.remove = async (req, res, next) => {
     // send response
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Delete Successful!',
-        detail: 'Record was deleted.'
+        severity: "success",
+        summary: "Delete Successful!",
+        detail: "Record was deleted.",
       },
       result: result,
     });
@@ -218,9 +213,9 @@ exports.removeAll = async (req, res, next) => {
     // send response
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Delete All Successful!',
-        detail: 'All records were deleted.'
+        severity: "success",
+        summary: "Delete All Successful!",
+        detail: "All records were deleted.",
       },
       result: result,
     });
