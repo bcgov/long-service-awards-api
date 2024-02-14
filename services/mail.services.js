@@ -13,6 +13,7 @@ const path = require("path");
 const Transaction = require("../models/transactions.model");
 const { decodeError } = require("../error");
 const { format } = require("date-fns");
+const exp = require("constants");
 
 // template directory
 const dirPath = "/resources/email_templates/";
@@ -204,7 +205,7 @@ module.exports.sendResetPassword = async (data) => {
 };
 
 module.exports.sendRSVP = async (data) => {
-  const { email, link, attendee } = data || {};
+  const { email, link, attendee, deadline } = data || {};
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 14);
   // send confirmation mail to supervisor
@@ -212,7 +213,16 @@ module.exports.sendRSVP = async (data) => {
     [email],
     "Your Long Service Awards Invitation",
     "email-recipient-ceremony-invitation.ejs",
-    { link: link, attendee: attendee, expiry: expiry },
+    {
+      link: link,
+      attendee: attendee,
+      expiry: expiry,
+      deadline: new Date(deadline).toLocaleDateString("en-us", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+    },
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],

@@ -308,8 +308,8 @@ exports.send = async (req, res, next) => {
         email,
         link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
         attendee: data,
+        deadline: deadline,
       });
-
       return res.status(200).json({
         message: "success",
         response: response,
