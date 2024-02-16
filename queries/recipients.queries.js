@@ -363,7 +363,8 @@ const recipientQueries = {
                                                           'label', pecsf.label,
                                                           'region', pecsf.region,
                                                           'vendor', pecsf.vendor,
-                                                          'active', pecsf.active
+                                                          'active', pecsf.active,
+                                                          'pooled', pecsf.pooled
                                                       )
                                               )
                                       ) AS selections
@@ -663,7 +664,7 @@ const recipientQueries = {
                              awd.label AS award_label,
                              string_agg(
                                 CASE WHEN awdopts.type 
-                                    NOT IN ('engraving', 'certificate', 'pecsf-certificate', 'pecsf-charity') 
+                                    NOT IN ('engraving', 'certificate', 'pecsf-certificate', 'pecsf-charity', 'pecsf-charity-local') 
                                     THEN awdopts.label END, '; '
                                  ) AS award_options,
                             string_agg(
@@ -675,6 +676,12 @@ const recipientQueries = {
                              string_agg(
                                      CASE WHEN awdopts.type IN ('pecsf-certificate') THEN awdoptsel.custom_value END, '; '
                                  ) AS pecsf_certificate_message,
+                             string_agg(
+                                     CASE WHEN awdopts.type IN ('pecsf-charity-local-1') THEN awdoptsel.custom_value END, '; '
+                                 ) AS pecsf_charity_local_1,
+                             string_agg(
+                                     CASE WHEN awdopts.type IN ('pecsf-charity-local-2') THEN awdoptsel.custom_value END, '; '
+                                 ) AS pecsf_charity_local_2,
                              string_agg(
                                      CASE WHEN awdopts.name IN ('pecsf-charity-1') THEN pecsf.label END, '; '
                                  ) AS pecsf_charity_1,

@@ -5,9 +5,9 @@
  * MIT Licensed
  */
 
-const db = require('../queries/index.queries');
+const db = require("../queries/index.queries");
 
-'use strict';
+("use strict");
 
 /**
  * Model schema
@@ -17,27 +17,30 @@ const db = require('../queries/index.queries');
  */
 
 const schema = {
-  modelName: 'pecsf_charities',
+  modelName: "pecsf_charities",
   attributes: {
     id: {
-      dataType: 'integer',
-      required: true
+      dataType: "integer",
+      required: true,
     },
     vendor: {
-      dataType: 'varchar'
+      dataType: "varchar",
     },
     label: {
-      dataType: 'varchar',
-      required: true
+      dataType: "varchar",
+      required: true,
     },
     region: {
-      dataType: 'varchar',
-      required: true
+      dataType: "varchar",
+      required: true,
     },
     active: {
-      dataType: 'boolean'
-    }
-  }
+      dataType: "boolean",
+    },
+    pooled: {
+      dataType: "boolean",
+    },
+  },
 };
 
 module.exports = db.generate(schema);
