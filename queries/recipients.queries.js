@@ -677,23 +677,29 @@ const recipientQueries = {
                                      CASE WHEN awdopts.type IN ('pecsf-certificate') THEN awdoptsel.custom_value END, '; '
                                  ) AS pecsf_certificate_message,
                              string_agg(
-                                     CASE WHEN awdopts.type IN ('pecsf-charity-local-1') THEN awdoptsel.custom_value END, '; '
-                                 ) AS pecsf_charity_local_1,
-                             string_agg(
-                                     CASE WHEN awdopts.type IN ('pecsf-charity-local-2') THEN awdoptsel.custom_value END, '; '
-                                 ) AS pecsf_charity_local_2,
-                             string_agg(
                                      CASE WHEN awdopts.name IN ('pecsf-charity-1') THEN pecsf.label END, '; '
                                  ) AS pecsf_charity_1,
+                                 string_agg(
+                                  CASE WHEN awdopts.name IN ('pecsf-charity-local-1') THEN awdoptsel.custom_value END, '; '
+                              ) AS pecsf_charity_local_1,
                              string_agg(
                                      CASE WHEN awdopts.name IN ('pecsf-charity-1') THEN pecsf.region END, '; '
                                  ) AS pecsf_region_1,
                              string_agg(
+                                  CASE WHEN awdopts.name IN ('pecsf-charity-1') THEN pecsf.vendor END, '; '
+                              ) AS pecsf_1_registration_number,
+                             string_agg(
                                      CASE WHEN awdopts.name IN ('pecsf-charity-2') THEN pecsf.label END, '; '
                                  ) AS pecsf_charity_2,
+                                 string_agg(
+                                  CASE WHEN awdopts.name IN ('pecsf-charity-local-2') THEN awdoptsel.custom_value END, '; '
+                              ) AS pecsf_charity_local_2,
                              string_agg(
                                      CASE WHEN awdopts.name IN ('pecsf-charity-2') THEN pecsf.region END, '; '
-                                 ) AS pecsf_region_2
+                                 ) AS pecsf_region_2,
+                              string_agg(
+                                  CASE WHEN awdopts.name IN ('pecsf-charity-2') THEN pecsf.vendor END, '; '
+                              ) AS pecsf_2_registration_number
                       FROM "service_selections" AS "srv"
                                -- Service Selection: award details
                                LEFT JOIN "award_selections" AS asel ON asel.id = srv."id"
