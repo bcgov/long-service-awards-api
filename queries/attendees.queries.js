@@ -27,6 +27,10 @@ const defaults = require("./default.queries");
 
 const attendeesQueries = {
   findAll: (filter, schema) => {
+    if (filter.orderby && filter.orderby.split(".").length > 1) {
+      filter.orderby =
+        filter.orderby.split(".")[filter.orderby.split(".").length - 1];
+    }
     // destructure filter
     const {
       orderby = "id",
@@ -39,11 +43,18 @@ const attendeesQueries = {
     //const orderClause = order && orderby ? `ORDER BY ${orderby} ${order}` : "";
     // const orderClause =
     //   order && orderby ? `ORDER BY attendees.id ${order}` : "";
+
     let orderClause = "";
     if (order && orderby) {
       const table =
         orderby === "first_name" || orderby === "last_name"
           ? "contacts"
+          : orderby === "abbreviation"
+          ? "organizations"
+          : orderby === "status" ||
+            orderby === "guest" ||
+            orderby === "ceremony_noshow"
+          ? "attendees"
           : "ceremonies";
       orderClause = `ORDER BY ${table}.${orderby} ${order}`;
     }
@@ -53,12 +64,13 @@ const attendeesQueries = {
     // get query results
     return {
       sql: `WITH attendees_query AS(
-        SELECT attendees.*
+        SELECT attendees.*, organizations.abbreviation
                       FROM attendees
                       LEFT JOIN  
                       ceremonies ON ceremonies.id = attendees.ceremony
                       LEFT JOIN recipients ON recipients.id = attendees.recipient
                       LEFT JOIN contacts ON contacts.id = recipients.contact
+                      LEFT JOIN organizations ON organizations.id = recipients.organization
                       ${filterStatement} 
               ${orderClause} ${limitClause}
               OFFSET ${offset}
