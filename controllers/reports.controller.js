@@ -35,7 +35,7 @@ const pipeCSV = (res, data, filename) => {
     console.error(err);
     res.status(404).end();
   });
-  rs.push(data);
+  rs.push("\ufeff" + data);
   rs.push(null);
 };
 
@@ -128,10 +128,10 @@ exports.attendees = async (req, res, next) => {
   }
 };
 
-exports.transactions = async( req, res, next) => {
+exports.transactions = async (req, res, next) => {
   try {
     const cycle = await QualifyingYear.findCurrent();
-    const transactions = await Transactions.report(res.locals.user, cycle)
+    const transactions = await Transactions.report(res.locals.user, cycle);
     const filename = `attendees-report-${cycle}.csv`;
     // convert json results to csv format
     const csvData = Papa.unparse(transactions, { newline: "\n" });
@@ -139,4 +139,4 @@ exports.transactions = async( req, res, next) => {
   } catch (err) {
     return next(err);
   }
-}
+};
