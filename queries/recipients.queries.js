@@ -232,6 +232,7 @@ const recipientQueries = {
                                      'name', o.name,
                                      'abbreviation', o.abbreviation,
                                      'previous_service_pins', o.previous_service_pins,
+                                     'bulk', o.bulk,
                                      'active', o.active
                                  ) AS organization
                       FROM "organizations" AS "o"
