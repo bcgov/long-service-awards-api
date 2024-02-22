@@ -152,7 +152,6 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const item = await res.locals.model.update(req.body);
-
     // handle exception
     if (!item) return next(Error("noRecord"));
 
