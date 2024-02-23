@@ -161,7 +161,7 @@ exports.transactions = async (req, res, next) => {
  * @src public
  */
 
-exports.pescf = async (req, res, next) => {
+exports.pecsf = async (req, res, next) => {
   try {
     // get current LSA cycle
     const cycle = await QualifyingYear.findCurrent();
@@ -170,11 +170,12 @@ exports.pescf = async (req, res, next) => {
     const filter = {
       cycle: String(cycle.name),
       milestones: "25,30,35,40,45,50,55",
+      pecsf: "true",
     };
 
     // apply query filter to results
     const recipients = await Recipient.report(filter, res.locals.user, cycle);
-    const filename = `pescf-certificates-report-${cycle}.csv`;
+    const filename = `pecsf-certificates-report-${cycle}.csv`;
 
     // convert json results to csv format
     const csvData = Papa.unparse(recipients, { newline: "\n" });

@@ -24,6 +24,6 @@ router.get("/lsa", authorizeOrgContact, controller.lsa);
 router.get("/service-pins", authorizeAdmin, controller.servicePins);
 router.get("/attendees", authorizeOrgContact, controller.attendees);
 router.get("/transactions", authorizeAdmin, controller.transactions);
-router.get("/pescf-certificates", authorizeAdmin, controller.pescf);
+router.get("/pecsf-certificates", authorizeAdmin, controller.pecsf);
 
 module.exports = router;

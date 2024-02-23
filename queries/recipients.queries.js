@@ -34,6 +34,7 @@ const getFilters = (data) => {
    * - Confirmed
    * - Ceremony Opt Out
    * - Status
+   * - PECSF
    * */
 
   const filters = {
@@ -64,6 +65,7 @@ const getFilters = (data) => {
       `(service_selections.qualifying_year IN (${(range || [])
         .map(() => `$${index++}::integer`)
         .join(",")}))`,
+
     confirmed: (value) => `(
         service_selections.confirmed = $${index++}::boolean 
         ${
@@ -77,18 +79,26 @@ const getFilters = (data) => {
             : ""
         } )`,
     status: () => `(recipients.status = $${index++}::varchar)`,
+    //Note: Is parameterless - therefore excluded from values output
+    pecsf: (value) =>
+      `${
+        value[0] === "true"
+          ? "award_option_selections.pecsf_charity IS NOT NULL"
+          : ""
+      }`,
   };
   // match filter with input data
   let statements = "";
   statements += Object.keys(data)
     .filter((key) => filters.hasOwnProperty(key))
     .reduce((o, key) => {
-      // explode comma-separated query array parameters into array
+      // explode comma-separated filter query parameters into array
       const datum = !!data[key] && data[key].split(",");
       // ignore null/empty filter values
       if (datum) {
         o.push(filters[key](datum));
-        values.push.apply(values, datum);
+        // do not push value when filtering for PECSF - otherwise SQL.data will have too many params
+        if (key !== "pecsf") values.push.apply(values, datum);
       }
       return o;
     }, [])
@@ -579,6 +589,7 @@ const recipientQueries = {
                         LEFT JOIN organizations ON organizations.id = r.organization
                         LEFT JOIN organizations AS attending_organization ON organizations.id = r.attending_with_organization
                         LEFT JOIN service_selections ON service_selections.recipient = r.id
+                        LEFT JOIN award_option_selections ON award_option_selections.service = service_selections.id
                     ${filterStatements && " WHERE " + filterStatements}
                 GROUP BY r.id
             )
@@ -872,7 +883,7 @@ exports.updateAttendee = async (recipientID, attendeeID) => {
 
 exports.report = async (filter, ignore, currentCycle, schema) => {
   // DEBUG SQL
-  // console.log(recipientQueries.report(filter, ignore, currentCycle, schema))
+  //var query = recipientQueries.report(filter, ignore, currentCycle, schema);
   return await query(
     recipientQueries.report(filter, ignore, currentCycle, schema)
   );
