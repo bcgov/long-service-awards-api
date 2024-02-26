@@ -21,13 +21,14 @@
                             </p>
                             <p>
                                 The pin is being mailed to you at the following address: <br>
-                                <%= supervisor.address.street1 %><br>
-                                    <%= supervisor.address.street2 %><br>
-                                        <% if (supervisor.address.pobox) { %>
-                                            <%= supervisor.address.pobox %><br>
+                                <%= supervisor.office_address.street1 %><br>
+                                    <%= supervisor.office_address.street2 %><br>
+                                        <% if (supervisor.office_address.pobox) { %>
+                                            <%= supervisor.office_address.pobox %><br>
                                                 <% } %>
-                                                    <%=supervisor.address.community %>, <%= supervisor.address.province
-                                                            %>, <%=supervisor.address.postal_code %><br>
+                                                    <%=supervisor.office_address.community %>, <%=
+                                                            supervisor.office_address.province %>,
+                                                            <%=supervisor.office_address.postal_code %><br>
                                                                 If
                                                                 this address is incorrect,
                                                                 please email <a
