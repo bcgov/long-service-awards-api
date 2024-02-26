@@ -128,7 +128,7 @@ const sendMail = async (
  */
 module.exports.sendRegistrationConfirmation = async (recipient) => {
   // check status of registration
-  const { service, supervisor, contact } = recipient || {};
+  const { service, supervisor, contact, organization } = recipient || {};
   const { confirmed, milestone } = service || {};
   const isLSA = milestone >= 25;
 
@@ -155,6 +155,8 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
 
   const supervisorTemplate = isLSA
     ? "email-supervisor-registration-confirm.ejs"
+    : organization.bulk
+    ? "email-supervisor-service-pins-bulkship-confirm.ejs"
     : "email-supervisor-service-pins-confirm.ejs";
 
   // send confirmation mail to supervisor

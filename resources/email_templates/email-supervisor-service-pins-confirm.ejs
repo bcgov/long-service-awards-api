@@ -1,34 +1,72 @@
 <%- await include('email-doctype'); %>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
-<%- await include('email-head', {title: title}); %>
-<body class="body" style="padding:0; margin:0; display:block; background:#ffffff; -webkit-text-size-adjust:none">
-<div class="container">
-    <table>
-        <tr>
-            <td style="border-bottom:1px solid #e7e7e7;">
-                <p style="text-align: center"><strong>This is an automated email. No response is required.</strong></p>
-                <p>
-                    <%= contact.first_name %> <%= contact.last_name %>, has
-                    registered to receive a <%= service.milestone %> year corporate <a href="https://longserviceawards.gww.gov.bc.ca">
-                    Service Pin</a> in <%= service.cycle %>.
-                </p>
-                <p>
-                    The corporate Service Pin program is for employees celebrating a career milestone of
-                    five years of service or more, in five-year increments.
-                </p>
-                <p>
-                    As the supervisor, pins will be delivered to you or your <a href="https://compass.gww.gov.bc.ca/ministry-recognition-contacts/">ministry recognition contact</a>
-                    in early June so they can be presented during <a href="https://compass.gww.gov.bc.ca/public-service-week/">Public Service Week</a> in
-                    a way that fits the employee’s recognition preference.
-                </p>
-                <p>
-                    If you have additional questions, contact
-                    your <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">Recognition contact</a>.
-                </p>
-                <%- await include('email-footer'); %>
-            </td>
-        </tr>
-    </table>
-</div>
-</body>
-</html>
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <%- await include('email-head', {title: title}); %>
+
+        <body class="body"
+            style="padding:0; margin:0; display:block; background:#ffffff; -webkit-text-size-adjust:none">
+            <div class="container">
+                <table>
+                    <tr>
+                        <td style="border-bottom:1px solid #e7e7e7;">
+                            <p style="text-align: center"><strong>This is an automated email. No response is
+                                    required.</strong></p>
+                            <p>
+                                This email is to advise that your employee, <%= contact.first_name %>
+                                    <%= contact.last_name %> has registered to
+                                        receive a <%= service.milestone %> year <a
+                                                href="https://longserviceawards.gww.gov.bc.ca/service-pins/">Corporate
+                                                Service Pin</a> in
+                                            <%= service.cycle %>.
+
+                            </p>
+                            <p>
+                                The pin is being mailed to you at the following address: <br>
+                                <%= supervisor.address.street1 %><br>
+                                    <%= supervisor.address.street2 %><br>
+                                        <% if (supervisor.address.pobox) { %>
+                                            <%= supervisor.address.pobox %><br>
+                                                <% } %>
+                                                    <%=supervisor.address.community %>, <%= supervisor.address.province
+                                                            %>, <%=supervisor.address.postal_code %><br>
+                                                                If
+                                                                this address is incorrect,
+                                                                please email <a
+                                                                    href="mailto:Corporate.Engagement@gov.bc.ca">Corporate.Engagement@gov.bc.ca</a>.
+                            </p>
+                            <p>
+                                The corporate Service Pin program is for employees
+                                celebrating a
+                                career
+                                milestone of
+                                5 years of service or more, in 5-year increments.
+                            </p>
+                            <p>
+                                As the employee’s supervisor, pins are delivered to
+                                you
+                                in early
+                                June. They
+                                should be
+                                presented during <a href="https://compass.gww.gov.bc.ca/public-service-week/">Public
+                                    Service Week</a> in a way that fits the
+                                employee’s
+                                recognition
+                                preference. To ensure your employee is recognized,
+                                please monitor
+                                the mail
+                                for their
+                                pin.
+                            </p>
+                            <p>
+                                If you have additional questions, contact
+                                your <a
+                                    href="https://compass.gww.gov.bc.ca/employee-recognition/ministry-recognition-contacts/">Recognition
+                                    contact</a>.
+                            </p>
+                            <%- await include('email-footer'); %>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+
+    </html>
