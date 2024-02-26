@@ -22,17 +22,19 @@
                             <p>
                                 The pin is being mailed to you at the following address: <br>
                                 <%= supervisor.office_address.street1 %><br>
-                                    <%= supervisor.office_address.street2 %><br>
-                                        <% if (supervisor.office_address.pobox) { %>
-                                            <%= supervisor.office_address.pobox %><br>
-                                                <% } %>
-                                                    <%=supervisor.office_address.community %>, <%=
-                                                            supervisor.office_address.province %>,
-                                                            <%=supervisor.office_address.postal_code %><br>
-                                                                If
-                                                                this address is incorrect,
-                                                                please email <a
-                                                                    href="mailto:Corporate.Engagement@gov.bc.ca">Corporate.Engagement@gov.bc.ca</a>.
+                                    <% if (supervisor.office_address.street2) { %>
+                                        <%= supervisor.office_address.street2 %><br>
+                                            <% } %>
+                                                <% if (supervisor.office_address.pobox) { %>
+                                                    <%= supervisor.office_address.pobox %><br>
+                                                        <% } %>
+                                                            <%=supervisor.office_address.community %>, <%=
+                                                                    supervisor.office_address.province %>,
+                                                                    <%=supervisor.office_address.postal_code %><br><br>
+                                                                        If
+                                                                        this address is incorrect,
+                                                                        please email <a
+                                                                            href="mailto:Corporate.Engagement@gov.bc.ca">Corporate.Engagement@gov.bc.ca</a>.
                             </p>
                             <p>
                                 The corporate Service Pin program is for employees
