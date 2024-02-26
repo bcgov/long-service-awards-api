@@ -184,3 +184,27 @@ exports.pecsf = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.count = async (req, res, next) => {
+  try {
+    // get current LSA cycle
+    const cycle = await QualifyingYear.findCurrent();
+
+    // define filter
+    const filter = {
+      cycle: String(cycle.name),
+      milestones: "25,30,35,40,45,50,55",
+      pecsf: "true",
+    };
+
+    // apply query filter to results
+    const recipients = await Recipient.report(filter, res.locals.user, cycle);
+    const filename = `pecsf-certificates-report-${cycle}.csv`;
+
+    // convert json results to csv format
+    const csvData = Papa.unparse(recipients, { newline: "\n" });
+    pipeCSV(res, csvData, filename);
+  } catch (err) {
+    return next(err);
+  }
+};
