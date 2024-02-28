@@ -7,6 +7,7 @@
 
 const Recipient = require("../models/recipients.model.js");
 const Attendee = require("../models/attendees.model.js");
+const Ceremony = require("../models/ceremonies.model.js");
 const Transactions = require("../models/transactions.model.js");
 const QualifyingYear = require("../models/qualifying-years.model.js");
 const { Readable } = require("stream");
@@ -194,12 +195,11 @@ exports.count = async (req, res, next) => {
     const filter = {
       cycle: String(cycle.name),
       milestones: "25,30,35,40,45,50,55",
-      pecsf: "true",
     };
 
     // apply query filter to results
-    const recipients = await Recipient.report(filter, res.locals.user, cycle);
-    const filename = `pecsf-certificates-report-${cycle}.csv`;
+    const recipients = await Ceremony.report(res.locals.user, cycle);
+    const filename = `award-counts-per-ceremony-${cycle}.csv`;
 
     // convert json results to csv format
     const csvData = Papa.unparse(recipients, { newline: "\n" });

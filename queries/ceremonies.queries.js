@@ -96,6 +96,10 @@ const ceremoniesQueries = {
     // apply update query
     return { sql: sql, data: filteredData };
   },
+  report: (cycle) => {
+    let sql = `SELECT  to_char(ceremonies.datetime, 'Mon DD, YYYY @ HH12:MI AM') AS "ceremony_date_time", count(*) as "recipient_count" FROM public.attendees LEFT JOIN ceremonies ON attendees.ceremony = ceremonies.id WHERE guest = 0 GROUP BY ceremony, ceremonies.datetime ORDER BY ceremonies.datetime ASC;`;
+    return { sql: sql, data: [] };
+  },
 };
 exports.queries = ceremoniesQueries;
 
@@ -105,6 +109,9 @@ exports.insert = async (data) => {
 };
 exports.update = async (data, schema) => {
   return await transactionOne([ceremoniesQueries.update(data, schema)]);
+};
+exports.report = async (cycle) => {
+  return await query(ceremoniesQueries.report(cycle));
 };
 /**
  * Default transactions

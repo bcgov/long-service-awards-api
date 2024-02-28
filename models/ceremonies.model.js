@@ -153,4 +153,15 @@ module.exports = {
   removeAll: async () => {
     return await db.defaults.removeAll(schema);
   },
+  report: async (user, cycle) => {
+    // check if user is administrator (skip user-org filtering)
+    const { role } = user || {};
+    const isAdmin = ["super-administrator", "administrator"].includes(
+      role.name
+    );
+    if (isAdmin) {
+      return await db.ceremonies.report(cycle);
+    }
+    return;
+  },
 };
