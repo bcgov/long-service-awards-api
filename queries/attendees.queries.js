@@ -180,7 +180,7 @@ const attendeesQueries = {
             RETURNING *
             )
             INSERT INTO attendees (id, recipient, ceremony, guest, ceremony_noshow, status) 
-            SELECT $1::uuid,$2::uuid,$3::uuid,$4::integer,$5::varchar
+            SELECT $1::uuid,$2::uuid,$3::uuid,$4::integer,$5::boolean,$6::varchar
             WHERE NOT EXISTS (SELECT * FROM upsert)
             ON CONFLICT DO NOTHING
             RETURNING *;`,
