@@ -71,13 +71,12 @@ const attendeesQueries = {
                       LEFT JOIN recipients ON recipients.id = attendees.recipient
                       LEFT JOIN contacts ON contacts.id = recipients.contact
                       LEFT JOIN organizations ON organizations.id = recipients.organization
-                      LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatement} 
               ${orderClause} ${limitClause}
               OFFSET ${offset}
         )
         ---------------------------------
-        SELECT attendees.id,recipient.first_name,recipient.last_name,attendees.guest,attendees.status,attendees.ceremony_noshow,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations, service_selections.service_selections
+        SELECT attendees.id,recipient.first_name,recipient.last_name,attendees.guest,attendees.status,attendees.ceremony_noshow,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations
         FROM attendees_query as attendees
         
         LEFT JOIN (
@@ -127,13 +126,6 @@ const attendeesQueries = {
           FROM accommodation_selections AS "accomms" GROUP BY accom_attendee
         ) AS "accommodations" ON accommodations.accom_attendee = attendees.id
 
-        LEFT JOIN (
-          SELECT srv.recipient AS recipient_id, srv.cycle AS service_cycle,
-          json_build_object(
-            'id', srv.recipient, 'cycle', srv.cycle
-          ) AS "service_selections"
-          FROM "service_selections" AS "srv"
-        ) AS "service_selections" ON service_selections.recipient_id = attendees.recipient
         ORDER BY ${orderby} ${order};`,
       data: [],
     };
@@ -386,7 +378,9 @@ const getFilters = (filter) => {
   if (filter.hasOwnProperty("ceremony_noshow") && filter.ceremony_noshow)
     filters.push(`attendees.ceremony_noshow = '${filter.ceremony_noshow}'`);
   if (filter.hasOwnProperty("cycle") && filter.cycle)
-    filters.push(`service_selections.cycle = ${filter.cycle}`);
+    filters.push(
+      `ceremonies.datetime >= '${filter.cycle}-01-01' AND ceremonies.datetime <= '${filter.cycle}-12-31'`
+    );
   if (filter.hasOwnProperty("status") && filter.status) {
     //Multi-select field - create their own OR clause
     const statuses = filter.status.split(",");
