@@ -302,6 +302,7 @@ const attendeesQueries = {
      * @return {Promise} results
      * @public
      */
+    const filterStatement = getFilters(filter);
 
     return {
       sql: `--Separate CTE/WITH queries to get list of milestones for each recipient, get dietary/accessibility per recipient+guest columns
@@ -356,7 +357,7 @@ const attendeesQueries = {
           LEFT JOIN accessibility_guest_query ON attendees.recipient = accessibility_guest_query.recipient
           LEFT JOIN dietary_query ON attendees.recipient = dietary_query.recipient
           LEFT JOIN dietary_guest_query ON attendees.recipient = dietary_guest_query.recipient
-          WHERE attendees.guest = 0
+          ${filterStatement}
             GROUP BY attendees.recipient, attendee_id, employee_number, first_name, last_name, milestones, 
           ceremony_date, ministry, branch, attendees.status, accessibility_query.recipient, outer_recipients.id, 
           dietary_query.accommodations, dietary_guest_query.accommodations, accessibility_query.accessibility, accessibility_guest_query.accessibility`,
@@ -403,7 +404,9 @@ const getFilters = (filter) => {
       orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";
     filters.push(organizationClause);
   }
-  return filters.length > 0 ? `WHERE  ${filters.join(" AND ")}` : "";
+  return filters.length > 0
+    ? `WHERE  ${filters.join(" AND ")} AND attendees.guest = 0`
+    : "WHERE attendees.guest = 0";
 };
 
 exports.findAll = async (filter, schema) => {
@@ -490,7 +493,7 @@ exports.insertGuest = async (
 
 exports.report = async (filter, ignore, currentCycle, schema) => {
   // DEBUG SQL
-  // console.log(recipientQueries.report(filter, ignore, currentCycle, schema))
+  // console.log(attendeesQueries.report(filter, ignore, currentCycle, schema));
   return await query(
     attendeesQueries.report(filter, ignore, currentCycle, schema)
   );
