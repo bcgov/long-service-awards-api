@@ -97,7 +97,10 @@ const ceremoniesQueries = {
     return { sql: sql, data: filteredData };
   },
   report: (cycle) => {
-    let sql = `SELECT  to_char(ceremonies.datetime, 'Mon DD, YYYY @ HH12:MI AM') AS "ceremony_date_time", count(*) as "recipient_count" FROM public.attendees LEFT JOIN ceremonies ON attendees.ceremony = ceremonies.id WHERE guest = 0 GROUP BY ceremony, ceremonies.datetime ORDER BY ceremonies.datetime ASC;`;
+    const queryFilter = cycle
+      ? `WHERE ceremonies.datetime >= '${cycle}-01-01' AND ceremonies.datetime <= '${cycle}-12-31' AND guest = 0`
+      : `WHERE guest = 0`;
+    let sql = `SELECT  to_char(ceremonies.datetime, 'Mon DD, YYYY @ HH12:MI AM') AS "ceremony_date_time", count(*) as "recipient_count" FROM public.attendees LEFT JOIN ceremonies ON attendees.ceremony = ceremonies.id ${queryFilter} GROUP BY ceremony, ceremonies.datetime ORDER BY ceremonies.datetime ASC;`;
     return { sql: sql, data: [] };
   },
 };
