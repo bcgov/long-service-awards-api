@@ -37,4 +37,7 @@ module.exports = {
     findCurrent: async () => {
         return await db.defaults.findOneByField('current', true, schema);
     },
+    findYear: async (year) => {
+        return await db.defaults.findOneByField('name', `${year}`, schema);
+    },
 }
