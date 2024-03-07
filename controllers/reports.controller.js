@@ -52,12 +52,15 @@ const pipeCSV = (res, data, filename) => {
 
 exports.lsa = async (req, res, next) => {
   try {
-    // get current LSA cycle
-    const cycle = await QualifyingYear.findCurrent();
-
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+    const cycleName = String(cycle.name);
     // define filter
     const filter = {
-      cycle: String(cycle.name),
+      cycle: cycleName,
       milestones: "25,30,35,40,45,50,55",
     };
 
@@ -85,11 +88,14 @@ exports.lsa = async (req, res, next) => {
 
 exports.servicePins = async (req, res, next) => {
   try {
-    // get current LSA cycle
-    const cycle = await QualifyingYear.findCurrent();
-
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+    const cycleName = String(cycle.name);
     // define filter
-    const filter = {};
+    const filter = { cycle: cycleName };
 
     // apply query filter to results
     const recipients = await Recipient.report(filter, res.locals.user, cycle);
@@ -114,9 +120,14 @@ exports.servicePins = async (req, res, next) => {
 
 exports.attendees = async (req, res, next) => {
   try {
-    const cycle = await QualifyingYear.findCurrent();
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+    const cycleName = String(cycle.name);
     // define filter
-    const filter = {};
+    const filter = { cycle: cycleName };
 
     // apply query filter to results
     const attendees = await Attendee.report(filter, res.locals.user, cycle);
@@ -141,7 +152,11 @@ exports.attendees = async (req, res, next) => {
 
 exports.transactions = async (req, res, next) => {
   try {
-    const cycle = await QualifyingYear.findCurrent();
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
     const transactions = await Transactions.report(res.locals.user, cycle);
     const filename = `attendees-report-${cycle}.csv`;
     // convert json results to csv format
@@ -164,12 +179,16 @@ exports.transactions = async (req, res, next) => {
 
 exports.pecsf = async (req, res, next) => {
   try {
-    // get current LSA cycle
-    const cycle = await QualifyingYear.findCurrent();
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+    const cycleName = String(cycle.name);
 
     // define filter
     const filter = {
-      cycle: String(cycle.name),
+      cycle: cycleName,
       milestones: "25,30,35,40,45,50,55",
       pecsf: "true",
     };
@@ -188,17 +207,22 @@ exports.pecsf = async (req, res, next) => {
 
 exports.count = async (req, res, next) => {
   try {
-    // get current LSA cycle
-    const cycle = await QualifyingYear.findCurrent();
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+
+    const cycleName = String(cycle.name);
 
     // define filter
     const filter = {
-      cycle: String(cycle.name),
+      cycle: cycleName,
       milestones: "25,30,35,40,45,50,55",
     };
 
     // apply query filter to results
-    const recipients = await Ceremony.report(res.locals.user, cycle);
+    const recipients = await Ceremony.report(res.locals.user, cycleName);
     const filename = `award-counts-per-ceremony-${cycle}.csv`;
 
     // convert json results to csv format
