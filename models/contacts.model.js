@@ -73,7 +73,7 @@ const schema = {
   attachments: {
     office_address: {
       model: Address,
-      required: true,
+      required: false,
       get: async (id) => {
         return await Address.findAttachment(id, "office_address", schema);
       },
