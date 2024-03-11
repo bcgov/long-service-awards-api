@@ -41,13 +41,15 @@ const awardsQueries = {
     if (active) {
       filterClauses.push("active = true");
       // quantity filter
-      filterClauses.push("(quantity < 0 OR quantity > selected)");
+      filterClauses.push(
+        "(quantity < 0 OR quantity > selected OR selected IS NULL)"
+      );
     }
     // milestone filter
     if (milestone) {
       filterClauses.push("milestone = $1::integer");
     }
-
+    console.log(filterClauses), "this is filter clauses";
     return {
       sql: `
       WITH awd_cycle_filtered AS (SELECT service_selections.id as "service_id" FROM service_selections LEFT JOIN (SELECT * FROM award_selections) as "awdselects" on service_selections.id = awdselects.id WHERE service_selections.cycle = ${currentYear})
