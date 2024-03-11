@@ -49,7 +49,7 @@ const awardsQueries = {
     if (milestone) {
       filterClauses.push("milestone = $1::integer");
     }
-    console.log(filterClauses), "this is filter clauses";
+
     return {
       sql: `
       WITH awd_cycle_filtered AS (SELECT service_selections.id as "service_id" FROM service_selections LEFT JOIN (SELECT * FROM award_selections) as "awdselects" on service_selections.id = awdselects.id WHERE service_selections.cycle = ${currentYear})
