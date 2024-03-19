@@ -215,14 +215,14 @@ const recipientQueries = {
       .join(", ");
     return {
       sql: `WITH rcps AS (
-                SELECT recipients.*, contacts.first_name as first_name, contacts.last_name as last_name, organization.abbreviation FROM recipients
+                SELECT recipients.*, contacts.first_name as first_name, contacts.last_name as last_name, organizations.abbreviation FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
-                           LEFT JOIN organizations AS "organization" ON organization.id = recipients.organization
+                           LEFT JOIN organizations ON organizations.id = recipients.organization
                            LEFT JOIN organizations AS "attending_organization" ON "attending_organization".id = recipients.attending_with_organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                            LEFT JOIN attendees ON attendees.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements}
-                  GROUP BY recipients.id, contacts.first_name, contacts.last_name, organization.abbreviation
+                  GROUP BY recipients.id, contacts.first_name, contacts.last_name, organizations.abbreviation
                                ${orderClause} ${limitClause}
                   OFFSET ${offset}
                   )
@@ -421,7 +421,7 @@ const recipientQueries = {
                   FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
-                           LEFT JOIN organizations AS attending_organization ON organizations.id = recipients.attending_with_organization
+                           LEFT JOIN organizations AS "attending_organization" ON organizations.id = recipients.attending_with_organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements};`,
       data: filterValues,
