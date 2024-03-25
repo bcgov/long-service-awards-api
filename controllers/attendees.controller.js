@@ -273,12 +273,12 @@ exports.send = async (req, res, next) => {
     // });
     const data = req.body || {};
     const recipient = data.recipient;
-    // let email = recipient.contact.office_email;
+    const development = process.env.NODE_ENV === "development";
+    let email = recipient.contact.office_email;
 
-    let email =
-      recipient.contact.alternative_is_preferred === true
-        ? recipient.contact.personal_email
-        : recipient.contact.office_email;
+    if (recipient.contact.alternative_is_preferred === true) {
+      email = recipient.contact.personal_email;
+    }
 
     let response = null;
 
@@ -290,6 +290,10 @@ exports.send = async (req, res, next) => {
       let retirement_date = new Date(convertDate(recipient.retirement_date));
       if (retirement_date < todayPlusGracePeriod)
         email = recipient.contact.personal_email;
+    }
+
+    if (development) {
+      email = res.locals.user.email;
     }
 
     var RsvpSendDate = new Date(); //today

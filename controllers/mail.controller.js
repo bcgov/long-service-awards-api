@@ -29,7 +29,7 @@ const _mailHandlers = {
       // check that submission has required fields
       // if (!confirm(Recipient.schema, data)) return [true, null];
       // send confirmation email (if confirmed)
-      return await sendRegistrationConfirmation(recipient.data);
+      return await sendRegistrationConfirmation(recipient.data, user);
     }
     return null;
   },

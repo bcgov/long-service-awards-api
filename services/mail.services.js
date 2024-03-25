@@ -126,11 +126,12 @@ const sendMail = async (
  * Send registration email confirmation
  * @param recipient
  */
-module.exports.sendRegistrationConfirmation = async (recipient) => {
+module.exports.sendRegistrationConfirmation = async (recipient, user) => {
   // check status of registration
   const { service, supervisor, contact, organization } = recipient || {};
   const { confirmed, milestone } = service || {};
   const isLSA = milestone >= 25;
+  const development = process.env.NODE_ENV === 'development';
 
   // check if registration is confirmed
   if (!confirmed) return;
@@ -138,6 +139,16 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
   // select confirmation email
   // - LSA registrations (milestone >= 25)
   // - Service Pin registration (milestone < 25)
+
+  let contactEmail = contact.office_email;
+
+  if (contact.alternative_is_preferred === true) {
+    contactEmail = contact.personal_email;
+  }
+
+  if (development) {
+    contactEmail = user.email;
+  }
 
   const from = isLSA
     ? process.env.MAIL_FROM_ADDRESS
@@ -161,7 +172,7 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
 
   // send confirmation mail to supervisor
   const [error1, response1] = await sendMail(
-    [supervisor.office_email || ""],
+    [development ? user.email : supervisor.office_email || ""],
     subject,
     supervisorTemplate,
     recipient,
@@ -173,7 +184,7 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
 
   // send confirmation mail to recipient
   const [error2, response2] = await sendMail(
-    [contact.office_email || ""],
+    [contactEmail || ""],
     subject,
     recipientTemplate,
     recipient,
