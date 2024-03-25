@@ -111,6 +111,10 @@ exports.update = async (req, res, next) => {
         email = recipient_attendee.data.recipient.contact.personal_email;
     }
 
+    if (process.env.NODE_ENV === 'development') {
+      email = res.locals.user.email;
+    }
+
     // Send RSVP confirmation
     await sendRSVPConfirmation(data, email, accept);
 

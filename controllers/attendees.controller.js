@@ -149,14 +149,14 @@ exports.update = async (req, res, next) => {
     const data = req.body;
     const attendee = await Attendees.findById(data.id);
 
-    console.log(data);
+    console.log('this is update', data);
 
     // handle exception
     if (!attendee) return next(Error("noRecord"));
 
     // recreate accommodations to have only attendee, accommodation fields to match the model
     let accommodationsArr = [];
-    if (data.accommodation_selections[0]) {
+    if (data.accommodation_selections && data.accommodation_selections[0]) {
       Object.keys(data.accommodation_selections[0]).forEach(async (key) => {
         if (data.accommodation_selections[0][key] === true) {
           accommodationsArr.push(
@@ -302,7 +302,8 @@ exports.send = async (req, res, next) => {
     // const deadline = await Settings.findById("rsvp-deadline"); - WHY THIS DOESN'T WORK?
 
     const settings = await Settings.findAll();
-    const deadline = settings.find((s) => s.name === "rsvp-deadline").value;
+    const currentYear = new Date().getFullYear();
+    const deadline = settings.find((s) => s?.name === "rsvp-deadline")?.value || `Jul 28, ${currentYear} 23:59:59`;
 
     const expiry = Math.ceil(
       Math.abs(RsvpSendDate.getTime() - new Date(deadline).getTime()) / 1000
