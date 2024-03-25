@@ -131,7 +131,7 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
   const { service, supervisor, contact, organization } = recipient || {};
   const { confirmed, milestone } = service || {};
   const isLSA = milestone >= 25;
-  const development = process.env.NODE_ENV === 'development';
+  const development = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === "testing";
 
   // check if registration is confirmed
   if (!confirmed) return;

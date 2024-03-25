@@ -273,7 +273,7 @@ exports.send = async (req, res, next) => {
     // });
     const data = req.body || {};
     const recipient = data.recipient;
-    const development = process.env.NODE_ENV === "development";
+    const development = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "testing";
     let email = recipient.contact.office_email;
 
     if (recipient.contact.alternative_is_preferred === true) {
