@@ -146,7 +146,7 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
     contactEmail = contact.personal_email;
   }
 
-  if (development) {
+  if (development && user && user.email) {
     contactEmail = user.email;
   }
 
@@ -172,7 +172,7 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
 
   // send confirmation mail to supervisor
   const [error1, response1] = await sendMail(
-    [development ? user.email : supervisor.office_email || ""],
+    [(development && user && user.email) ? user.email : supervisor.office_email || ""],
     subject,
     supervisorTemplate,
     recipient,

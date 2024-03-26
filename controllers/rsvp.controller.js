@@ -112,7 +112,9 @@ exports.update = async (req, res, next) => {
     }
 
     if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === "testing") {
-      email = res.locals.user.email;
+      if(res.locals && res.locals.user && res.locals.user.email){
+        email = res.locals.user.email;
+      }   
     }
 
     // Send RSVP confirmation

@@ -292,7 +292,7 @@ exports.send = async (req, res, next) => {
         email = recipient.contact.personal_email;
     }
 
-    if (development) {
+    if (development && res.locals && res.locals.user && res.locals.user.email) {
       email = res.locals.user.email;
     }
 
