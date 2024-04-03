@@ -14,6 +14,7 @@ const Transaction = require("../models/transactions.model");
 const { decodeError } = require("../error");
 const { format } = require("date-fns");
 const exp = require("constants");
+const { generatePDFCertificate } = require("./pdf.services");
 
 // template directory
 const dirPath = "/resources/email_templates/";
@@ -71,8 +72,8 @@ const sendMail = async (
   template,
   data,
   from,
-  fromName
-  // attachments,
+  fromName,
+  attachments
   // options={},
 ) => {
   // set mail parameters
@@ -96,11 +97,27 @@ const sendMail = async (
     const body = await ejs.renderFile(templatePath, templateData, {
       async: true,
     });
+
+    // Read attachments and convert them to base64 format
+    const attachmentArray = [];
+    if (attachments && Array.isArray(attachments)) {
+      for (const attachment of attachments) {
+        const fileContent = fs.readFileSync(attachment.path);
+        const base64Content = Buffer.from(fileContent).toString("base64");
+
+        attachmentArray.push({
+          filename: attachment.filename,
+          content: base64Content,
+          contentType: attachment.contentType || "application/octet-stream", // default content type
+        });
+      }
+    }
     const response = await transporter.sendMail({
       from: `"${fromName}" <${from}>`, // sender address
       to: to.join(", "), // list of receivers
       subject: subject, // subject line
       html: body, // html body
+      attachments: attachmentArray, // Add attachments array to the options object
     });
     // log send event
     await _logMail(null, response, data);
@@ -227,6 +244,27 @@ module.exports.sendRSVP = async (data) => {
   const { email, link, attendee, deadline } = data || {};
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 14);
+  //generate PDF attachment
+  const certificateTemplate = "invitation_certificate";
+  const certificateData = {
+    Name: `${attendee.recipient.contact.first_name} ${attendee.recipient.contact.last_name}`,
+    Date: `${attendee.ceremony.datetime_formatted}`,
+    Address1: `${
+      attendee.ceremony.venue
+        ? attendee.ceremony.venue
+        : attendee.ceremony.address.street1
+    }`,
+    Address2: `${
+      attendee.ceremony.venue
+        ? `${attendee.ceremony.address.street1}, ${attendee.ceremony.address.street2}`
+        : `${attendee.ceremony.address.street2}`
+    }`,
+    CityProvince: `${attendee.ceremony.address.community}, ${attendee.ceremony.address.province}`,
+  };
+  const certificateAttachment = await generatePDFCertificate(
+    certificateTemplate,
+    certificateData
+  );
   // send confirmation mail to supervisor
   return await sendMail(
     [email],
@@ -244,7 +282,13 @@ module.exports.sendRSVP = async (data) => {
     },
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
-    [],
+    [
+      {
+        filename: "LSAInvitation.pdf",
+        content: certificateAttachment,
+        contentType: "application/pdf",
+      },
+    ],
     null
   );
 };

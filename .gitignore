@@ -108,3 +108,4 @@ dist
 # SQL Backups
 backups
 docker-entrypoint-initdb.d
+resources/certificate_templates
