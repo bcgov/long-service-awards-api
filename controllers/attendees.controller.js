@@ -149,8 +149,6 @@ exports.update = async (req, res, next) => {
     const data = req.body;
     const attendee = await Attendees.findById(data.id);
 
-    console.log('this is update', data);
-
     // handle exception
     if (!attendee) return next(Error("noRecord"));
 
