@@ -284,8 +284,8 @@ module.exports.sendRSVP = async (data) => {
   };
   const certificateAttachment = await generatePDFCertificate(
     certificateTemplate,
-    certificateData,
-    fontData
+    certificateData
+    // fontData
   );
   // send confirmation mail to supervisor
   return await sendMail(
