@@ -15,6 +15,7 @@ const fontkit = require("@pdf-lib/fontkit");
  * Add fillable form fields (aka acro form fields) with specific field titles.
  * Provide data for these fillable form fields.
  * fontData is optional, but provides further customization. Default font is Helvetica.
+ * Using StandardFonts built in fonts will result in a quicker generation.
  *
  * @param {String} documentName
  * @param {Object} certificateDetails
@@ -47,37 +48,47 @@ async function generatePDFCertificate(
   const form = pdfDoc.getForm();
 
   // init array to track fonts used and prevent embedding a font multiple times
-  let usedFonts = [];
-
   // loop through provided details and match details to form fields, with provided formatting
+  // Create a Map object to store embedded fonts
+  const fontCache = new Map();
 
-  for (let detail in certificateDetails) {
+  for (const detail in certificateDetails) {
     const field = form.getTextField(detail);
     if (field) {
       field.setText(certificateDetails[detail]);
       if (fontData && fontData[detail]) {
         const { font, size } = fontData[detail];
-        let finalStyle = null;
+        let finalStyle;
 
-        const localFont = localfonts.find((obj) => obj["name"] === `${font}`);
-        const fontUsed = usedFonts.find((obj) => obj["name"] === `${font}`);
-
-        if (fontUsed) finalStyle = fontUsed;
-        else {
-          finalStyle = localFont
-            ? await pdfDoc.embedFont(fs.readFileSync(localFont.path))
-            : await pdfDoc.embedFont(StandardFonts[`${font}`]);
+        // Check if the font has already been embedded
+        if (!fontCache.has(font)) {
+          const localFont = localfonts.find((obj) => obj["name"] === font);
+          const readFilePromise = localFont
+            ? fs.promises.readFile(localFont.path)
+            : Promise.resolve();
+          finalStyle = await readFilePromise.then((data) => {
+            if (localFont) {
+              return pdfDoc.embedFont(data);
+            } else {
+              return pdfDoc.embedFont(StandardFonts[font]);
+            }
+          });
+          fontCache.set(font, finalStyle);
+        } else {
+          // Retrieve the cached font
+          finalStyle = fontCache.get(font);
         }
 
-        usedFonts.push(finalStyle);
         field.setFontSize(size);
         field.updateAppearances(finalStyle);
       }
     }
   }
+
   form.flatten();
 
   // Save the PDF document to a buffer
+
   const pdfBytes = await pdfDoc.save();
   return pdfBytes;
 }

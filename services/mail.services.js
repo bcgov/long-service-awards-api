@@ -276,43 +276,44 @@ module.exports.sendRSVP = async (data) => {
     CityProvince: `${attendee.ceremony.address.community}, ${attendee.ceremony.address.province}`,
   };
   const fontData = {
-    Name: { font: "BCSans-Bold", size: 16 },
-    Date: { font: "BCSans-Bold", size: 14 },
+    Name: { font: "TimesRomanBold", size: 16 },
+    Date: { font: "TimesRomanBold", size: 14 },
     Address1: { font: "CormorantGaramond-Light", size: 20 },
     Address2: { font: "CormorantGaramond-Light", size: 20 },
     CityProvince: { font: "CormorantGaramond-Light", size: 20 },
   };
-  const certificateAttachment = await generatePDFCertificate(
+
+  return await generatePDFCertificate(
     certificateTemplate,
-    certificateData
-    // fontData
-  );
-  // send confirmation mail to supervisor
-  return await sendMail(
-    [email],
-    "Your Long Service Awards Invitation",
-    "email-recipient-ceremony-invitation.ejs",
-    {
-      link: link,
-      attendee: attendee,
-      expiry: expiry,
-      deadline: new Date(deadline).toLocaleDateString("en-us", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-    },
-    process.env.MAIL_FROM_ADDRESS,
-    process.env.MAIL_FROM_NAME,
-    [
+    certificateData,
+    fontData
+  ).then(async (pdfCertificate) => {
+    await sendMail(
+      [email],
+      "Your Long Service Awards Invitation",
+      "email-recipient-ceremony-invitation.ejs",
       {
-        filename: "LSAInvitation.pdf",
-        content: certificateAttachment,
-        contentType: "application/pdf",
+        link: link,
+        attendee: attendee,
+        expiry: expiry,
+        deadline: new Date(deadline).toLocaleDateString("en-us", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
       },
-    ],
-    null
-  );
+      process.env.MAIL_FROM_ADDRESS,
+      process.env.MAIL_FROM_NAME,
+      [
+        {
+          filename: "LSAInvitation.pdf",
+          content: pdfCertificate,
+          contentType: "application/pdf",
+        },
+      ],
+      null
+    );
+  });
 };
 
 module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
