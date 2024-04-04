@@ -18,6 +18,7 @@ const fs = require("fs");
 
 async function generatePDFCertificate(documentName, certificateDetails) {
   const template_path = `resources/certificate_templates/${documentName}.pdf`;
+
   // Load the PDF template
   const templatePdfBytes = fs.readFileSync(template_path);
   const pdfDoc = await PDFDocument.load(templatePdfBytes);
@@ -29,12 +30,12 @@ async function generatePDFCertificate(documentName, certificateDetails) {
       field.setText(certificateDetails[detail]);
     }
   }
+  form.flatten();
 
   // Save the PDF document to a buffer
   const pdfBytes = await pdfDoc.save();
-  const pdfBase64 = pdfBytes.toString("base64");
 
-  return pdfBase64;
+  return pdfBytes;
 }
 
 exports.generatePDFCertificate = generatePDFCertificate;

@@ -9,7 +9,7 @@
 const ejs = require("ejs");
 const nodemailer = require("nodemailer");
 const path = require("path");
-// const fs = require("fs");
+const fs = require("fs");
 const Transaction = require("../models/transactions.model");
 const { decodeError } = require("../error");
 const { format } = require("date-fns");
@@ -102,8 +102,13 @@ const sendMail = async (
     const attachmentArray = [];
     if (attachments && Array.isArray(attachments)) {
       for (const attachment of attachments) {
-        const fileContent = fs.readFileSync(attachment.path);
-        const base64Content = Buffer.from(fileContent).toString("base64");
+        const fileContent = attachment.content
+          ? attachment.content
+          : fs.readFileSync(attachment.path);
+
+        const base64Content = attachment.content
+          ? attachment.content
+          : Buffer.from(fileContent).toString("base64");
 
         attachmentArray.push({
           filename: attachment.filename,
@@ -244,7 +249,8 @@ module.exports.sendRSVP = async (data) => {
   const { email, link, attendee, deadline } = data || {};
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 14);
-  //generate PDF attachment
+
+  //generate PDF Certificate attachment
   const certificateTemplate = "invitation_certificate";
   const certificateData = {
     Name: `${attendee.recipient.contact.first_name} ${attendee.recipient.contact.last_name}`,
@@ -256,8 +262,16 @@ module.exports.sendRSVP = async (data) => {
     }`,
     Address2: `${
       attendee.ceremony.venue
-        ? `${attendee.ceremony.address.street1}, ${attendee.ceremony.address.street2}`
-        : `${attendee.ceremony.address.street2}`
+        ? `${attendee.ceremony.address.street1}, ${
+            attendee.ceremony.address.street2
+              ? attendee.ceremony.address.street2
+              : ""
+          }`
+        : `${
+            attendee.ceremony.address.street2
+              ? attendee.ceremony.address.street2
+              : ""
+          }`
     }`,
     CityProvince: `${attendee.ceremony.address.community}, ${attendee.ceremony.address.province}`,
   };
