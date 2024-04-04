@@ -275,9 +275,17 @@ module.exports.sendRSVP = async (data) => {
     }`,
     CityProvince: `${attendee.ceremony.address.community}, ${attendee.ceremony.address.province}`,
   };
+  const fontData = {
+    Name: { font: "BCSans-Bold", size: 16 },
+    Date: { font: "BCSans-Bold", size: 14 },
+    Address1: { font: "CormorantGaramond-Light", size: 20 },
+    Address2: { font: "CormorantGaramond-Light", size: 20 },
+    CityProvince: { font: "CormorantGaramond-Light", size: 20 },
+  };
   const certificateAttachment = await generatePDFCertificate(
     certificateTemplate,
-    certificateData
+    certificateData,
+    fontData
   );
   // send confirmation mail to supervisor
   return await sendMail(
