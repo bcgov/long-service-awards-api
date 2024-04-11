@@ -5,6 +5,7 @@
  * MIT Licensed
  */
 
+const awardOptionsModel = require("../models/award-options.model.js");
 const Award = require("../models/awards.model.js");
 
 /**
@@ -128,10 +129,19 @@ exports.update = async (req, res, next) => {
     // check that recipient exists
     const { id } = req.params || {};
     const award = await Award.findById(id);
-
     // handle exception
     if (!award) return next(Error("noRecord"));
-
+    for (const option of award.attachments.options) {
+      if (
+        req.body.options.find((reqOption) => reqOption.id == option.id) ==
+        undefined
+      ) {
+        //option was deleted
+        await awardOptionsModel.remove(option.id);
+      }
+      //if (!req.body.options.find((reqOption) => (reqOption.id == option.id))
+      //  console.log("deleted a option!");
+    }
     // update record
     await award.save(req.body);
 
