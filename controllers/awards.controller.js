@@ -155,7 +155,9 @@ exports.update = async (req, res, next) => {
       result: award.data,
     });
   } catch (err) {
-    return next(err);
+    if (err.constraint != undefined && err.constraint === "award_options_ref") {
+      return next(Error("awardOptionInUse"));
+    } else return next(err);
   }
 };
 
