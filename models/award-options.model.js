@@ -23,6 +23,7 @@ const schema = {
   attributes: {
     id: {
       dataType: "integer",
+      serial: true,
       editable: false,
       required: true,
     },
@@ -86,7 +87,10 @@ module.exports = {
     awardOptions.award = award.id;
 
     // upsert record
-    return await defaults.upsert(awardOptions.data, schema);
+    return await db.award_options.upsert(awardOptions.data, schema, [
+      "award",
+      "value",
+    ]);
   },
   findAll: async ({
     offset = 0,

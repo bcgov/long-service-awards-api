@@ -22,6 +22,7 @@ const recipients = require("./recipients.queries.js");
 const organizations = require("./organizations.queries");
 const settings = require("./settings.queries");
 const transactions = require("./transactions.queries.js");
+const award_options = require("./award-options.queries.js");
 const { ModelConstructor } = require("../models/constructor.model");
 
 /**
@@ -46,6 +47,7 @@ module.exports = {
   organizations,
   settings,
   transactions,
+  award_options,
   generate: (schema) => {
     return {
       schema: schema,
