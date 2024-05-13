@@ -274,6 +274,7 @@ module.exports.sendRSVP = async (data) => {
           }`
     }`,
     CityProvince: `${attendee.ceremony.address.community}, ${attendee.ceremony.address.province}`,
+    Time: `${format(new Date(attendee.ceremony.datetime), `p`)}`,
   };
   const fontData = {
     Name: { font: "TimesRomanBold", size: 16 },
@@ -281,6 +282,7 @@ module.exports.sendRSVP = async (data) => {
     Address1: { font: "CormorantGaramond-Light", size: 20 },
     Address2: { font: "CormorantGaramond-Light", size: 20 },
     CityProvince: { font: "CormorantGaramond-Light", size: 20 },
+    Time: { font: "TimesRomanBold", size: 14 },
   };
 
   return await generatePDFCertificate(
