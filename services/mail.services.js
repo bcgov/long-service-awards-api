@@ -12,9 +12,10 @@ const path = require("path");
 const fs = require("fs");
 const Transaction = require("../models/transactions.model");
 const { decodeError } = require("../error");
-const { format } = require("date-fns");
+
 const exp = require("constants");
 const { generatePDFCertificate } = require("./pdf.services");
+const { format, formatInTimeZone } = require("date-fns-tz");
 
 // template directory
 const dirPath = "/resources/email_templates/";
@@ -274,7 +275,11 @@ module.exports.sendRSVP = async (data) => {
           }`
     }`,
     CityProvince: `${attendee.ceremony.address.community}, ${attendee.ceremony.address.province}`,
-    Time: `${format(new Date(attendee.ceremony.datetime), `p`)}`,
+    Time: `${formatInTimeZone(
+      new Date(attendee.ceremony.datetime),
+      "PST",
+      `p`
+    )}`,
   };
   const fontData = {
     Name: { font: "TimesRomanBold", size: 16 },
