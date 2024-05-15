@@ -287,7 +287,7 @@ module.exports.sendRSVP = async (data) => {
     Address1: { font: "CormorantGaramond-Light", size: 20 },
     Address2: { font: "CormorantGaramond-Light", size: 20 },
     CityProvince: { font: "CormorantGaramond-Light", size: 20 },
-    Time: { font: "TimesRomanBold", size: 14 },
+    Time: { font: "TimesRomanBoldItalic", size: 14 },
   };
 
   return await generatePDFCertificate(
