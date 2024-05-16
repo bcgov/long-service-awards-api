@@ -263,9 +263,9 @@ module.exports.sendRSVP = async (data) => {
     }`,
     Address2: `${
       attendee.ceremony.venue
-        ? `${attendee.ceremony.address.street1}, ${
+        ? `${attendee.ceremony.address.street1}${
             attendee.ceremony.address.street2
-              ? attendee.ceremony.address.street2
+              ? ", " + attendee.ceremony.address.street2
               : ""
           }`
         : `${
