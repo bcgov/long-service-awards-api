@@ -306,65 +306,69 @@ const attendeesQueries = {
 
     return {
       sql: `--Separate CTE/WITH queries to get list of milestones for each recipient, get dietary/accessibility per recipient+guest columns
-      WITH milestones_query AS
-      (SELECT string_agg(service_selections.milestone::varchar,',' ORDER BY milestone) AS milestones, service_selections.recipient 
-       FROM service_selections GROUP BY service_selections.recipient),
-      
-      accessibility_query AS 
-      (SELECT accommodation_selections.accommodation AS accessibility, attendees.recipient 
-       FROM accommodation_selections LEFT JOIN attendees ON attendees.id = accommodation_selections.attendee 
-       WHERE attendees.guest = 0 AND accommodation = 'accessibility' GROUP BY attendees.recipient, accommodation_selections.accommodation),
-      
-      accessibility_guest_query AS 
-      (SELECT accommodation_selections.accommodation AS accessibility, attendees.recipient 
-       FROM accommodation_selections LEFT JOIN attendees ON attendees.id = accommodation_selections.attendee 
-       WHERE attendees.guest > 0 AND accommodation = 'accessibility' GROUP BY attendees.recipient, accommodation_selections.accommodation),
-      
-      dietary_query AS
-      (SELECT string_agg(accommodation_selections.accommodation,',') AS accommodations, attendees.recipient 
-       FROM accommodation_selections LEFT JOIN attendees ON attendees.id = accommodation_selections.attendee 
-       WHERE accommodation != 'accessibility' AND attendees.guest = 0 GROUP BY attendees.recipient, accommodation_selections.attendee),
-      
-      dietary_guest_query AS
-      (SELECT string_agg(accommodation_selections.accommodation,',') AS accommodations, attendees.recipient 
-       FROM accommodation_selections LEFT JOIN attendees ON attendees.id = accommodation_selections.attendee 
-       WHERE accommodation != 'accessibility' AND attendees.guest > 0 GROUP BY attendees.recipient, accommodation_selections.attendee)
-      
-      
-      --Main query:
-      SELECT 
-            attendees.id AS "attendee_id",
-            outer_recipients.employee_number as "employee_number",
-            contacts.first_name,
-            contacts.last_name,
-            milestones_query.milestones,
-            CAST(DATE(ceremonies.datetime at time zone 'America/Vancouver') as TEXT) AS "ceremony_date",
-            organizations.name AS "ministry",
-            outer_recipients.branch,
-            attendees.status,
+        WITH milestones_query AS
+        (SELECT string_agg(service_selections.milestone::varchar,',' ORDER BY milestone) AS milestones, service_selections.recipient 
+        FROM service_selections GROUP BY service_selections.recipient),
+        
+        accessibility_query AS 
+        (SELECT accommodation_selections.accommodation AS accessibility, attendees.recipient 
+        FROM accommodation_selections LEFT JOIN attendees ON attendees.id = accommodation_selections.attendee 
+        WHERE attendees.guest = 0 AND accommodation = 'accessibility' GROUP BY attendees.recipient, accommodation_selections.accommodation),
+        
+        accessibility_guest_query AS 
+        (SELECT accommodation_selections.accommodation AS accessibility, attendees.recipient 
+        FROM accommodation_selections LEFT JOIN attendees ON attendees.id = accommodation_selections.attendee 
+        WHERE attendees.guest > 0 AND accommodation = 'accessibility' GROUP BY attendees.recipient, accommodation_selections.accommodation),
+        
+        dietary_query AS
+        (SELECT string_agg(accommodation_selections.accommodation,',') AS accommodations, attendees.recipient 
+        FROM accommodation_selections LEFT JOIN attendees ON attendees.id = accommodation_selections.attendee 
+        WHERE accommodation != 'accessibility' AND attendees.guest = 0 GROUP BY attendees.recipient, accommodation_selections.attendee),
+        
+        dietary_guest_query AS
+        (SELECT string_agg(accommodation_selections.accommodation,',') AS accommodations, attendees.recipient 
+        FROM accommodation_selections LEFT JOIN attendees ON attendees.id = accommodation_selections.attendee 
+        WHERE accommodation != 'accessibility' AND attendees.guest > 0 GROUP BY attendees.recipient, accommodation_selections.attendee)
+        
+        
+        --Main query:
+        SELECT 
+          attendees.id AS "attendee_id",
+          outer_recipients.employee_number as "employee_number",
+          contacts.first_name,
+          contacts.last_name,
+          milestones_query.milestones,
+          CAST(DATE(ceremonies.datetime at time zone 'America/Vancouver') as TEXT) AS "ceremony_date",
+          organizations.name AS "ministry",
+          outer_recipients.branch,
+          attendees.status,
+          CASE WHEN (SELECT COUNT(*) FROM attendees AS inner_attendees WHERE inner_attendees.recipient = outer_recipients.id) > 1 THEN 2
+            WHEN (SELECT COUNT(*) FROM attendees AS inner_attendees WHERE inner_attendees.recipient = outer_recipients.id AND inner_attendees.status = 'attending') = 1 THEN 1
+            WHEN (SELECT COUNT(*) FROM attendees AS inner_attendees WHERE inner_attendees.recipient = outer_recipients.id AND inner_attendees.status != 'attending') = 1 THEN 0 END "total_attending",
           CASE WHEN (SELECT COUNT(*) FROM attendees AS inner_attendees WHERE inner_attendees.recipient = outer_recipients.id) > 1 THEN 'Yes' ELSE 'No' END "has_guest",
           CASE WHEN accessibility_query.accessibility = 'accessibility' THEN 'Yes' ELSE 'No' END "accessibility",
           CASE WHEN accessibility_guest_query.accessibility = 'accessibility' THEN 'Yes' ELSE 'No' END "guest_accessibility",
           dietary_query.accommodations AS dietary,
           dietary_guest_query.accommodations AS dietary_guest
-            FROM attendees
-            LEFT JOIN recipients AS outer_recipients ON attendees.recipient = outer_recipients.id
-            LEFT JOIN contacts ON outer_recipients.contact = contacts.id
-            LEFT JOIN ceremonies ON attendees.ceremony = ceremonies.id
-            LEFT JOIN organizations ON outer_recipients.organization = organizations.id
-          LEFT JOIN milestones_query on attendees.recipient = milestones_query.recipient
-          LEFT JOIN accessibility_query ON attendees.recipient = accessibility_query.recipient
-          LEFT JOIN accessibility_guest_query ON attendees.recipient = accessibility_guest_query.recipient
-          LEFT JOIN dietary_query ON attendees.recipient = dietary_query.recipient
-          LEFT JOIN dietary_guest_query ON attendees.recipient = dietary_guest_query.recipient
-          ${
-            filterStatement === ""
-              ? "WHERE guest = 0"
-              : filterStatement + " AND guest = 0"
-          }
-            GROUP BY attendees.recipient, attendee_id, employee_number, first_name, last_name, milestones, 
-          ceremony_date, ministry, branch, attendees.status, accessibility_query.recipient, outer_recipients.id, 
-          dietary_query.accommodations, dietary_guest_query.accommodations, accessibility_query.accessibility, accessibility_guest_query.accessibility`,
+        FROM attendees
+        LEFT JOIN recipients AS outer_recipients ON attendees.recipient = outer_recipients.id
+        LEFT JOIN contacts ON outer_recipients.contact = contacts.id
+        LEFT JOIN ceremonies ON attendees.ceremony = ceremonies.id
+        LEFT JOIN organizations ON outer_recipients.organization = organizations.id
+        LEFT JOIN milestones_query on attendees.recipient = milestones_query.recipient
+        LEFT JOIN accessibility_query ON attendees.recipient = accessibility_query.recipient
+        LEFT JOIN accessibility_guest_query ON attendees.recipient = accessibility_guest_query.recipient
+        LEFT JOIN dietary_query ON attendees.recipient = dietary_query.recipient
+        LEFT JOIN dietary_guest_query ON attendees.recipient = dietary_guest_query.recipient
+        --WHERE Statement:
+        ${
+          filterStatement === ""
+            ? "WHERE guest = 0"
+            : filterStatement + " AND guest = 0"
+        }
+        GROUP BY attendees.recipient, attendee_id, employee_number, first_name, last_name, milestones, 
+        ceremony_date, ministry, branch, attendees.status, accessibility_query.recipient, outer_recipients.id, 
+        dietary_query.accommodations, dietary_guest_query.accommodations, accessibility_query.accessibility, accessibility_guest_query.accessibility`,
     };
   },
 };
