@@ -9,11 +9,13 @@
 const ejs = require("ejs");
 const nodemailer = require("nodemailer");
 const path = require("path");
-// const fs = require("fs");
+const fs = require("fs");
 const Transaction = require("../models/transactions.model");
 const { decodeError } = require("../error");
-const { format } = require("date-fns");
+
 const exp = require("constants");
+const { generatePDFCertificate } = require("./pdf.services");
+const { format, formatInTimeZone } = require("date-fns-tz");
 
 // template directory
 const dirPath = "/resources/email_templates/";
@@ -71,8 +73,8 @@ const sendMail = async (
   template,
   data,
   from,
-  fromName
-  // attachments,
+  fromName,
+  attachments
   // options={},
 ) => {
   // set mail parameters
@@ -96,11 +98,32 @@ const sendMail = async (
     const body = await ejs.renderFile(templatePath, templateData, {
       async: true,
     });
+
+    // Read attachments and convert them to base64 format
+    const attachmentArray = [];
+    if (attachments && Array.isArray(attachments)) {
+      for (const attachment of attachments) {
+        const fileContent = attachment.content
+          ? attachment.content
+          : fs.readFileSync(attachment.path);
+
+        const base64Content = attachment.content
+          ? attachment.content
+          : Buffer.from(fileContent).toString("base64");
+
+        attachmentArray.push({
+          filename: attachment.filename,
+          content: base64Content,
+          contentType: attachment.contentType || "application/octet-stream", // default content type
+        });
+      }
+    }
     const response = await transporter.sendMail({
       from: `"${fromName}" <${from}>`, // sender address
       to: to.join(", "), // list of receivers
       subject: subject, // subject line
       html: body, // html body
+      attachments: attachmentArray, // Add attachments array to the options object
     });
     // log send event
     await _logMail(null, response, data);
@@ -126,11 +149,14 @@ const sendMail = async (
  * Send registration email confirmation
  * @param recipient
  */
-module.exports.sendRegistrationConfirmation = async (recipient) => {
+module.exports.sendRegistrationConfirmation = async (recipient, user) => {
   // check status of registration
   const { service, supervisor, contact, organization } = recipient || {};
   const { confirmed, milestone } = service || {};
   const isLSA = milestone >= 25;
+  const development =
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "testing";
 
   // check if registration is confirmed
   if (!confirmed) return;
@@ -138,6 +164,16 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
   // select confirmation email
   // - LSA registrations (milestone >= 25)
   // - Service Pin registration (milestone < 25)
+
+  let contactEmail = contact.office_email;
+
+  if (contact.alternate_is_preferred === true) {
+    contactEmail = contact.personal_email;
+  }
+
+  if (development && user && user.email) {
+    contactEmail = user.email;
+  }
 
   const from = isLSA
     ? process.env.MAIL_FROM_ADDRESS
@@ -161,7 +197,11 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
 
   // send confirmation mail to supervisor
   const [error1, response1] = await sendMail(
-    [supervisor.office_email || ""],
+    [
+      development && user && user.email
+        ? user.email
+        : supervisor.office_email || "",
+    ],
     subject,
     supervisorTemplate,
     recipient,
@@ -173,7 +213,7 @@ module.exports.sendRegistrationConfirmation = async (recipient) => {
 
   // send confirmation mail to recipient
   const [error2, response2] = await sendMail(
-    [contact.office_email || ""],
+    [contactEmail || ""],
     subject,
     recipientTemplate,
     recipient,
@@ -210,26 +250,77 @@ module.exports.sendRSVP = async (data) => {
   const { email, link, attendee, deadline } = data || {};
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 14);
-  // send confirmation mail to supervisor
-  return await sendMail(
-    [email],
-    "Your Long Service Awards Invitation",
-    "email-recipient-ceremony-invitation.ejs",
-    {
-      link: link,
-      attendee: attendee,
-      expiry: expiry,
-      deadline: new Date(deadline).toLocaleDateString("en-us", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-    },
-    process.env.MAIL_FROM_ADDRESS,
-    process.env.MAIL_FROM_NAME,
-    [],
-    null
-  );
+
+  //generate PDF Certificate attachment
+  const certificateTemplate = "invitation_certificate";
+  const certificateData = {
+    Name: `${attendee.recipient.contact.first_name} ${attendee.recipient.contact.last_name}`,
+    Date: `${attendee.ceremony.datetime_formatted}`,
+    Address1: `${
+      attendee.ceremony.venue
+        ? attendee.ceremony.venue
+        : attendee.ceremony.address.street1
+    }`,
+    Address2: `${
+      attendee.ceremony.venue
+        ? `${attendee.ceremony.address.street1}${
+            attendee.ceremony.address.street2
+              ? ", " + attendee.ceremony.address.street2
+              : ""
+          }`
+        : `${
+            attendee.ceremony.address.street2
+              ? attendee.ceremony.address.street2
+              : ""
+          }`
+    }`,
+    CityProvince: `${attendee.ceremony.address.community}, ${attendee.ceremony.address.province}`,
+    Time: `${formatInTimeZone(
+      new Date(attendee.ceremony.datetime),
+      "PST",
+      `p`
+    )}`,
+  };
+  const fontData = {
+    Name: { font: "TimesRomanBold", size: 16 },
+    Date: { font: "TimesRomanBold", size: 14 },
+    Address1: { font: "CormorantGaramond-Light", size: 20 },
+    Address2: { font: "CormorantGaramond-Light", size: 20 },
+    CityProvince: { font: "CormorantGaramond-Light", size: 20 },
+    Time: { font: "TimesRomanBoldItalic", size: 14 },
+  };
+
+  return await generatePDFCertificate(
+    certificateTemplate,
+    certificateData,
+    fontData
+  ).then(async (pdfCertificate) => {
+    await sendMail(
+      [email],
+      "Your Long Service Awards Invitation",
+      "email-recipient-ceremony-invitation.ejs",
+      {
+        link: link,
+        attendee: attendee,
+        expiry: expiry,
+        deadline: new Date(deadline).toLocaleDateString("en-us", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
+      },
+      process.env.MAIL_FROM_ADDRESS,
+      process.env.MAIL_FROM_NAME,
+      [
+        {
+          filename: "LSAInvitation.pdf",
+          content: pdfCertificate,
+          contentType: "application/pdf",
+        },
+      ],
+      null
+    );
+  });
 };
 
 module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {

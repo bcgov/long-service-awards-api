@@ -149,14 +149,12 @@ exports.update = async (req, res, next) => {
     const data = req.body;
     const attendee = await Attendees.findById(data.id);
 
-    console.log(data);
-
     // handle exception
     if (!attendee) return next(Error("noRecord"));
 
     // recreate accommodations to have only attendee, accommodation fields to match the model
     let accommodationsArr = [];
-    if (data.accommodation_selections[0]) {
+    if (data.accommodation_selections && data.accommodation_selections[0]) {
       Object.keys(data.accommodation_selections[0]).forEach(async (key) => {
         if (data.accommodation_selections[0][key] === true) {
           accommodationsArr.push(
@@ -273,12 +271,12 @@ exports.send = async (req, res, next) => {
     // });
     const data = req.body || {};
     const recipient = data.recipient;
-    // let email = recipient.contact.office_email;
+    const development = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "testing";
+    let email = recipient.contact.office_email;
 
-    let email =
-      recipient.contact.alternative_is_preferred === true
-        ? recipient.contact.personal_email
-        : recipient.contact.office_email;
+    if (recipient.contact.alternative_is_preferred === true) {
+      email = recipient.contact.personal_email;
+    }
 
     let response = null;
 
@@ -292,13 +290,18 @@ exports.send = async (req, res, next) => {
         email = recipient.contact.personal_email;
     }
 
+    if (development && res.locals && res.locals.user && res.locals.user.email) {
+      email = res.locals.user.email;
+    }
+
     var RsvpSendDate = new Date(); //today
     // var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
 
     // const deadline = await Settings.findById("rsvp-deadline"); - WHY THIS DOESN'T WORK?
 
     const settings = await Settings.findAll();
-    const deadline = settings.find((s) => s.name === "rsvp-deadline").value;
+    const currentYear = new Date().getFullYear();
+    const deadline = settings.find((s) => s?.name === "rsvp-deadline")?.value || `Jul 28, ${currentYear} 23:59:59`;
 
     const expiry = Math.ceil(
       Math.abs(RsvpSendDate.getTime() - new Date(deadline).getTime()) / 1000

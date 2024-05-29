@@ -84,6 +84,7 @@ exports.register = async (req, res, next) => {
 exports.save = async (req, res, next) => {
   try {
     let { guid = null } = res.locals.user || {};
+    let user = res.locals.user || null
 
     // check that recipient exists
     const recipient = await Recipient.findByGUID(guid);
@@ -116,7 +117,7 @@ exports.save = async (req, res, next) => {
       // update record
       await recipient.save(req.body);
       // send confirmation email (if confirmed)
-      await sendRegistrationConfirmation(recipient.data);
+      await sendRegistrationConfirmation(recipient.data, user);
     } else {
       // save draft registration
       await recipient.save(req.body);

@@ -216,6 +216,12 @@ const errors = {
     status: 500,
     type: "error",
   },
+  awardOptionInUse: {
+    hint: "Award option is in use.",
+    msg: "The award option you are trying to delete is in use by a recipient, and cannot be deleted due to data loss. Please create a new award option, or re-create the award and all it's options.",
+    status: 500,
+    type: "error",
+  },
 };
 
 /**

@@ -122,7 +122,7 @@ const session = {
   saveUninitialized: false,
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
-    secure: nodeENV === "production",
+    secure: nodeENV === "production" || nodeENV === "testing",
   },
   // Insert express-session options here
 };
