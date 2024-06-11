@@ -271,10 +271,12 @@ exports.send = async (req, res, next) => {
     // });
     const data = req.body || {};
     const recipient = data.recipient;
-    const development = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "testing";
+    const development =
+      process.env.NODE_ENV === "development" ||
+      process.env.NODE_ENV === "testing";
     let email = recipient.contact.office_email;
 
-    if (recipient.contact.alternative_is_preferred === true) {
+    if (recipient.contact.alternate_is_preferred === true) {
       email = recipient.contact.personal_email;
     }
 
@@ -301,7 +303,9 @@ exports.send = async (req, res, next) => {
 
     const settings = await Settings.findAll();
     const currentYear = new Date().getFullYear();
-    const deadline = settings.find((s) => s?.name === "rsvp-deadline")?.value || `Jul 28, ${currentYear} 23:59:59`;
+    const deadline =
+      settings.find((s) => s?.name === "rsvp-deadline")?.value ||
+      `Jul 28, ${currentYear} 23:59:59`;
 
     const expiry = Math.ceil(
       Math.abs(RsvpSendDate.getTime() - new Date(deadline).getTime()) / 1000
