@@ -101,6 +101,12 @@ exports.update = async (req, res, next) => {
     }
 
     let email = recipient_attendee.data.recipient.contact.office_email;
+    if (
+      recipient_attendee.data.recipient.contact.alternate_is_preferred === true
+    ) {
+      email = recipient_attendee.data.recipient.contact.personal_email;
+    }
+
     // Create 48 hour grace period
     const todayPlusGracePeriod = new Date();
     todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
@@ -111,10 +117,13 @@ exports.update = async (req, res, next) => {
         email = recipient_attendee.data.recipient.contact.personal_email;
     }
 
-    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === "testing") {
-      if(res.locals && res.locals.user && res.locals.user.email){
+    if (
+      process.env.NODE_ENV === "development" ||
+      process.env.NODE_ENV === "testing"
+    ) {
+      if (res.locals && res.locals.user && res.locals.user.email) {
         email = res.locals.user.email;
-      }   
+      }
     }
 
     // Send RSVP confirmation
