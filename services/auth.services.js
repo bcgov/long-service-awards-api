@@ -108,7 +108,7 @@ exports.authenticateSMS = async (req, res, next) => {
     // check if Public endpoints, API test, RSVP
     if (
       req.url === "/" ||
-      req.url === "/accommodations/list" ||
+      req.url === "/rsvp/accommodations/list" ||
       req.url.match("^/(rsvp)/[^/]+/[^/]+$")
     )
       return next();
