@@ -120,8 +120,12 @@ exports.update = async (req, res, next) => {
         email = recipient_attendee.data.recipient.contact.personal_email;
     }
 
-    if (development && res.locals && res.locals.user && res.locals.user.email) {
-      email = res.locals.user.email;
+    if (development) {
+      if (req.user && req.user.email) email = req.user.email;
+      else {
+        email = undefined;
+        throw (err = "Admin user not logged in");
+      }
     }
 
     // Send RSVP confirmation
