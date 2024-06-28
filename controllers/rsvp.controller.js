@@ -45,6 +45,9 @@ exports.update = async (req, res, next) => {
     const token = req.params.token;
     const valid = await validateToken(id, token);
     const accept = req.body.attendance_confirmed;
+    const development =
+      process.env.NODE_ENV === "development" ||
+      process.env.NODE_ENV === "testing";
 
     if (!valid) throw (err = "Not Valid");
 
@@ -117,12 +120,11 @@ exports.update = async (req, res, next) => {
         email = recipient_attendee.data.recipient.contact.personal_email;
     }
 
-    if (
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "testing"
-    ) {
-      if (res.locals && res.locals.user && res.locals.user.email) {
-        email = res.locals.user.email;
+    if (development) {
+      if (req.user && req.user.email) email = req.user.email;
+      else {
+        email = undefined;
+        throw (err = "Admin user not logged in");
       }
     }
 
