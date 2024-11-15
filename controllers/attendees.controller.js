@@ -303,9 +303,7 @@ exports.send = async (req, res, next) => {
 
     const settings = await Settings.findAll();
     const currentYear = new Date().getFullYear();
-    const deadline =
-      settings.find((s) => s?.name === "rsvp-deadline")?.value ||
-      `Jul 29, ${currentYear} 16:59:59`;
+    const deadline = `Aug 31, ${currentYear} 16:59:59`;
 
     const expiry = Math.ceil(
       Math.abs(RsvpSendDate.getTime() - new Date(deadline).getTime()) / 1000

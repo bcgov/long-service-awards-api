@@ -11,6 +11,7 @@ const Accommodations = require("../models/accommodations.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
 const { convertDate } = require("../services/validation.services.js");
 const { deleteToken, validateToken } = require("../services/cache.services");
+const settings = require("../models/settings.model.js");
 /**
  * Send invite emails for selected recipients
  *
@@ -27,8 +28,23 @@ exports.get = async (req, res, next) => {
     const token = req.params.token;
 
     const valid = await validateToken(id, token);
-
     if (!valid) return next(Error("noToken"));
+
+    // Check if RSVP is active and within open period
+    const rsvpActive = await settings.findById("ceremony-rsvp-active");
+    //Note: RSVP open date is not used however this could be used for scheduling at a later date.
+    const rsvpPeriodOpen = (await settings.findById("ceremony-rsvp-open-date"))
+      .value;
+    const rsvpPeriodClose = (
+      await settings.findById("ceremony-rsvp-close-date")
+    ).value;
+    const now = new Date(Date.now());
+    const isRsvpPeriod =
+      now > new Date(rsvpPeriodOpen) && now < new Date(rsvpPeriodClose);
+
+    // These errors are not used on the front end yet - any error will display "Your invitation has expired." on the frontend
+    if (!rsvpActive && isRsvpPeriod) return next(Error("temporarilyClosed"));
+    if (!isRsvpPeriod) return next(Error("rsvpClosed"));
 
     const results = await Attendees.findById(id);
     if (!results) return next(Error("noToken"));
