@@ -297,16 +297,18 @@ exports.send = async (req, res, next) => {
     }
 
     var RsvpSendDate = new Date(); //today
-    // var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
-
-    // const deadline = await Settings.findById("rsvp-deadline"); - WHY THIS DOESN'T WORK?
 
     const settings = await Settings.findAll();
     const currentYear = new Date().getFullYear();
-    const deadline = `Aug 31, ${currentYear} 16:59:59`;
+    const deadline =
+      settings.find((s) => s?.name === "ceremony-rsvp-close-date")?.value ||
+      `Jul 28, ${currentYear} 16:59:59`;
 
+    // LSA-497 Expire tokens on Aug 31, well past close date, incase changes need to be made or RSVP period needs extensions
+    const tokenExpireDate = `Aug 31, ${currentYear} 16:59:59`;
     const expiry = Math.ceil(
-      Math.abs(RsvpSendDate.getTime() - new Date(deadline).getTime()) / 1000
+      Math.abs(RsvpSendDate.getTime() - new Date(tokenExpireDate).getTime()) /
+        1000
     );
     const token = await rsvpToken(data.id, expiry);
     const valid = await validateToken(data.id, token);
