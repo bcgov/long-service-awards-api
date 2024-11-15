@@ -6,6 +6,7 @@
  */
 
 const Recipient = require("../models/recipients.model.js");
+const Global = require("../models/settings.model.js");
 const uuid = require("uuid");
 
 /**
@@ -65,6 +66,26 @@ exports.get = async (req, res, next) => {
     res.status(200).json({
       message: {},
       result: recipient.data,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.exists = async (req, res, next) => {
+  try {
+    // count number of recipients based on employee number and cycle and returns true if it exists (LSA-478)
+    const { employee_number } = req.params || {};
+    
+    const cycle = ( (await Global.findById("cycle"))?.value ) || (new Date().getFullYear());
+
+    const count = await Recipient.checkForRecipientInCycle(employee_number, cycle);
+    // handle exception
+    if (!count) return next(Error("dbError"));
+
+    res.status(200).json({
+      message: {},
+      result: count.total_filtered_records != '0',
     });
   } catch (err) {
     return next(err);

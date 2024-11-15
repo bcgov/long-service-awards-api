@@ -224,7 +224,17 @@ module.exports = {
     // look up existing recipient contact/supervisor info
     return construct(await db.attendees.findRecipient(id, type, schema));
   },
+  countByEmployeeNumber: async (employeeNumber) => {
+    // count the number of entries in the DB based on the recipient's employee number (LSA-478)
+    return await db.recipients.count( {"employee_number": employeeNumber } );
+  },
+  findByEmployeeNumber: async (employeeNumber) => {
+    return construct(await db.defaults.findOneByField("employee_number", employeeNumber, schema));
+  },
+  checkForRecipientInCycle: async (employeeNumber, cycle) => {
 
+    return await db.recipients.checkForRecipientInCycle(employeeNumber, cycle);
+  },
   findAttachment: async (parentID, parentField, parentSchema) => {
     // look up addresses for requested reference and type
     return construct(
