@@ -242,7 +242,7 @@ exports.duplicatesInCycle = async (req, res, next) => {
 
     const duplicates = await Recipient.duplicatesInCycle(queryYear);
 
-    const test = true;
+    const test = !true;
 
     const csvData = Papa.unparse(duplicates || [ ['Duplicates'], ['None for Cycle'] ], { newline: test ? "<br />" : "\n" });
 
@@ -250,7 +250,7 @@ exports.duplicatesInCycle = async (req, res, next) => {
 
       return res.status(200).send(csvData)
     }
-    
+
     pipeCSV(res, csvData, filename);
     
   } catch (err) {
