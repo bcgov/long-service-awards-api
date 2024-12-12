@@ -806,6 +806,53 @@ const recipientQueries = {
       },
     ];
   },
+  duplicatesInCycle: (cycle) => {
+
+    return {
+
+      sql: `
+        WITH duplicates AS (
+          SELECT 
+            recipients.employee_number, 
+            COUNT(recipients.employee_number) AS occurrences
+          FROM service_selections, recipients
+          WHERE service_selections.cycle = $1::integer
+            AND service_selections.recipient = recipients.id
+          GROUP BY 
+            recipients.employee_number 
+          HAVING
+            COUNT(recipients.employee_number) >= 2
+        )
+
+        SELECT 
+          recipients.employee_number,
+          contacts.first_name,
+          contacts.last_name,
+          contacts.office_email,
+          contacts.office_phone,
+          contacts.personal_email,
+          contacts.personal_phone,
+          service_selections.cycle,
+          service_selections.milestone,
+          service_selections.delegated,
+	        service_selections.confirmed,
+          duplicates.occurrences
+        FROM 
+          duplicates,
+          recipients, 
+          contacts,
+          service_selections
+        WHERE 
+          recipients.employee_number = duplicates.employee_number AND
+          contacts.id = recipients.contact AND
+          service_selections.recipient = recipients.id AND
+          service_selections.cycle = $1::integer
+        ORDER BY
+          recipients.employee_number
+      `,
+      data: [cycle]
+    }
+  }
 };
 exports.queries = recipientQueries;
 
@@ -1165,4 +1212,16 @@ exports.stats = async (schema, cycle) => {
 
 exports.remove = async (id, schema) => {
   return await defaults.removeByFields(["id"], [id], schema);
+};
+
+/**
+ * Find duplicate entries in cycle based on employee number
+ * 
+ * @param {int} cycle 
+ * @return {Promise} results 
+ */
+
+exports.duplicatesInCycle = async(cycle) => {
+
+  return await query(recipientQueries.duplicatesInCycle(cycle));
 };

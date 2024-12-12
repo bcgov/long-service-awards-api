@@ -320,4 +320,8 @@ module.exports = {
   removeAll: async () => {
     await db.defaults.removeAll(schema);
   },
+  duplicatesInCycle: async (cycle) => {
+
+    return await db.recipients.duplicatesInCycle(cycle);
+  }
 };
