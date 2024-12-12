@@ -26,5 +26,6 @@ router.get("/attendees", authorizeOrgContact, controller.attendees);
 router.get("/transactions", authorizeAdmin, controller.transactions);
 router.get("/pecsf-certificates", authorizeAdmin, controller.pecsf);
 router.get("/lsa-count", authorizeAdmin, controller.count);
+router.get("/duplicates", authorizeAdmin, controller.duplicatesInCycle);
 
 module.exports = router;

@@ -232,3 +232,29 @@ exports.count = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.duplicatesInCycle = async (req, res, next) => {
+  try {
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+   
+    const filename = `duplicates-per-cycle-${queryYear}.csv`;
+
+    const duplicates = await Recipient.duplicatesInCycle(queryYear);
+
+    const test = true;
+
+    const csvData = Papa.unparse(duplicates || [ ['Duplicates'], ['None for Cycle'] ], { newline: test ? "<br />" : "\n" });
+
+    if ( test ) {
+
+      return res.status(200).send(csvData)
+    }
+    
+    pipeCSV(res, csvData, filename);
+    
+  } catch (err) {
+    return next(err);
+  }
+
+}
