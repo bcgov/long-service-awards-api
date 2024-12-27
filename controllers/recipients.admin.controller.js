@@ -8,6 +8,7 @@
 const Recipient = require("../models/recipients.model.js");
 const Global = require("../models/settings.model.js");
 const uuid = require("uuid");
+const settings = require("../models/settings.model.js");
 
 /**
  * Retrieve all records.
@@ -76,16 +77,20 @@ exports.exists = async (req, res, next) => {
   try {
     // count number of recipients based on employee number and cycle and returns true if it exists (LSA-478)
     const { employee_number } = req.params || {};
-    
-    const cycle = ( (await Global.findById("cycle"))?.value ) || (new Date().getFullYear());
 
-    const count = await Recipient.checkForRecipientInCycle(employee_number, cycle);
+    const cycle =
+      (await Global.findById("cycle"))?.value || new Date().getFullYear();
+
+    const count = await Recipient.checkForRecipientInCycle(
+      employee_number,
+      cycle
+    );
     // handle exception
     if (!count) return next(Error("dbError"));
 
     res.status(200).json({
       message: {},
-      result: count.total_filtered_records != '0',
+      result: count.total_filtered_records != "0",
     });
   } catch (err) {
     return next(err);
@@ -143,24 +148,45 @@ exports.create = async (req, res, next) => {
 
 exports.save = async (req, res, next) => {
   try {
-    // check that recipient exists
-    const { id } = req.params || {};
-    const recipient = await Recipient.findById(id, res.locals.user);
+    const userRole = req.user.role.name;
+    const activeEditing = await settings.findOneByField(
+      "name",
+      "nonadmin-editing-active"
+    );
+    const activeEditingValue = activeEditing ? activeEditing.value : false;
 
-    // handle exception
-    if (!recipient) return next(Error("noRecord"));
+    if (
+      ["administrator", "super-administrator"].includes(userRole) ||
+      activeEditingValue === "true"
+    ) {
+      // check that recipient exists
+      const { id } = req.params || {};
+      const recipient = await Recipient.findById(id, res.locals.user);
 
-    // update record
-    await recipient.save(req.body);
+      // handle exception
+      if (!recipient) return next(Error("noRecord"));
 
-    res.status(200).json({
-      message: {
-        severity: "success",
-        summary: "Recipient Saved Successfully!",
-        detail: "Recipient record saved.",
-      },
-      result: recipient.data,
-    });
+      // update record
+      await recipient.save(req.body);
+
+      res.status(200).json({
+        message: {
+          severity: "success",
+          summary: "Recipient Saved Successfully!",
+          detail: "Recipient record saved.",
+        },
+        result: recipient.data,
+      });
+    } else {
+      res.status(401).json({
+        message: {
+          severity: "error",
+          summary: "Error saving!",
+          detail: "Error saving",
+        },
+        result: undefined,
+      });
+    }
   } catch (err) {
     return next(err);
   }
@@ -215,9 +241,31 @@ exports.assign = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
-    const id = req.params.id;
-    const results = await Recipient.remove(id);
-    res.status(200).json(results);
+    //const userRole = req.user.role.name;
+    const userRole = "delegate";
+    const activeEditing = await settings.findOneByField(
+      "name",
+      "nonadmin-editing-active"
+    );
+    const activeEditingValue = activeEditing ? activeEditing.value : false;
+
+    if (
+      ["administrator", "super-administrator"].includes(userRole) ||
+      activeEditingValue === "true"
+    ) {
+      const id = req.params.id;
+      const results = await Recipient.remove(id);
+      res.status(200).json(results);
+    } else {
+      res.status(401).json({
+        message: {
+          severity: "error",
+          summary: "Error saving!",
+          detail: "Error saving",
+        },
+        result: undefined,
+      });
+    }
   } catch (err) {
     return next(err);
   }
