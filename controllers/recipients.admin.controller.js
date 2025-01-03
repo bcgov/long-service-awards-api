@@ -241,8 +241,11 @@ exports.assign = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
-    //const userRole = req.user.role.name;
-    const userRole = "delegate";
+    const userRole = req.user.role.name;
+    /*
+      Guessing this line was done in order to test permissions.
+      const userRole = "delegate";
+    */
     const activeEditing = await settings.findOneByField(
       "name",
       "nonadmin-editing-active"
