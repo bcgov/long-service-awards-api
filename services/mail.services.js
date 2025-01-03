@@ -246,12 +246,22 @@ module.exports.sendResetPassword = async (data) => {
   );
 };
 
-module.exports.sendReminder = async (data) => {
+module.exports.sendReminder = async (data, user) => {
 
   const { email, attendee } = data || {};
 
+  let contactEmail = email;
+
+  const development =
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "testing";
+
+  if (development && user && user.email) {
+    contactEmail = user.email;
+  }
+
   return await sendMail(
-    [email],
+    [contactEmail],
     "Your Long Service Awards Ceremony Reminder",
     "email-recipient-ceremony-reminder.ejs",
     {

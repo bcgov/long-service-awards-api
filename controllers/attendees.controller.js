@@ -282,10 +282,12 @@ exports.sendReminder = async (req, res, next) => {
       email = recipient.contact.personal_email;
     }
 
+    const user = res.locals.user;
+
     const response = await sendReminder({
       email,
       attendee: data
-    });
+    }, user);
     return res.status(200).json({
       message: "success",
       response: response,
