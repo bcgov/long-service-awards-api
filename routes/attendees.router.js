@@ -24,5 +24,7 @@ router.get("/delete/:id", authorizeAdmin, controller.remove);
 
 //Send RSVP email
 router.post("/send", authorizeAdmin, controller.send);
+router.post('/reminder', authorizeAdmin, controller.sendReminder);
+
 
 module.exports = router;

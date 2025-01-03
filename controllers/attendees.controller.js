@@ -9,7 +9,7 @@ const Attendees = require("../models/attendees.model.js");
 const Settings = require("../models/settings.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
 const uuid = require("uuid");
-const { sendRSVP } = require("../services/mail.services");
+const { sendRSVP, sendReminder } = require("../services/mail.services");
 const { rsvpToken, validateToken } = require("../services/cache.services");
 const { convertDate } = require("../services/validation.services.js");
 
@@ -257,6 +257,44 @@ exports.removeAll = async (req, res, next) => {
     const results = await Attendees.removeAll();
     res.status(200).json(results);
   } catch (err) {
+    return next(err);
+  }
+};
+
+/**
+ * Send reminder email for ceremony
+ * 
+ * @param req 
+ * @param res 
+ * @param next
+ */
+
+exports.sendReminder = async (req, res, next) => {
+
+  try {
+
+    const data = req.body || {};
+    const recipient = data.recipient;
+    
+    let email = recipient.contact.office_email;
+
+    if (recipient.contact.alternate_is_preferred === true) {
+      email = recipient.contact.personal_email;
+    }
+
+    const response = await sendReminder({
+      email,
+      attendee: data
+    });
+    return res.status(200).json({
+      message: "success",
+      response: response,
+    });
+
+  }
+  catch (err) {
+
+    console.log(e);
     return next(err);
   }
 };
