@@ -322,6 +322,8 @@ module.exports = {
   },
   duplicatesInCycle: async (cycle) => {
 
+    // LSA-516 Create report that lists duplicate entries for selected cycle based on employee numbers
+
     return await db.recipients.duplicatesInCycle(cycle);
   }
 };

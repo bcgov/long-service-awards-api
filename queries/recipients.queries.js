@@ -808,6 +808,8 @@ const recipientQueries = {
   },
   duplicatesInCycle: (cycle) => {
 
+    // LSA-516 Create query that lists duplicate entries for selected cycle based on employee numbers
+
     return {
 
       sql: `
@@ -1215,7 +1217,7 @@ exports.remove = async (id, schema) => {
 };
 
 /**
- * Find duplicate entries in cycle based on employee number
+ * LSA-516 Create report that lists duplicate entries for selected cycle based on employee numbers
  * 
  * @param {int} cycle 
  * @return {Promise} results 

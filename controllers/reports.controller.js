@@ -233,6 +233,7 @@ exports.count = async (req, res, next) => {
   }
 };
 
+// LSA-516 Create report that lists duplicate entries for selected cycle based on employee numbers
 exports.duplicatesInCycle = async (req, res, next) => {
   try {
     // get requested LSA cycle
