@@ -246,6 +246,26 @@ module.exports.sendResetPassword = async (data) => {
   );
 };
 
+module.exports.sendReminder = async (data) => {
+
+  const { email, attendee } = data || {};
+
+  return await sendMail(
+    [email],
+    "Your Long Service Awards Ceremony Reminder",
+    "email-recipient-ceremony-reminder.ejs",
+    {
+      
+      attendee: attendee,
+      
+    },
+    process.env.MAIL_FROM_ADDRESS,
+    process.env.MAIL_FROM_NAME,
+    [],
+    null
+  );
+}
+
 module.exports.sendRSVP = async (data) => {
   const { email, link, attendee, deadline } = data || {};
   const expiry = new Date();
