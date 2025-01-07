@@ -6,7 +6,6 @@
  */
 
 const Recipient = require("../models/recipients.model.js");
-const Global = require("../models/settings.model.js");
 const uuid = require("uuid");
 const settings = require("../models/settings.model.js");
 
@@ -79,7 +78,7 @@ exports.exists = async (req, res, next) => {
     const { employee_number } = req.params || {};
 
     const cycle =
-      (await Global.findById("cycle"))?.value || new Date().getFullYear();
+      (await settings.findById("cycle"))?.value || new Date().getFullYear();
 
     const count = await Recipient.checkForRecipientInCycle(
       employee_number,
