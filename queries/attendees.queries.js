@@ -386,10 +386,20 @@ const getFilters = (filter) => {
     filters.push(`attendees.guest = '${filter.guest}'`);
   if (filter.hasOwnProperty("ceremony_noshow") && filter.ceremony_noshow)
     filters.push(`attendees.ceremony_noshow = '${filter.ceremony_noshow}'`);
-  if (filter.hasOwnProperty("cycle") && filter.cycle)
-    filters.push(
-      `ceremonies.datetime >= '${filter.cycle}-01-01' AND ceremonies.datetime <= '${filter.cycle}-12-31'`
-    );
+  if (filter.hasOwnProperty("cycle") && filter.cycle) {
+
+    // LSA-520 Split cycle years to avoid type cast error in SQL
+    const cycles = filter.cycle.split(/,/);
+    const cycleFilters = [];
+    cycles.forEach(cycle => {
+
+      cycleFilters.push(
+        `(ceremonies.datetime >= '${cycle}-01-01' AND ceremonies.datetime <= '${cycle}-12-31')`
+      );
+    });
+
+    filters.push( `( ${cycleFilters.join(" OR ")} )`);
+  }
   if (filter.hasOwnProperty("status") && filter.status) {
     //Multi-select field - create their own OR clause
     const statuses = filter.status.split(",");
