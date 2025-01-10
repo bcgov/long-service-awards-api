@@ -262,7 +262,7 @@ exports.removeAll = async (req, res, next) => {
 };
 
 /**
- * Send reminder email for ceremony
+ * LSA-510 Send reminder email for ceremony
  * 
  * @param req 
  * @param res 
@@ -275,7 +275,11 @@ exports.sendReminder = async (req, res, next) => {
 
     const data = req.body || {};
     const recipient = data.recipient;
-    
+
+    const settings = await Settings.findAll();
+    const currentYear = new Date().getFullYear();
+    const cycleYear = settings.find((s) => s?.name === "cycle")?.value || currentYear;
+
     let email = recipient.contact.office_email;
 
     if (recipient.contact.alternate_is_preferred === true) {
@@ -286,6 +290,7 @@ exports.sendReminder = async (req, res, next) => {
 
     const response = await sendReminder({
       email,
+      cycleYear,
       attendee: data
     }, user);
     return res.status(200).json({

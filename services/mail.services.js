@@ -246,9 +246,10 @@ module.exports.sendResetPassword = async (data) => {
   );
 };
 
+// LSA-510 Send reminder email for ceremony
 module.exports.sendReminder = async (data, user) => {
 
-  const { email, attendee } = data || {};
+  const { email, attendee, cycleYear } = data || {};
 
   let contactEmail = email;
 
@@ -265,7 +266,7 @@ module.exports.sendReminder = async (data, user) => {
     "Your Long Service Awards Ceremony Reminder",
     "email-recipient-ceremony-reminder.ejs",
     {
-      
+      cycleYear,
       attendee: attendee,
       
     },

@@ -6,14 +6,14 @@
     <div class="container" style="width: 600px">
       <%- await include('email-banner'); %>
 
-      <h3>Reminder: The Government of British Columbia is pleased to invite</h3>
+      <h3>Important ceremony information</h3>
 
       <h2>
         <%= attendee.recipient.contact.first_name %> <%=
         attendee.recipient.contact.last_name %>
       </h2>
 
-      <h3>to the Long Service Awards Ceremony</h3>
+      
 
       <table
         cellpadding="5"
@@ -52,14 +52,32 @@
         </tbody>
       </table>
 
-      <p>This invitation is for the intended recipient and a guest.</p>
+      
 
       <p>Dress: Business attire</p>
 
       <p>Doors open at <%= attendee.ceremony.ceremony_time %></p>
 
-    
-    
+      <p>
+
+        <b>Important information </b>
+      </p>
+
+      <p>
+
+        If you're are unable to attend, please email the Long Service Awards Team at <a href="mailto:LongServiceAwards@gov.bc.ca">LongServiceAwards@gov.bc.ca</a> and notify your ministry contact prior to your ceremony. 
+        <br /><br />
+        Please be advised that if you fail to notify us in advance of your ceremony, your attendance cannot be deferred to the <%= ((+cycleYear)+1) %> ceremonies. 
+        <br /><br />
+        If you're traveling to Victoria and have chosen a larger award, please account for this when planning your trip home. 
+            
+      </p>
+
+      <p>
+        Thank you, 
+        <br /><br />
+        The Long Service Awards Team 
+      </p>
       <!-- Removing the closing DIV so that iPhone renders the email in fullscreen and then shows PDF attachment underneath -->
     <!--[if mso]>
       </div>
