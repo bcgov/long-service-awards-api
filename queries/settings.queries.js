@@ -7,7 +7,28 @@
 
 'use strict';
 
-const {queryOne} = require("../db");
+const {queryOne, transaction} = require("../db");
+
+// LSA-519 Update qualifying years when global cycle changes
+const updateQualifyingYears = async (year) => {
+
+    const queries = [
+        {
+            sql: `UPDATE qualifying_years SET current = FALSE;`,
+            data: []
+        },
+        {
+            sql: `INSERT INTO qualifying_years ("name", current) 
+                VALUES ($1::integer, TRUE)
+                ON CONFLICT ("name") DO UPDATE SET current = TRUE
+                RETURNING *;
+            `,
+            data: [year]
+        }
+    ];
+
+    return await transaction(queries);
+};
 
 /**
  * Generate query: Upsert record into database.
@@ -24,6 +45,12 @@ exports.upsert = async (data) => {
         value=null,
         label=null
     } = data || {};
+
+    // LSA-519 Update qualifying years when global cycle changes
+    if ( name == "cycle" ) {
+
+        await updateQualifyingYears(value);
+    }
 
     return await queryOne({
         sql: `INSERT INTO settings ("name", label, value)
