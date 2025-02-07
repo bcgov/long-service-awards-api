@@ -1,91 +1,88 @@
 <%- await include('email-doctype'); %>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <%- await include('email-head', {title: title}); %>
-  <body
-    class="body"
-    style="
+
+    <body class="body" style="
       padding: 0;
       margin: 0;
       display: block;
       background: #ffffff;
       -webkit-text-size-adjust: none;
-    "
-    bgcolor="#ffffff"
-  >
-    <div class="container">
-      <%- await include('email-banner'); %>
-      <table>
-        <tr>
-          <td style="border-bottom: 1px solid #e7e7e7">
-            <p style="text-align: center">
-              <strong
-                >This is an automated email. No response is required.</strong
-              >
-            </p>
-            <p>
-              Your employee, <%= contact.first_name %> <%= contact.last_name %>,
-              has registered to receive a <%= service.milestone %> year
-              <a href="https://longserviceawards.gww.gov.bc.ca">
-                Long Service Award</a
-              >
-              in <%= service.cycle %>.
-            </p>
-            <p>
-              Long Service Awards registration is open to any full-time,
-              part-time or seasonal employees who have reached a 25, 30, 35, 40,
-              45 or 50 year milestone with the BC Public Service by December 31,
-              <%= service.cycle %>. Employees who have achieved one of these
-              milestones before <%= service.cycle %>, but have not been
-              recognized, can also register.
-            </p>
-            <p>
-              Registration for the Long Service Awards may include a service pin. 
-              If applicable, your employee's pin will be sent to you, the supervisor, 
-              in early June for presentation during Public Service Week.
+    " bgcolor="#ffffff">
+      <div class="container">
+        <%- await include('email-banner'); %>
+          <table>
+            <tr>
+              <td style="border-bottom: 1px solid #e7e7e7">
+                <p style="text-align: center">
+                  <strong>This is an automated email. No response is required.</strong>
+                </p>
+                <p>
+                  Your employee, <%= contact.first_name %>
+                    <%= contact.last_name %>,
+                      has registered to receive a <%= service.milestone %> year
+                        <a href="https://longserviceawards.gww.gov.bc.ca">
+                          Long Service Award</a>
+                        in <%= service.cycle %>.
+                </p>
+                <p>
+                  Long Service Awards registration is open to any full-time,
+                  part-time or seasonal employees who have reached a 25, 30, 35, 40,
+                  45 or 50 year milestone with the BC Public Service by December 31,
+                  <%= service.cycle %>. Employees who have achieved one of these
+                    milestones before <%= service.cycle %>, but have not been
+                      recognized, can also register.
+                </p>
+                <p>
+                  Registration for the Long Service Awards may include a service pin.
+                  If applicable, your employee's pin will be sent to you, the supervisor,
+                  in early June for presentation during Public Service Week.
 
-            </p>
-            <h2>Ceremony</h2>
-            <p>
-              The ceremonies will be held in Victoria this fall. 
-            </p>
-            <% let nextCycle = service.cycle + 1 %>
-            <p>
-              If your employee has registered but cannot attend their ceremony, they may be eligible to 
-              defer for one year and attend a ceremony in 2026. Their award will be couriered to them in the fall.  
-              If they declined their last invitation, this is their final opportunity to attend. 
-              If your employee contacts you to cancel their registration, please notify us at 
-              <a href="mailto:LongServiceAwards@gov.bc.ca">LongServiceAwards@gov.bc.ca</a> or inform 
-              your <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">ministry contact</a> as soon as possible. 
-              Failure to provide a cancellation notice may affect their eligibility to defer to the following year. 
-            </p>
-            <h2>Travel and Time Off</h2>
-            <p>
-              Long Service Awards recipients from outside Greater Victoria must
-              be approved to take time off to attend their ceremony. Travel
-              costs, including transportation, hotel and meal expenses for the
-              recipient and one guest, are covered by the employee’s
-              organization.
-            </p>
-            <p>
-              For Victoria-based recipients, taxi expenses to and from their
-              ceremony are covered by their organization. In addition,
-              Victoria-based recipients must be provided a reasonable amount of
-              time to prepare for their ceremony. It is recommended recipients
-              are allowed to leave their workplace by 2 pm on the day of their
-              event without any negative impact to their pay. In cases where the
-              recipient is a front-line worker, arrangements for coverage should
-              be made in advance.
-            </p>
-            <p>
-              If you have additional questions, contact your
-              <a href="https://longserviceawards.gww.gov.bc.ca/contacts/"
-                >Long Service Award contact</a
-              >.
-            </p>
-            <%- await include('email-footer'); %>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </body>
-</html>
+                </p>
+                <h2>Ceremony</h2>
+                <p>
+                  The ceremonies will be held in Victoria this fall.
+                </p>
+                <% let nextCycle=service.cycle + 1 %>
+                  <p>
+                    If your employee has registered but cannot attend their ceremony, they may be eligible to
+                    defer for one year and attend a ceremony in <%= nextCycle %>. Their award will be couriered to them
+                      in the fall.
+                      If they declined their last invitation, this is their final opportunity to attend.
+                      If your employee contacts you to cancel their registration, please notify us at
+                      <a href="mailto:LongServiceAwards@gov.bc.ca">LongServiceAwards@gov.bc.ca</a> or inform
+                      your <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">ministry contact</a> as soon as
+                      possible.
+                      Failure to provide a cancellation notice may affect their eligibility to defer to the following
+                      year.
+                  </p>
+                  <h2>Travel and Time Off</h2>
+                  <p>
+                    Long Service Awards recipients from outside Greater Victoria must
+                    be approved to take time off to attend their ceremony. Travel
+                    costs, including transportation, hotel and meal expenses for the
+                    recipient and one guest, are covered by the employee’s
+                    organization.
+                  </p>
+                  <p>
+                    For Victoria-based recipients, taxi expenses to and from their
+                    ceremony are covered by their organization. In addition,
+                    Victoria-based recipients must be provided a reasonable amount of
+                    time to prepare for their ceremony. It is recommended recipients
+                    are allowed to leave their workplace by 2 pm on the day of their
+                    event without any negative impact to their pay. In cases where the
+                    recipient is a front-line worker, arrangements for coverage should
+                    be made in advance.
+                  </p>
+                  <p>
+                    If you have additional questions, contact your
+                    <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">Long Service Award contact</a>.
+                  </p>
+                  <%- await include('email-footer'); %>
+              </td>
+            </tr>
+          </table>
+      </div>
+    </body>
+
+  </html>
