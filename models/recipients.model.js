@@ -159,6 +159,7 @@ module.exports = {
     }
 
     // restrict available orgs to user assignment
+    // plus current year (LSA-524)
     // - check filter overlap with user-assigned orgs
     const { organizations = [] } = user || {};
     const userFilter = (organizations || []).map(
@@ -179,6 +180,12 @@ module.exports = {
         intersection.length === 0
           ? userFilter.join(",")
           : intersection.join(",");
+      // LSA-524 if not admin, limit to current year only
+      if (!isAdmin) {
+        const cycle = await QualifyingYear.findCurrent();
+        filter.QualifyingYear = [cycle.name];
+      }
+
       return await db.recipients.findAll(filter, ["notes"], schema);
     }
     return [];
@@ -226,13 +233,18 @@ module.exports = {
   },
   countByEmployeeNumber: async (employeeNumber) => {
     // count the number of entries in the DB based on the recipient's employee number (LSA-478)
-    return await db.recipients.count( {"employee_number": employeeNumber } );
+    return await db.recipients.count({ employee_number: employeeNumber });
   },
   findByEmployeeNumber: async (employeeNumber) => {
-    return construct(await db.defaults.findOneByField("employee_number", employeeNumber, schema));
+    return construct(
+      await db.defaults.findOneByField(
+        "employee_number",
+        employeeNumber,
+        schema
+      )
+    );
   },
   checkForRecipientInCycle: async (employeeNumber, cycle) => {
-
     return await db.recipients.checkForRecipientInCycle(employeeNumber, cycle);
   },
   findAttachment: async (parentID, parentField, parentSchema) => {
@@ -321,9 +333,8 @@ module.exports = {
     await db.defaults.removeAll(schema);
   },
   duplicatesInCycle: async (cycle) => {
-
     // LSA-516 Create report that lists duplicate entries for selected cycle based on employee numbers
 
     return await db.recipients.duplicatesInCycle(cycle);
-  }
+  },
 };
