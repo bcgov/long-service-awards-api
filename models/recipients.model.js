@@ -183,7 +183,7 @@ module.exports = {
       // LSA-524 if not admin, limit to current year only
       if (!isAdmin) {
         const cycle = await QualifyingYear.findCurrent();
-        filter.QualifyingYear = [cycle.name];
+        filter.cycle = `${cycle.name}`;
       }
 
       return await db.recipients.findAll(filter, ["notes"], schema);
