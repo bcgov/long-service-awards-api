@@ -246,6 +246,35 @@ module.exports.sendResetPassword = async (data) => {
   );
 };
 
+// LSA-510 Send reminder email for ceremony
+module.exports.sendReminder = async (data, user) => {
+  const { email, attendee, cycleYear } = data || {};
+
+  let contactEmail = email;
+
+  const development =
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "testing";
+
+  if (development && user && user.email) {
+    contactEmail = user.email;
+  }
+
+  return await sendMail(
+    [contactEmail],
+    "Your Long Service Awards Ceremony Reminder",
+    "email-recipient-ceremony-reminder.ejs",
+    {
+      cycleYear,
+      attendee: attendee,
+    },
+    process.env.MAIL_FROM_ADDRESS,
+    process.env.MAIL_FROM_NAME,
+    [],
+    null
+  );
+};
+
 module.exports.sendRSVP = async (data) => {
   const { email, link, attendee, deadline } = data || {};
   const expiry = new Date();
@@ -303,11 +332,11 @@ module.exports.sendRSVP = async (data) => {
         link: link,
         attendee: attendee,
         expiry: expiry,
-        deadline: new Date(deadline).toLocaleDateString("en-us", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }),
+        deadline: `${formatInTimeZone(
+          new Date(deadline),
+          "PST",
+          `MMMM dd, yyyy`
+        )}`,
       },
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,

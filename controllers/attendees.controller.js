@@ -9,7 +9,7 @@ const Attendees = require("../models/attendees.model.js");
 const Settings = require("../models/settings.model.js");
 const AccommodationSelections = require("../models/accommodation-selection.model.js");
 const uuid = require("uuid");
-const { sendRSVP } = require("../services/mail.services");
+const { sendRSVP, sendReminder } = require("../services/mail.services");
 const { rsvpToken, validateToken } = require("../services/cache.services");
 const { convertDate } = require("../services/validation.services.js");
 
@@ -261,6 +261,51 @@ exports.removeAll = async (req, res, next) => {
   }
 };
 
+/**
+ * LSA-510 Send reminder email for ceremony
+ * 
+ * @param req 
+ * @param res 
+ * @param next
+ */
+
+exports.sendReminder = async (req, res, next) => {
+
+  try {
+
+    const data = req.body || {};
+    const recipient = data.recipient;
+
+    const settings = await Settings.findAll();
+    const currentYear = new Date().getFullYear();
+    const cycleYear = settings.find((s) => s?.name === "cycle")?.value || currentYear;
+
+    let email = recipient.contact.office_email;
+
+    if (recipient.contact.alternate_is_preferred === true) {
+      email = recipient.contact.personal_email;
+    }
+
+    const user = res.locals.user;
+
+    const response = await sendReminder({
+      email,
+      cycleYear,
+      attendee: data
+    }, user);
+    return res.status(200).json({
+      message: "success",
+      response: response,
+    });
+
+  }
+  catch (err) {
+
+    console.log(e);
+    return next(err);
+  }
+};
+
 exports.send = async (req, res, next) => {
   try {
     // const { id } = req.params || {};
@@ -297,18 +342,18 @@ exports.send = async (req, res, next) => {
     }
 
     var RsvpSendDate = new Date(); //today
-    // var deadline = new Date("Jul 28, 2023 23:59:59"); // Needs to be improved and user-configurable - LSA-404
-
-    // const deadline = await Settings.findById("rsvp-deadline"); - WHY THIS DOESN'T WORK?
 
     const settings = await Settings.findAll();
     const currentYear = new Date().getFullYear();
     const deadline =
-      settings.find((s) => s?.name === "rsvp-deadline")?.value ||
-      `Jul 29, ${currentYear} 16:59:59`;
+      settings.find((s) => s?.name === "ceremony-rsvp-close-date")?.value ||
+      `Jul 28, ${currentYear} 16:59:59`;
 
+    // LSA-497 Expire tokens on Aug 31, well past close date, incase changes need to be made or RSVP period needs extensions
+    const tokenExpireDate = `Aug 31, ${currentYear} 16:59:59`;
     const expiry = Math.ceil(
-      Math.abs(RsvpSendDate.getTime() - new Date(deadline).getTime()) / 1000
+      Math.abs(RsvpSendDate.getTime() - new Date(tokenExpireDate).getTime()) /
+        1000
     );
     const token = await rsvpToken(data.id, expiry);
     const valid = await validateToken(data.id, token);

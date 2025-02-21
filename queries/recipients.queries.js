@@ -437,6 +437,26 @@ const recipientQueries = {
       data: [id],
     };
   },
+  findFromEmployeeNumber: (employeeNumber) => {
+
+    return {
+      sql: `SELECT recipients.* FROM recipients
+                  WHERE recipients.employee_number = $1::varchar`,
+      data: [employeeNumber]
+    }
+  },
+  checkForRecipientInCycle: (employeeNumber, cycle) => {
+
+    return {
+      sql:  `SELECT COUNT(recipients.id) AS total_filtered_records 
+              FROM recipients, service_selections
+              WHERE 
+                recipients.employee_number = $1::varchar AND
+                service_selections.recipient = recipients.id AND
+                service_selections.cycle = $2::integer`,
+      data: [employeeNumber, cycle]
+    }
+  },
   updateContact: (recipientID, contactID, type) => {
     return {
       sql: `UPDATE recipients
@@ -786,6 +806,55 @@ const recipientQueries = {
       },
     ];
   },
+  duplicatesInCycle: (cycle) => {
+
+    // LSA-516 Create query that lists duplicate entries for selected cycle based on employee numbers
+
+    return {
+
+      sql: `
+        WITH duplicates AS (
+          SELECT 
+            recipients.employee_number, 
+            COUNT(recipients.employee_number) AS occurrences
+          FROM service_selections, recipients
+          WHERE service_selections.cycle = $1::integer
+            AND service_selections.recipient = recipients.id
+          GROUP BY 
+            recipients.employee_number 
+          HAVING
+            COUNT(recipients.employee_number) >= 2
+        )
+
+        SELECT 
+          recipients.employee_number,
+          contacts.first_name,
+          contacts.last_name,
+          contacts.office_email,
+          contacts.office_phone,
+          contacts.personal_email,
+          contacts.personal_phone,
+          service_selections.cycle,
+          service_selections.milestone,
+          service_selections.delegated,
+	        service_selections.confirmed,
+          duplicates.occurrences
+        FROM 
+          duplicates,
+          recipients, 
+          contacts,
+          service_selections
+        WHERE 
+          recipients.employee_number = duplicates.employee_number AND
+          contacts.id = recipients.contact AND
+          service_selections.recipient = recipients.id AND
+          service_selections.cycle = $1::integer
+        ORDER BY
+          recipients.employee_number
+      `,
+      data: [cycle]
+    }
+  }
 };
 exports.queries = recipientQueries;
 
@@ -822,6 +891,32 @@ exports.findById = findById;
 exports.findContact = async (id, type, schema) => {
   const result = await queryOne(recipientQueries.findContact(id, type));
   return await attachReferences(result, schema);
+};
+
+/**
+ * Generate query: Find recipient based on employee number
+ * 
+ * @param {String} employeeNumber
+ * @return {Promise} results
+ */
+
+exports.findFromEmployeeNumber = async(employeeNumber/*, schema*/) => {
+
+  const result = await query(recipientQueries.findFromEmployeeNumber(employeeNumber));
+  return result;
+};
+
+/**
+ * Generate query: Check if employee number + current cycle is empty
+ * 
+ * @param {String} employeeNumber
+ * @return {Promise} results
+ */
+
+exports.checkForRecipientInCycle = async(employeeNumber, cycle) => {
+
+  const result = await queryOne(recipientQueries.checkForRecipientInCycle(employeeNumber, cycle));
+  return result;
 };
 
 /**
@@ -1119,4 +1214,16 @@ exports.stats = async (schema, cycle) => {
 
 exports.remove = async (id, schema) => {
   return await defaults.removeByFields(["id"], [id], schema);
+};
+
+/**
+ * LSA-516 Create report that lists duplicate entries for selected cycle based on employee numbers
+ * 
+ * @param {int} cycle 
+ * @return {Promise} results 
+ */
+
+exports.duplicatesInCycle = async(cycle) => {
+
+  return await query(recipientQueries.duplicatesInCycle(cycle));
 };

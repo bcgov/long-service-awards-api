@@ -51,14 +51,24 @@ exports.register = async (req, res, next) => {
   try {
     let { guid = null, idir = null } = res.locals.user || {};
 
-    // register recipient (creates stub record)
-    await Recipient.register({
-      idir: idir,
-      guid: guid,
-      status: "self",
-    });
-    const recipient = await Recipient.findByGUID(guid);
+    // LSA-506 Instead of creating a new recipient, first check if the GUID already exists
 
+    let recipient = await Recipient.findByGUID(guid);
+
+    if ( !recipient ) {
+      // register recipient (creates stub record)
+      await Recipient.register({
+        idir: idir,
+        guid: guid,
+        status: "self",
+      });
+      
+      recipient = await Recipient.findByGUID(guid);
+    }
+    else {
+      console.log("Register, found existing recipient for " +guid);
+    }
+    
     res.status(200).json({
       message: {
         severity: "success",
