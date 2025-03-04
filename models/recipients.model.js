@@ -145,6 +145,19 @@ const construct = (init) => {
     db: db.recipients,
   });
 };
+
+// Moved functions to outside of exports for re-use by removeForUser
+
+const findByUser = async(user) => {
+
+  return db.defaults.findByField("user", user, schema);
+};
+
+const remove = async(id) => {
+
+  return db.defaults.removeByFields(["id"], [id], schema);
+};
+
 module.exports = {
   schema: schema,
   create: construct,
@@ -225,7 +238,7 @@ module.exports = {
     return construct(await db.defaults.findOneByField("guid", guid, schema));
   },
   findByUser: async (user) => {
-    return await db.defaults.findByField("user", user, schema);
+    return await findByUser(user);
   },
   findByAttendee: async (id, type) => {
     // look up existing recipient contact/supervisor info
@@ -327,7 +340,7 @@ module.exports = {
     return (await db.recipients.stats(schema, cycle && cycle.name)) || {};
   },
   remove: async (id) => {
-    return await db.defaults.removeByFields(["id"], [id], schema);
+    return await remove(id);
   },
   removeAll: async () => {
     await db.defaults.removeAll(schema);
@@ -337,4 +350,17 @@ module.exports = {
 
     return await db.recipients.duplicatesInCycle(cycle);
   },
+  removeForUser: async(id) => {
+
+    // LSA-540 Remove any Recipients tied to this user
+
+    const recipients = await findByUser(id);
+        
+    if ( recipients && recipients.length > 0 ) {
+
+      for ( let recipient of recipients ) {
+        await remove(recipient.id);
+      }
+    }
+  }
 };
