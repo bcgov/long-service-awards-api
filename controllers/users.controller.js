@@ -8,10 +8,6 @@
 const User = require("../models/users.model.js");
 const UserRole = require("../models/user-roles.model");
 
-const Recipient = require("../models/recipients.model.js");
-const Transaction = require("../models/transactions.model.js");
-
-
 /**
  * Find user by ID
  *
@@ -185,11 +181,6 @@ exports.remove = async (req, res, next) => {
 
     // check that user is not deleting themselves
     if (res.locals.user.id === id) return next(Error('selfDelete'));
-
-    // LSA-540 Remove any Recipients and Transactions tied to this user before removing User from database
-
-    await Recipient.removeForUser(id);
-    await Transaction.removeForUser(id);
 
     // delete user
     await User.remove(id);

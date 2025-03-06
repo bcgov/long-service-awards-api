@@ -39,15 +39,3 @@ exports.report = async (currentCycle) => {
 
     });
 };
-
-exports.removeForUser = async(id) => {
-
-    // LSA-540 Remove any Transactions tied to this user
-    
-   return query({
-        sql: `
-            DELETE FROM transactions WHERE transactions.user = $1::uuid
-        `,
-        data: [id]
-   });
-}
