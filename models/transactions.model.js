@@ -63,6 +63,9 @@ module.exports.report = async (user, cycle) => {
     }
 };
 
+module.exports.removeForUser = async(id) => {
 
+    // LSA-540 Remove any Transactions tied to this user
 
-
+    return await db.transactions.removeForUser(id);
+};
