@@ -290,3 +290,41 @@ exports.removeAll = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.migrate = async ( req, res, next ) => {
+
+  const failed = () => {
+
+    res.status(200).json({
+      message: {
+        severity: "error",
+        summary: "Migration failed",
+        detail: `Failed to migrate user's recipients`
+      }
+    });
+  };
+
+  try {
+
+    const {from="", to=""} = req.params || {};
+
+    if ( from.length < 36 || to.length < 36 ) {
+
+      return failed();
+    }
+    
+    const count = await Recipient.migrate(from, to);
+
+    res.status(200).json({
+      message: {
+        severity: "success",
+        summary: `Migrated ${count} recipient(s)`,
+        detail: `User's ${count} recipient(s) have been migrated`
+      },
+      result: []
+    });
+  }
+  catch ( err ) {
+    return next(err);
+  }
+}

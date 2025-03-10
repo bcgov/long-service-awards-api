@@ -854,6 +854,16 @@ const recipientQueries = {
       `,
       data: [cycle]
     }
+  },
+  // LSA-540 Update a Recipient's user. Used by new Recipient migration
+  // Changes user column in recipients table for id=recipientID to user=userID
+  updateUser: (recipientID, userID) => {
+
+    return { 
+      
+      sql: `UPDATE recipients SET "user" = $1::uuid WHERE id = $2::uuid RETURNING *;`,
+      data: [userID, recipientID]
+    };
   }
 };
 exports.queries = recipientQueries;
@@ -1226,4 +1236,14 @@ exports.remove = async (id, schema) => {
 exports.duplicatesInCycle = async(cycle) => {
 
   return await query(recipientQueries.duplicatesInCycle(cycle));
+};
+
+/**
+ * 
+ * LSA-540 Migrate recipient to other user
+ */
+
+exports.updateUser = async(recipientID, userID) => {
+
+  return await transactionOne([recipientQueries.updateUser(recipientID, userID)]);
 };

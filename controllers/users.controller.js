@@ -186,9 +186,8 @@ exports.remove = async (req, res, next) => {
     // check that user is not deleting themselves
     if (res.locals.user.id === id) return next(Error('selfDelete'));
 
-    // LSA-540 Remove any Recipients and Transactions tied to this user before removing User from database
+    // LSA-540 Remove Transactions tied to this user before removing User from database
 
-    await Recipient.removeForUser(id);
     await Transaction.removeForUser(id);
 
     // delete user

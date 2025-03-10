@@ -350,17 +350,23 @@ module.exports = {
 
     return await db.recipients.duplicatesInCycle(cycle);
   },
-  removeForUser: async(id) => {
+  migrate: async (from, to) => {
 
-    // LSA-540 Remove any Recipients tied to this user
+    // LSA-540 Migrate any Recipients from one user to another. This is required before deleting a User
+    // Migrates any Recipients belonging to user {from} to another user {to}
+    // Returns the number of Recipients that were migrated
 
-    const recipients = await findByUser(id);
+    const recipients = await findByUser(from);
         
     if ( recipients && recipients.length > 0 ) {
 
       for ( let recipient of recipients ) {
-        await remove(recipient.id);
+        await db.recipients.updateUser(recipient.id, to);
       }
+      return recipients.length;
     }
+
+    return 0;
+
   }
 };
