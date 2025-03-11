@@ -145,6 +145,17 @@ const construct = (init) => {
     db: db.recipients,
   });
 };
+
+// Moved functions to outside of exports for re-use by removeForUser
+
+const findByUser = async (user) => {
+  return db.defaults.findByField("user", user, schema);
+};
+
+const remove = async (id) => {
+  return db.defaults.removeByFields(["id"], [id], schema);
+};
+
 module.exports = {
   schema: schema,
   create: construct,

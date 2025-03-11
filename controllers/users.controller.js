@@ -8,6 +8,9 @@
 const User = require("../models/users.model.js");
 const UserRole = require("../models/user-roles.model");
 
+const Recipient = require("../models/recipients.model.js");
+const Transaction = require("../models/transactions.model.js");
+
 /**
  * Find user by ID
  *
