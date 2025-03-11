@@ -19,7 +19,7 @@ const UserRole = require("../models/user-roles.model");
 
 exports.get = async (req, res, next) => {
   try {
-    const {id=''} = req.params || {};
+    const { id = "" } = req.params || {};
     const user = await User.find(id);
     res.status(200).json({
       message: {},
@@ -42,7 +42,7 @@ exports.get = async (req, res, next) => {
 
 exports.getByGUID = async (req, res, next) => {
   try {
-    const {id=''} = req.params || {};
+    const { id = "" } = req.params || {};
     const user = await User.findByGUID(id);
     res.status(200).json({
       message: {},
@@ -76,7 +76,6 @@ exports.getAll = async (req, res, next) => {
   }
 };
 
-
 /**
  * Register new user
  *
@@ -89,36 +88,38 @@ exports.getAll = async (req, res, next) => {
 
 exports.register = async (req, res, next) => {
   try {
+    const { guid = null, idir = null } = res.locals.user || {};
 
     const {
-      guid=null,
-      idir=null
-    } = res.locals.user || {};
-
-    const {
-      first_name='',
-      last_name='',
-      email='',
-      password='',
+      first_name = "",
+      last_name = "",
+      email = "",
+      password = "",
     } = req.body || {};
 
     // check if user is already registered
-    if (await User.findByGUID(guid)) return next(Error('userExists'));
+    if (await User.findByGUID(guid)) return next(Error("userExists"));
 
     // register user
-    await User.register(
-        { first_name, last_name, email, guid, idir, password, role: 'inactive'}
-    );
+    await User.register({
+      first_name,
+      last_name,
+      email,
+      guid,
+      idir,
+      password,
+      role: "inactive",
+    });
 
     // confirm user exists
     const user = await User.findByGUID(guid);
-    if (!user && user.hasOwnProperty(id)) return next(Error('noRecord'));
+    if (!user && user.hasOwnProperty(id)) return next(Error("noRecord"));
 
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'New User',
-        detail: `Added new admin user.`
+        severity: "success",
+        summary: "New User",
+        detail: `Added new admin user.`,
       },
       result: user.data,
     });
@@ -139,20 +140,20 @@ exports.register = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const {id=''} = req.params || {};
+    const { id = "" } = req.params || {};
     const user = await User.find(id);
 
     // handle exception
-    if (!user) return next(Error('noRecord'));
+    if (!user) return next(Error("noRecord"));
 
     // update record
     await user.save(req.body);
 
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Updated User Data',
-        detail: `Updated admin user.`
+        severity: "success",
+        summary: "Updated User Data",
+        detail: `Updated admin user.`,
       },
       result: user.data,
     });
@@ -173,22 +174,26 @@ exports.update = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
-    const {id=''} = req.params || {};
+    const { id = "" } = req.params || {};
 
     // check that user exists
     const user = await User.find(id);
-    if (!user) return next(Error('noRecord'));
+    if (!user) return next(Error("noRecord"));
 
     // check that user is not deleting themselves
-    if (res.locals.user.id === id) return next(Error('selfDelete'));
+    if (res.locals.user.id === id) return next(Error("selfDelete"));
+
+    // LSA-540 Remove Transactions tied to this user before removing User from database
+
+    await Transaction.removeForUser(id);
 
     // delete user
     await User.remove(id);
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Remove User',
-        detail: 'User record has been deleted.'
+        severity: "success",
+        summary: "Remove User",
+        detail: "User record has been deleted.",
       },
       result: user,
     });
@@ -217,5 +222,3 @@ exports.getRoles = async (req, res, next) => {
     return next(err);
   }
 };
-
-
