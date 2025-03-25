@@ -74,9 +74,12 @@ const sendMail = async (
   data,
   from,
   fromName,
-  attachments
+  attachments,
+  user
   // options={},
 ) => {
+  // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
+
   // set mail parameters
   const templatePath = path.join(__dirname, "..", dirPath, template);
   const templateData = { ...{ title: subject }, ...data };
@@ -118,6 +121,15 @@ const sendMail = async (
         });
       }
     }
+
+    const development =
+      process.env.NODE_ENV === "development" ||
+      process.env.NODE_ENV === "testing";
+
+    if (development && user && user.email) {
+      to = [user.email];
+    }
+
     const response = await transporter.sendMail({
       from: `"${fromName}" <${from}>`, // sender address
       to: to.join(", "), // list of receivers
@@ -151,13 +163,11 @@ const sendMail = async (
  */
 module.exports.sendRegistrationConfirmation = async (recipient, user) => {
   // check status of registration
+  // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const { service, supervisor, contact, organization } = recipient || {};
   const { confirmed, milestone } = service || {};
   const isLSA = milestone >= 25;
-  const development =
-    process.env.NODE_ENV === "development" ||
-    process.env.NODE_ENV === "testing";
-
+  
   // check if registration is confirmed
   if (!confirmed) return;
 
@@ -169,10 +179,6 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
 
   if (contact.alternate_is_preferred === true) {
     contactEmail = contact.personal_email;
-  }
-
-  if (development && user && user.email) {
-    contactEmail = user.email;
   }
 
   const from = isLSA
@@ -198,9 +204,7 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
   // send confirmation mail to supervisor
   const [error1, response1] = await sendMail(
     [
-      development && user && user.email
-        ? user.email
-        : supervisor.office_email || "",
+      supervisor.office_email || "",
     ],
     subject,
     supervisorTemplate,
@@ -208,7 +212,8 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
     from,
     fromName,
     [],
-    null
+    null,
+    user
   );
 
   // send confirmation mail to recipient
@@ -220,7 +225,8 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
     from,
     fromName,
     [],
-    null
+    null,
+    user
   );
 
   return [error1 || error2 || null, { response1, response2 }];
@@ -230,7 +236,8 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
  * Send user reset password link
  * @param link
  */
-module.exports.sendResetPassword = async (data) => {
+module.exports.sendResetPassword = async (data, user) => {
+  // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const { email, link } = data || {};
 
   // send confirmation mail to supervisor
@@ -242,26 +249,18 @@ module.exports.sendResetPassword = async (data) => {
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],
-    null
+    null,
+    user
   );
 };
 
 // LSA-510 Send reminder email for ceremony
 module.exports.sendReminder = async (data, user) => {
+  // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const { email, attendee, cycleYear } = data || {};
 
-  let contactEmail = email;
-
-  const development =
-    process.env.NODE_ENV === "development" ||
-    process.env.NODE_ENV === "testing";
-
-  if (development && user && user.email) {
-    contactEmail = user.email;
-  }
-
   return await sendMail(
-    [contactEmail],
+    [email],
     "Your Long Service Awards Ceremony Reminder",
     "email-recipient-ceremony-reminder.ejs",
     {
@@ -271,11 +270,13 @@ module.exports.sendReminder = async (data, user) => {
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],
-    null
+    null,
+    user
   );
 };
 
-module.exports.sendRSVP = async (data) => {
+module.exports.sendRSVP = async (data, user) => {
+  // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const { email, link, attendee, deadline } = data || {};
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 14);
@@ -347,12 +348,14 @@ module.exports.sendRSVP = async (data) => {
           contentType: "application/pdf",
         },
       ],
-      null
+      null,
+      user
     );
   });
 };
 
-module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
+module.exports.sendRSVPConfirmation = async (data, email, accept = true, user) => {
+  // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const attendee = data || {};
 
   // //format ceremony date for email
@@ -374,7 +377,8 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
       [],
-      null
+      null,
+      user
     );
   } else {
     return await sendMail(
@@ -385,7 +389,8 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true) => {
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
       [],
-      null
+      null,
+      user
     );
   }
 };
@@ -404,6 +409,7 @@ module.exports.sendTEST = async () => {
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],
+    null,
     null
   );
 };

@@ -271,6 +271,8 @@ exports.removeAll = async (req, res, next) => {
 
 exports.sendReminder = async (req, res, next) => {
 
+  // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
+  
   try {
 
     const data = req.body || {};
@@ -279,6 +281,7 @@ exports.sendReminder = async (req, res, next) => {
     const settings = await Settings.findAll();
     const currentYear = new Date().getFullYear();
     const cycleYear = settings.find((s) => s?.name === "cycle")?.value || currentYear;
+    const user = res.locals.user;
 
     let email = recipient.contact.office_email;
 
@@ -286,13 +289,13 @@ exports.sendReminder = async (req, res, next) => {
       email = recipient.contact.personal_email;
     }
 
-    const user = res.locals.user;
-
     const response = await sendReminder({
-      email,
-      cycleYear,
-      attendee: data
-    }, user);
+        email,
+        cycleYear,
+        attendee: data
+      }, 
+      user
+    );
     return res.status(200).json({
       message: "success",
       response: response,
@@ -316,10 +319,8 @@ exports.send = async (req, res, next) => {
     // });
     const data = req.body || {};
     const recipient = data.recipient;
-    const development =
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "testing";
     let email = recipient.contact.office_email;
+    const user = res.locals.user;
 
     if (recipient.contact.alternate_is_preferred === true) {
       email = recipient.contact.personal_email;
@@ -335,10 +336,6 @@ exports.send = async (req, res, next) => {
       let retirement_date = new Date(convertDate(recipient.retirement_date));
       if (retirement_date < todayPlusGracePeriod)
         email = recipient.contact.personal_email;
-    }
-
-    if (development && res.locals && res.locals.user && res.locals.user.email) {
-      email = res.locals.user.email;
     }
 
     var RsvpSendDate = new Date(); //today
@@ -359,11 +356,13 @@ exports.send = async (req, res, next) => {
     const valid = await validateToken(data.id, token);
     if (valid) {
       response = await sendRSVP({
-        email,
-        link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
-        attendee: data,
-        deadline: deadline,
-      });
+          email,
+          link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
+          attendee: data,
+          deadline: deadline,
+        }, 
+        user
+      );
       return res.status(200).json({
         message: "success",
         response: response,

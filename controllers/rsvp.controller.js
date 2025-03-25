@@ -136,6 +136,9 @@ exports.update = async (req, res, next) => {
         email = recipient_attendee.data.recipient.contact.personal_email;
     }
 
+    /*
+    //LSA-522 Removed because mail.services.js is handling test emails now
+
     if (development) {
       if (req.user && req.user.email) email = req.user.email;
       else {
@@ -143,9 +146,10 @@ exports.update = async (req, res, next) => {
         throw (err = "Admin user not logged in");
       }
     }
+    */
 
     // Send RSVP confirmation
-    await sendRSVPConfirmation(data, email, accept);
+    await sendRSVPConfirmation(data, email, accept, user);
 
     if ((await deleteToken(id)) != 1) throw (err = "Key deletion failure");
 

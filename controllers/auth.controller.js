@@ -197,9 +197,11 @@ exports.requestResetPassword = async (req, res, next) => {
 
   // send reset link in email to user
   const response = await sendResetPassword({
-    email,
-    link: `${process.env.LSA_APPS_ADMIN_URL}/reset-password/${id}/${token}`,
-  });
+      email,
+      link: `${process.env.LSA_APPS_ADMIN_URL}/reset-password/${id}/${token}`,
+    }, 
+    null //LSA-522 res.locals.users will always by NULL here because user is not logged in
+  );
 
   res.status(200).json({
     message: {
