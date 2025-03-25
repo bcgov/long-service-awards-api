@@ -78,6 +78,7 @@ const sendMail = async (
   user
   // options={},
 ) => {
+  
   // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
 
   // set mail parameters
@@ -212,7 +213,6 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
     from,
     fromName,
     [],
-    null,
     user
   );
 
@@ -225,7 +225,6 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
     from,
     fromName,
     [],
-    null,
     user
   );
 
@@ -249,7 +248,6 @@ module.exports.sendResetPassword = async (data, user) => {
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],
-    null,
     user
   );
 };
@@ -270,7 +268,6 @@ module.exports.sendReminder = async (data, user) => {
     process.env.MAIL_FROM_ADDRESS,
     process.env.MAIL_FROM_NAME,
     [],
-    null,
     user
   );
 };
@@ -348,7 +345,6 @@ module.exports.sendRSVP = async (data, user) => {
           contentType: "application/pdf",
         },
       ],
-      null,
       user
     );
   });
@@ -377,7 +373,6 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true, user) =
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
       [],
-      null,
       user
     );
   } else {
@@ -389,7 +384,6 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true, user) =
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
       [],
-      null,
       user
     );
   }
