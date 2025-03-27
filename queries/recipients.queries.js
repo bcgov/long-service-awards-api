@@ -453,7 +453,8 @@ const recipientQueries = {
               WHERE 
                 recipients.employee_number = $1::varchar AND
                 service_selections.recipient = recipients.id AND
-                service_selections.cycle = $2::integer`,
+                service_selections.cycle = $2::integer AND
+                service_selections.confirmed = True`,
       data: [employeeNumber, cycle]
     }
   },
