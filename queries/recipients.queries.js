@@ -478,6 +478,8 @@ const recipientQueries = {
   },
   insert: (data) => {
     // destructure user stub data
+    // LSA-549 Adding ability to set a note during insert for Delegated LSA registrations
+    // Added notes to destruct and also the SQL insert
     const {
       id = null,
       guid = null,
@@ -489,10 +491,11 @@ const recipientQueries = {
       attending_with_organization = null,
       contact = null,
       supervisor = null,
+      notes = ""
     } = data || {};
     return {
       sql: `INSERT INTO recipients (
-                id, guid, idir, "user", employee_number, status, organization, contact, supervisor, attending_with_organization
+                id, guid, idir, "user", employee_number, status, organization, contact, supervisor, attending_with_organization, notes
             )
                   VALUES (
                              $1::uuid,
@@ -504,7 +507,8 @@ const recipientQueries = {
                              $7::integer,
                              $8::uuid,
                              $9::uuid,
-                             $10::integer
+                             $10::integer,
+                             $11::varchar
                          )
                   ON CONFLICT DO NOTHING
                   RETURNING *;`,
@@ -519,6 +523,7 @@ const recipientQueries = {
         contact,
         supervisor,
         attending_with_organization,
+        notes
       ],
     };
   },
@@ -1026,6 +1031,8 @@ exports.delegate = async (data, user, cycle, schema) => {
   // await user.save({first_name, last_name, email: office_email, role: 'delegate'});
 
   // register and save delegated recipient records
+
+  // LSA-549 Adding ability to set a note during insert for Delegated LSA registrations
   employees.map((recipientData) => {
     const {
       employee_number,
@@ -1033,6 +1040,7 @@ exports.delegate = async (data, user, cycle, schema) => {
       contact,
       service,
       prior_milestones = [],
+      notes
     } = recipientData || {};
 
     // generate UUID for recipient
@@ -1118,6 +1126,7 @@ exports.delegate = async (data, user, cycle, schema) => {
         organization: organization.id,
         contact: contactID,
         supervisor: supervisorID,
+        notes: notes
       })
     );
 
