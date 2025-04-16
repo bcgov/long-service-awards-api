@@ -12,13 +12,64 @@ const path = require("path");
 const fs = require("fs");
 const Transaction = require("../models/transactions.model");
 const { decodeError } = require("../error");
+const chesService = require("../services/ches.services");
 
 const exp = require("constants");
 const { generatePDFCertificate } = require("./pdf.services");
 const { format, formatInTimeZone } = require("date-fns-tz");
 
-// template directory
-const dirPath = "/resources/email_templates/";
+/**
+ * Health Check endpoint for CHES
+ * @param {*} req
+ * @param {*} res
+ */
+
+module.exports.healthCheck = async (req, res) => {
+  try {
+    const result = await chesService.healthCheck();
+
+    // Respond with success
+    res.status(200).json({
+      success: true,
+      message: "Health Check:",
+      result: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to send email",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Updates all transaction logs where queued status column is set to true.
+ * If the message failed to send, it will also update the transactions error description.
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+module.exports.updateQueued = async (req, res, next) => {
+  const queued = await Transaction.findByFields(["queued"], [true]);
+  for (const email of queued) {
+    const statusData = await chesService.transactionStatus(email.txid);
+    if (statusData.status === "completed" || statusData.status === "failed") {
+      const updated = await Transaction.updateTransactionQueueStatus(
+        email.txid,
+        false
+      );
+      console.log(updated);
+    }
+    if (statusData.status === "failed") {
+      Transaction.updateTransactionError(
+        email.txid,
+        statusData.smtpResponse.response
+      );
+    }
+  }
+  console.log(queued);
+};
 
 /**
  * Log mail event
@@ -36,14 +87,21 @@ const _logMail = async (error, response, recipient) => {
   const { id, user } = !!recipient.recipient
     ? recipient.recipient
     : recipient || {};
+
+  const detailString = `[${JSON.stringify(error)}, ${JSON.stringify(
+    response.data
+  )}]`;
+
   const transaction = {
-    recipient: id,
+    recipient: id || null,
+    txid: response.data ? response.data.txId : null,
+    queued: !error ? true : false,
     error: !!error,
     code: error ? "failedMailSend" : "successMailSend",
     description: `${msg ? msg : "Error not indexed"} (${
       hint ? hint : "N/A"
     })`.slice(0, 256),
-    details: `[${JSON.stringify(error)}, ${JSON.stringify(response)}]`,
+    details: detailString,
   };
 
   // include user ID if present
@@ -56,6 +114,8 @@ const _logMail = async (error, response, recipient) => {
   await Transaction.create(transaction);
 };
 
+// template directory
+const dirPath = "/resources/email_templates/";
 /**
  * Send mail
  * @param subject
@@ -78,7 +138,6 @@ const sendMail = async (
   user
   // options={},
 ) => {
-  
   // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
 
   // set mail parameters
@@ -86,18 +145,6 @@ const sendMail = async (
   const templateData = { ...{ title: subject }, ...data };
 
   try {
-    /**
-     * Configure Nodemailer:
-     * - create reusable transporter object using the default SMTP transport
-     */
-
-    let transporter = nodemailer.createTransport({
-      host: process.env.MAIL_SERVER,
-      port: process.env.MAIL_PORT,
-      secure: false, // true for 465, false for other ports
-      pool: true,
-    });
-
     // generate html body using template file
     const body = await ejs.renderFile(templatePath, templateData, {
       async: true,
@@ -111,14 +158,16 @@ const sendMail = async (
           ? attachment.content
           : fs.readFileSync(attachment.path);
 
+        //LSA-546: Convert attachment.content to base64
         const base64Content = attachment.content
-          ? attachment.content
+          ? Buffer.from(attachment.content).toString("base64")
           : Buffer.from(fileContent).toString("base64");
 
         attachmentArray.push({
           filename: attachment.filename,
           content: base64Content,
           contentType: attachment.contentType || "application/octet-stream", // default content type
+          encoding: "base64",
         });
       }
     }
@@ -131,17 +180,21 @@ const sendMail = async (
       to = [user.email];
     }
 
-    const response = await transporter.sendMail({
-      from: `"${fromName}" <${from}>`, // sender address
-      to: to.join(", "), // list of receivers
+    var fromString = `"${fromName} ${from}`;
+
+    const response = await chesService.sendEmail({
+      from: fromString, // sender address
+      to: to, // list of receivers
       subject: subject, // subject line
-      html: body, // html body
+      body: body, // html body
+      bodyType: "html",
       attachments: attachmentArray, // Add attachments array to the options object
     });
     // log send event
     await _logMail(null, response, data);
     // return mail send response
-    return [null, response];
+    // return only response.data, as response contains too much info and causes circular json error somewhere
+    return [null, response.data];
   } catch (error) {
     console.error(error);
     // log error as transaction record
@@ -168,7 +221,7 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
   const { service, supervisor, contact, organization } = recipient || {};
   const { confirmed, milestone } = service || {};
   const isLSA = milestone >= 25;
-  
+
   // check if registration is confirmed
   if (!confirmed) return;
 
@@ -204,9 +257,7 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
 
   // send confirmation mail to supervisor
   const [error1, response1] = await sendMail(
-    [
-      supervisor.office_email || "",
-    ],
+    [supervisor.office_email || ""],
     subject,
     supervisorTemplate,
     recipient,
@@ -350,7 +401,12 @@ module.exports.sendRSVP = async (data, user) => {
   });
 };
 
-module.exports.sendRSVPConfirmation = async (data, email, accept = true, user) => {
+module.exports.sendRSVPConfirmation = async (
+  data,
+  email,
+  accept = true,
+  user
+) => {
   // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const attendee = data || {};
 
@@ -387,23 +443,4 @@ module.exports.sendRSVPConfirmation = async (data, email, accept = true, user) =
       user
     );
   }
-};
-
-/**
- * Send test n  emails to test sending limits - sends to  (and from) MAIL_FROM_ADDRESS env var
- * @param link
- */
-module.exports.sendTEST = async () => {
-  // send test emails
-  return await sendMail(
-    [process.env.SUPER_ADMIN_EMAIL],
-    "Long Service Awards: TEST EMAIL",
-    "email-user-reset-password.ejs",
-    { link: "sendTEST EMAIL TEST" },
-    process.env.MAIL_FROM_ADDRESS,
-    process.env.MAIL_FROM_NAME,
-    [],
-    null,
-    null
-  );
 };

@@ -9,6 +9,7 @@ require("dotenv").config();
 const axios = require("axios");
 const User = require("../models/users.model");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const LocalStrategy = require("passport-local").Strategy;
 const urlParse = require("url");
 

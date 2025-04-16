@@ -14,6 +14,7 @@
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",
     "axios": "^0.27.2",
+    "axios-token-interceptor": "^0.2.0",
     "bcrypt": "^5.1.0",
     "connect-history-api-fallback": "^1.6.0",
     "connect-pg-simple": "^8.0.0",
@@ -27,6 +28,7 @@
     "express-session": "^1.17.3",
     "file-saver": "^2.0.5",
     "helmet": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^3.1.2",
     "nodemailer": "^6.9.1",
     "nodemon": "^2.0.22",
