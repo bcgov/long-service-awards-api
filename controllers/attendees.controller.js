@@ -312,7 +312,39 @@ exports.send = async (req, res, next) => {
   const data = req.body || {};
   for (const attendee of data) {
     const recipient = attendee.recipient;
-    console.log(recipient);
+
+    const updatedAttendee = await Attendees.findById(attendee.id);
+
+    // handle exception
+    if (!attendee) return next(Error("noRecord"));
+
+    // recreate accommodations to have only attendee, accommodation fields to match the model
+    let accommodationsArr = [];
+    if (
+      attendee.accommodation_selections &&
+      attendee.accommodation_selections[0]
+    ) {
+      Object.keys(attendee.accommodation_selections[0]).forEach(async (key) => {
+        if (attendee.accommodation_selections[0][key] === true) {
+          accommodationsArr.push(
+            JSON.parse(
+              '{"accommodation": "' +
+                key +
+                '", "attendee": "' +
+                attendee.id +
+                '"}'
+            )
+          );
+        }
+      });
+
+      attendee.accommodations = accommodationsArr;
+    }
+
+    // Clear accommodations before saving - otherwise saving is only additive (won't remove unchecked)
+    await AccommodationSelections.remove(attendee.id);
+    await Attendees.update(attendee);
+
     try {
       let email = recipient.contact.office_email;
       const user = res.locals.user;

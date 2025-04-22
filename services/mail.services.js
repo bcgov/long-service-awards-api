@@ -180,7 +180,7 @@ const sendMail = async (
       to = [user.email];
     }
 
-    var fromString = `${fromName} <${fromEmailAddress}>`;
+    var fromString = `${fromName} <${from}>`;
 
     const response = await chesService.sendEmail({
       from: fromString, // sender address
