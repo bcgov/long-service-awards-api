@@ -353,7 +353,7 @@ exports.send = async (req, res, next) => {
         response = await sendRSVP(
           {
             email,
-            link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
+            link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${attendee.id}/${token}`,
             attendee: attendee,
             deadline: deadline,
           },
