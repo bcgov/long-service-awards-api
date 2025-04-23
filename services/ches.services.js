@@ -60,6 +60,10 @@ class ChesService {
     this.apiUrl = `${apiUrl}/api/v1`;
   }
 
+  /**
+   * https://ches.api.gov.bc.ca/api/v1/docs#tag/Health/operation/getHealth
+   * @returns json
+   */
   async healthCheck() {
     try {
       //const token = getJwtToken();
@@ -73,6 +77,12 @@ class ChesService {
       console.log(e);
     }
   }
+
+  /**
+   * https://ches.api.gov.bc.ca/api/v1/docs#tag/Message/operation/GetStatusQuery
+   * @param {string <uuid>} txID
+   * @returns Array
+   */
   async transactionStatus(txID) {
     try {
       const status = await this.axios.get(`${this.apiUrl}/status?txId=${txID}`);
@@ -84,7 +94,12 @@ class ChesService {
     //transactions-queue.deleteFromQueue
   }
 
-  // Function to send an email
+  /**
+   *  Function to send an email
+   *  https://ches.api.gov.bc.ca/api/v1/docs#tag/Email/operation/postEmail
+   * @param {object} emailData
+   * @returns response from CHES
+   */
   async sendEmail(emailData) {
     try {
       const response = await this.axios.post(`${this.apiUrl}/email`, emailData);
