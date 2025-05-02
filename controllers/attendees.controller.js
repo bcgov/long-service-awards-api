@@ -303,7 +303,7 @@ exports.sendReminder = async (req, res, next) => {
       });
     }
   } catch (err) {
-    console.log(e);
+    console.log("sendReminder, ", err);
     return next(err);
   }
 };

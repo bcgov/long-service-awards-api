@@ -59,7 +59,7 @@ module.exports.updateQueued = async (req, res, next) => {
         email.txid,
         false
       );
-      console.log(updated);
+      console.log("Updated, ", updated);
     }
     if (statusData.status === "failed") {
       Transaction.updateTransactionError(
@@ -68,7 +68,13 @@ module.exports.updateQueued = async (req, res, next) => {
       );
     }
   }
-  console.log(queued);
+  console.log("Queued, ", queued);
+
+  res.status(200).json({
+    success: true,
+    message: "Updated queued transactions",
+    result: queued
+  });
 };
 
 /**
@@ -175,7 +181,7 @@ const sendMail = async (
     const development =
       process.env.NODE_ENV === "development" ||
       process.env.NODE_ENV === "testing";
-
+    
     if (development && user && user.email) {
       to = [user.email];
     }
@@ -279,7 +285,18 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
     user
   );
 
-  return [error1 || error2 || null, { response1, response2 }];
+  /* 
+    LSA-546 Check for errors and throws any errors (if present)
+  */
+
+  if ( error1 != null || error2 != null )  {
+    console.error("Error sending registration confirmation email: ", error1, error2);
+    throw new Error(error1 || error2);
+  } else {
+
+    return { response1, response2 };
+  }
+
 };
 
 /**
@@ -308,7 +325,7 @@ module.exports.sendReminder = async (data, user) => {
   // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const { email, attendee, cycleYear } = data || {};
 
-  return await sendMail(
+  const [error, response] =  await sendMail(
     [email],
     "Your Long Service Awards Ceremony Reminder",
     "email-recipient-ceremony-reminder.ejs",
@@ -321,6 +338,17 @@ module.exports.sendReminder = async (data, user) => {
     [],
     user
   );
+
+  /* 
+    LSA-546 Check for errors and throws any errors (if present)
+  */
+
+  if ( error != null )  {
+    console.error("Error sending reminder email: ", error);
+    throw error;
+  }
+
+  return response;
 };
 
 module.exports.sendRSVP = async (data, user) => {
@@ -373,7 +401,7 @@ module.exports.sendRSVP = async (data, user) => {
     certificateData,
     fontData
   ).then(async (pdfCertificate) => {
-    await sendMail(
+    const [error, response] = await sendMail(
       [email],
       "Your Long Service Awards Invitation",
       "email-recipient-ceremony-invitation.ejs",
@@ -398,6 +426,15 @@ module.exports.sendRSVP = async (data, user) => {
       ],
       user
     );
+
+    /* 
+      LSA-546 Check for errors and throws any errors (if present)
+    */
+    if ( error != null )  {
+      console.error("Error sending reminder email: ", error);
+      return Promise.reject(error);
+    }
+    return Promise.resolve(response);
   });
 };
 
@@ -420,8 +457,10 @@ module.exports.sendRSVPConfirmation = async (
   // });
 
   // send confirmation mail to supervisor
+
+  let error, response;
   if (accept) {
-    return await sendMail(
+    [error, response] = await sendMail(
       [email],
       "Confirmation to Attend the Long Service Awards Ceremony",
       "email-recipient-ceremony-rsvp-accept-updated.ejs",
@@ -432,7 +471,7 @@ module.exports.sendRSVPConfirmation = async (
       user
     );
   } else {
-    return await sendMail(
+    [error, response] = await sendMail(
       [email],
       "Confirmation to Not Attend the Long Service Awards Ceremony",
       "email-recipient-ceremony-rsvp-decline-updated.ejs",
@@ -443,4 +482,15 @@ module.exports.sendRSVPConfirmation = async (
       user
     );
   }
+
+  /* 
+    LSA-546 Check for errors and throws any errors (if present)
+  */
+
+  if (error != null) {
+    console.error("Error sending RSVP confirmation email: ", error);
+    return Promise.reject(error);
+  }
+  return Promise.resolve(response);
+  
 };
