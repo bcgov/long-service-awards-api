@@ -358,7 +358,8 @@ module.exports.sendRSVP = async (data, user) => {
   expiry.setDate(expiry.getDate() + 14);
 
   //generate PDF Certificate attachment
-  const certificateTemplate = "invitation_certificate";
+  // LSA-557 Changed template name to match new template
+  const certificateTemplate = "LSA_Keepsake_Invitation_FN_BG1";
   const certificateData = {
     Name: `${attendee.recipient.contact.first_name} ${attendee.recipient.contact.last_name}`,
     Date: `${attendee.ceremony.datetime_formatted}`,
@@ -387,13 +388,15 @@ module.exports.sendRSVP = async (data, user) => {
       `p`
     )}`,
   };
+  // LSA-557 Added new fonts and sizes
+  const baseSize = 18;
   const fontData = {
-    Name: { font: "TimesRomanBold", size: 16 },
-    Date: { font: "TimesRomanBold", size: 14 },
-    Address1: { font: "CormorantGaramond-Light", size: 20 },
-    Address2: { font: "CormorantGaramond-Light", size: 20 },
-    CityProvince: { font: "CormorantGaramond-Light", size: 20 },
-    Time: { font: "TimesRomanBoldItalic", size: 14 },
+    Name: { font: "EBGaramond-Italic-VariableFont_wght", size: 31 },
+    Date: { font: "EBGaramond-VariableFont_wght", size: baseSize },
+    Address1: { font: "EBGaramond-VariableFont_wght", size: baseSize },
+    Address2: { font: "EBGaramond-VariableFont_wght", size: baseSize },
+    CityProvince: { font: "EBGaramond-VariableFont_wght", size: baseSize },
+    Time: { font: "EBGaramond-VariableFont_wght", size: baseSize },
   };
 
   return await generatePDFCertificate(
