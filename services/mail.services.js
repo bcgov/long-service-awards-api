@@ -11,6 +11,9 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs");
 const Transaction = require("../models/transactions.model");
+const ServiceSelection = require("../models/service-selections.model");
+const AwardSelection = require("../models/award-selections.model");
+const Awards = require("../models/awards.model");
 const { decodeError } = require("../error");
 const chesService = require("../services/ches.services");
 
@@ -73,7 +76,7 @@ module.exports.updateQueued = async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Updated queued transactions",
-    result: queued
+    result: queued,
   });
 };
 
@@ -181,7 +184,7 @@ const sendMail = async (
     const development =
       process.env.NODE_ENV === "development" ||
       process.env.NODE_ENV === "testing";
-    
+
     if (development && user && user.email) {
       to = [user.email];
     }
@@ -289,14 +292,16 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
     LSA-546 Check for errors and throws any errors (if present)
   */
 
-  if ( error1 != null || error2 != null )  {
-    console.error("Error sending registration confirmation email: ", error1, error2);
+  if (error1 != null || error2 != null) {
+    console.error(
+      "Error sending registration confirmation email: ",
+      error1,
+      error2
+    );
     throw new Error(error1 || error2);
   } else {
-
-    return { response1, response2 };
+    return [error1 || error2 || null, { response1, response2 }];
   }
-
 };
 
 /**
@@ -325,7 +330,7 @@ module.exports.sendReminder = async (data, user) => {
   // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const { email, attendee, cycleYear } = data || {};
 
-  const [error, response] =  await sendMail(
+  const [error, response] = await sendMail(
     [email],
     "Your Long Service Awards Ceremony Reminder",
     "email-recipient-ceremony-reminder.ejs",
@@ -343,7 +348,7 @@ module.exports.sendReminder = async (data, user) => {
     LSA-546 Check for errors and throws any errors (if present)
   */
 
-  if ( error != null )  {
+  if (error != null) {
     console.error("Error sending reminder email: ", error);
     throw error;
   }
@@ -430,7 +435,7 @@ module.exports.sendRSVP = async (data, user) => {
     /* 
       LSA-546 Check for errors and throws any errors (if present)
     */
-    if ( error != null )  {
+    if (error != null) {
       console.error("Error sending reminder email: ", error);
       return Promise.reject(error);
     }
@@ -446,6 +451,25 @@ module.exports.sendRSVPConfirmation = async (
 ) => {
   // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const attendee = data || {};
+
+  // Fetch the service selection for the recipient
+  const selection = await ServiceSelection.findByRecipient(
+    attendee.recipient.id
+  );
+
+  if (selection && selection.length > 0) {
+    const selectionId = selection[selection.length - 1].id;
+
+    // Fetch the award details using the selection ID
+    const awardsel = await AwardSelection.findById(selectionId);
+
+    const award = await Awards.findById(awardsel.award);
+
+    // Add the award name to the attendee object
+    attendee.award = award ? award.label : "No award selected";
+  } else {
+    attendee.award = "No award selected";
+  }
 
   // //format ceremony date for email
   // Object.assign(attendee.ceremony, {
@@ -492,5 +516,4 @@ module.exports.sendRSVPConfirmation = async (
     return Promise.reject(error);
   }
   return Promise.resolve(response);
-  
 };
