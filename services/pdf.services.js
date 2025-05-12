@@ -38,6 +38,15 @@ async function generatePDFCertificate(
       name: "CormorantGaramond-Light",
       path: `resources/fonts/CormorantGaramond-Light.ttf`,
     },
+    // LSA-557 Added new fonts
+    {
+      name: "EBGaramond-Italic-VariableFont_wght",
+      path: `resources/fonts/EBGaramond-Italic-VariableFont_wght.ttf`,
+    },
+    {
+      name: "EBGaramond-VariableFont_wght",
+      path: `resources/fonts/EBGaramond-VariableFont_wght.ttf`,
+    },
   ];
 
   // Load the PDF template
