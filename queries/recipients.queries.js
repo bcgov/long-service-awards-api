@@ -502,7 +502,7 @@ const recipientQueries = {
                              $2::varchar,
                              $3::varchar,
                              $4::uuid,
-                             $5::integer,
+                             $5::varchar,
                              $6::varchar,
                              $7::integer,
                              $8::uuid,
