@@ -480,6 +480,7 @@ const recipientQueries = {
     // destructure user stub data
     // LSA-549 Adding ability to set a note during insert for Delegated LSA registrations
     // Added notes to destruct and also the SQL insert
+    // LSA-560 Fixed $5::integer to be $5::varchar
     const {
       id = null,
       guid = null,
