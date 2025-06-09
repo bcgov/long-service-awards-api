@@ -411,7 +411,7 @@ module.exports.sendRSVP = async (data, user) => {
   ).then(async (pdfCertificate) => {
     const [error, response] = await sendMail(
       [email],
-      "Your Long Service Awards Invitation",
+      "Your Long Service Awards Ceremony Invitation",
       "email-recipient-ceremony-invitation.ejs",
       {
         link: link,
