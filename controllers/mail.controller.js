@@ -7,8 +7,11 @@
 
 const Recipient = require("../models/recipients.model.js");
 const {
-  sendRegistrationConfirmation
+  sendRegistrationConfirmation,
+  healthCheck,
+  updateQueued,
 } = require("../services/mail.services");
+const axios = require("axios");
 // const {confirm} = require("../services/validation.services");
 
 /**
@@ -16,10 +19,10 @@ const {
  * */
 
 const _mailHandlers = {
-  'reg-confirm': async (data, user) => {
+  "reg-confirm": async (data, user) => {
     // check confirmation status of registration
-    const {id, service} = data || {};
-    const {confirmed} = service || {};
+    const { id, service } = data || {};
+    const { confirmed } = service || {};
     // get recipient data
     const recipient = await Recipient.findById(id, user);
     // Handle registration submissions
@@ -33,7 +36,15 @@ const _mailHandlers = {
     }
     return null;
   },
-}
+};
+
+exports.health = async (req, res, next) => {
+  const result = healthCheck(req, res);
+};
+
+exports.updateQueued = async (req, res, next) => {
+  const result = updateQueued(req, res, next);
+};
 
 /**
  * Send email
@@ -46,13 +57,13 @@ const _mailHandlers = {
 
 exports.send = async (req, res, next) => {
   try {
-    const { id=null } = req.params || {};
+    const { id = null } = req.params || {};
 
     // check that mail handler (w/ template) exists
     const handler = _mailHandlers.hasOwnProperty(id) ? _mailHandlers[id] : null;
 
     // mail handler is not defined
-    if (!handler) return next(Error('invalidInput'));
+    if (!handler) return next(Error("invalidInput"));
 
     // send email
     // - define mail response callback
@@ -66,13 +77,12 @@ exports.send = async (req, res, next) => {
 
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Mail Sent Successfully!',
-        detail: 'Email message was sent.'
+        severity: "success",
+        summary: "Mail Sent Successfully!",
+        detail: "Email message was sent.",
       },
       result: result,
     });
-
   } catch (err) {
     return next(err);
   }

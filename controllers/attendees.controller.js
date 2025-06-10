@@ -263,118 +263,146 @@ exports.removeAll = async (req, res, next) => {
 
 /**
  * LSA-510 Send reminder email for ceremony
- * 
- * @param req 
- * @param res 
+ *
+ * @param req
+ * @param res
  * @param next
  */
 
 exports.sendReminder = async (req, res, next) => {
-
+  // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   try {
-
     const data = req.body || {};
-    const recipient = data.recipient;
+    for (const attendee of data) {
+      //const data = req.body || {};
+      const recipient = attendee.recipient;
 
-    const settings = await Settings.findAll();
-    const currentYear = new Date().getFullYear();
-    const cycleYear = settings.find((s) => s?.name === "cycle")?.value || currentYear;
+      const settings = await Settings.findAll();
+      const currentYear = new Date().getFullYear();
+      const cycleYear =
+        settings.find((s) => s?.name === "cycle")?.value || currentYear;
+      const user = res.locals.user;
 
-    let email = recipient.contact.office_email;
+      let email = recipient.contact.office_email;
 
-    if (recipient.contact.alternate_is_preferred === true) {
-      email = recipient.contact.personal_email;
+      if (recipient.contact.alternate_is_preferred === true) {
+        email = recipient.contact.personal_email;
+      }
+
+      const response = await sendReminder(
+        {
+          email,
+          cycleYear,
+          attendee: attendee,
+        },
+        user
+      );
+      return res.status(200).json({
+        message: "success",
+        response: response,
+      });
     }
-
-    const user = res.locals.user;
-
-    const response = await sendReminder({
-      email,
-      cycleYear,
-      attendee: data
-    }, user);
-    return res.status(200).json({
-      message: "success",
-      response: response,
-    });
-
-  }
-  catch (err) {
-
-    console.log(e);
+  } catch (err) {
+    console.log("sendReminder, ", err);
     return next(err);
   }
 };
 
 exports.send = async (req, res, next) => {
-  try {
-    // const { id } = req.params || {};
-    // const ceremony = await ceremoniesModel.findById(id);
-    // res.status(200).json({
-    //   message: {},
-    //   result: ceremony.data,
-    // });
-    const data = req.body || {};
-    const recipient = data.recipient;
-    const development =
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "testing";
-    let email = recipient.contact.office_email;
+  const data = req.body || {};
+  for (const attendee of data) {
+    const recipient = attendee.recipient;
 
-    if (recipient.contact.alternate_is_preferred === true) {
-      email = recipient.contact.personal_email;
+    const updatedAttendee = await Attendees.findById(attendee.id);
+
+    // handle exception
+    if (!attendee) return next(Error("noRecord"));
+
+    // recreate accommodations to have only attendee, accommodation fields to match the model
+    let accommodationsArr = [];
+    if (
+      attendee.accommodation_selections &&
+      attendee.accommodation_selections[0]
+    ) {
+      Object.keys(attendee.accommodation_selections[0]).forEach(async (key) => {
+        if (attendee.accommodation_selections[0][key] === true) {
+          accommodationsArr.push(
+            JSON.parse(
+              '{"accommodation": "' +
+                key +
+                '", "attendee": "' +
+                attendee.id +
+                '"}'
+            )
+          );
+        }
+      });
+
+      attendee.accommodations = accommodationsArr;
     }
 
-    let response = null;
+    // Clear accommodations before saving - otherwise saving is only additive (won't remove unchecked)
+    await AccommodationSelections.remove(attendee.id);
+    await Attendees.update(attendee);
 
-    // Create 48 hour grace period
-    const todayPlusGracePeriod = new Date();
-    todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
+    try {
+      let email = recipient.contact.office_email;
+      const user = res.locals.user;
 
-    if (recipient.retirement_date != null) {
-      let retirement_date = new Date(convertDate(recipient.retirement_date));
-      if (retirement_date < todayPlusGracePeriod)
+      if (recipient.contact.alternate_is_preferred === true) {
         email = recipient.contact.personal_email;
+      }
+
+      let response = null;
+
+      // Create 48 hour grace period
+      const todayPlusGracePeriod = new Date();
+      todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
+
+      if (recipient.retirement_date != null) {
+        let retirement_date = new Date(convertDate(recipient.retirement_date));
+        if (retirement_date < todayPlusGracePeriod)
+          email = recipient.contact.personal_email;
+      }
+
+      var RsvpSendDate = new Date(); //today
+
+      const settings = await Settings.findAll();
+      const currentYear = new Date().getFullYear();
+      const deadline =
+        settings.find((s) => s?.name === "ceremony-rsvp-close-date")?.value ||
+        `Jul 28, ${currentYear} 16:59:59`;
+
+      // LSA-497 Expire tokens on Aug 31, well past close date, incase changes need to be made or RSVP period needs extensions
+      const tokenExpireDate = `Aug 31, ${currentYear} 16:59:59`;
+      const expiry = Math.ceil(
+        Math.abs(RsvpSendDate.getTime() - new Date(tokenExpireDate).getTime()) /
+          1000
+      );
+      const token = await rsvpToken(attendee.id, expiry);
+      const valid = await validateToken(attendee.id, token);
+      if (valid) {
+        response = await sendRSVP(
+          {
+            email,
+            link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${attendee.id}/${token}`,
+            attendee: attendee,
+            deadline: deadline,
+          },
+          user
+        );
+        return res.status(200).json({
+          message: "success",
+          response: response,
+        });
+      } else {
+        return res.status(500).json({
+          message: "failure",
+          response: response,
+        });
+      }
+    } catch (err) {
+      return next(err);
     }
-
-    if (development && res.locals && res.locals.user && res.locals.user.email) {
-      email = res.locals.user.email;
-    }
-
-    var RsvpSendDate = new Date(); //today
-
-    const settings = await Settings.findAll();
-    const currentYear = new Date().getFullYear();
-    const deadline =
-      settings.find((s) => s?.name === "ceremony-rsvp-close-date")?.value ||
-      `Jul 28, ${currentYear} 16:59:59`;
-
-    // LSA-497 Expire tokens on Aug 31, well past close date, incase changes need to be made or RSVP period needs extensions
-    const tokenExpireDate = `Aug 31, ${currentYear} 16:59:59`;
-    const expiry = Math.ceil(
-      Math.abs(RsvpSendDate.getTime() - new Date(tokenExpireDate).getTime()) /
-        1000
-    );
-    const token = await rsvpToken(data.id, expiry);
-    const valid = await validateToken(data.id, token);
-    if (valid) {
-      response = await sendRSVP({
-        email,
-        link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${data.id}/${token}`,
-        attendee: data,
-        deadline: deadline,
-      });
-      return res.status(200).json({
-        message: "success",
-        response: response,
-      });
-    } else {
-      return res.status(500).json({
-        message: "failure",
-        response: response,
-      });
-    }
-  } catch (err) {
-    return next(err);
   }
 };

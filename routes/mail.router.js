@@ -5,15 +5,20 @@
  * MIT Licensed
  */
 
-const router = require('express').Router();
-const mailController = require('../controllers/mail.controller');
-const { authorizeOrgContact} = require('../services/auth.services')
+const router = require("express").Router();
+const mailController = require("../controllers/mail.controller");
+const {
+  authorizeAdmin,
+  authorizeOrgContact,
+} = require("../services/auth.services");
 
 /**
  * Mailer endpoints
  */
 
-router.post('/send/:id', authorizeOrgContact, mailController.send);
+router.post("/send/:id", authorizeOrgContact, mailController.send);
+router.get("/health/", mailController.health);
+router.get("/updateQueued", mailController.updateQueued);
 // router.post('/remind/:id', authorizeAdmin, emailController.get);
 // router.post('/rsvp/confirm/', authorizeAdmin, emailController.get);
 

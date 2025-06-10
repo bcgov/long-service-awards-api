@@ -175,7 +175,7 @@ module.exports = {
     return construct(await db.attendees.insert(data));
   },
   update: async (data) => {
-    return construct(await db.defaults.update(data));
+    return construct(await db.defaults.update(data, schema));
   },
   remove: async (id) => {
     await db.defaults.remove(id, schema);

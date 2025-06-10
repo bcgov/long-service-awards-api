@@ -61,10 +61,7 @@ exports.update = async (req, res, next) => {
     const token = req.params.token;
     const valid = await validateToken(id, token);
     const accept = req.body.attendance_confirmed;
-    const development =
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "testing";
-
+    
     if (!valid) throw (err = "Not Valid");
 
     const recipient_attendee = await Attendees.findById(data.id);
@@ -136,16 +133,10 @@ exports.update = async (req, res, next) => {
         email = recipient_attendee.data.recipient.contact.personal_email;
     }
 
-    if (development) {
-      if (req.user && req.user.email) email = req.user.email;
-      else {
-        email = undefined;
-        throw (err = "Admin user not logged in");
-      }
-    }
-
+   
     // Send RSVP confirmation
-    await sendRSVPConfirmation(data, email, accept);
+    const user = req.user;
+    await sendRSVPConfirmation(data, email, accept, user);
 
     if ((await deleteToken(id)) != 1) throw (err = "Key deletion failure");
 
