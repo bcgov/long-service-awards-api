@@ -464,7 +464,8 @@ module.exports.sendRSVPConfirmation = async (
     const selectionId = selection[selection.length - 1].id;
 
     // Fetch the award details using the selection ID
-    const awardsel = await AwardSelection.findById(selectionId);
+    // LSA-568: Fixing issue where award selection was not being fetched correctly
+    const awardsel = await AwardSelection.findById(selectionId) || {};
 
     const award = await Awards.findById(awardsel.award);
 
