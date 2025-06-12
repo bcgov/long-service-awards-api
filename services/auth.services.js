@@ -168,7 +168,7 @@ exports.authenticateSMS = async (req, res, next) => {
     });
 
     // LSA-561 Debug to check SSO information being returned
-    console.log(`User authenticated via SiteMinder: `, response)
+    // console.log(`User authenticated via SiteMinder: `, response)
 
     const { data = {} } = response || {};
     const { SMGOV_GUID = [null], username = [null] } = data || {};
