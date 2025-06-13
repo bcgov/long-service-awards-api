@@ -166,10 +166,13 @@ const attendeesQueries = {
     } = data || {};
 
     return {
-      sql: `WITH upsert AS (
+      sql: `WITH deleted AS (
+            DELETE FROM attendees
+            WHERE recipient = $2::uuid AND guest = 1),
+            upsert AS (
             UPDATE attendees
-            SET ceremony = $3::uuid
-            WHERE attendees.recipient = $2::uuid
+            SET ceremony = $3::uuid, status = $6::varchar, ceremony_noshow = $5::boolean
+            WHERE attendees.recipient = $2::uuid AND guest = 0
             RETURNING *
             )
             INSERT INTO attendees (id, recipient, ceremony, guest, ceremony_noshow, status) 
