@@ -310,6 +310,8 @@ exports.sendReminder = async (req, res, next) => {
 
 exports.send = async (req, res, next) => {
   const data = req.body || {};
+  const allResponses = [];
+  const nonValid = [];
   for (const attendee of data) {
     const recipient = attendee.recipient;
 
@@ -353,8 +355,6 @@ exports.send = async (req, res, next) => {
         email = recipient.contact.personal_email;
       }
 
-      let response = null;
-
       // Create 48 hour grace period
       const todayPlusGracePeriod = new Date();
       todayPlusGracePeriod.setDate(todayPlusGracePeriod.getDate() + 2);
@@ -381,8 +381,9 @@ exports.send = async (req, res, next) => {
       );
       const token = await rsvpToken(attendee.id, expiry);
       const valid = await validateToken(attendee.id, token);
+      let responseObj;
       if (valid) {
-        response = await sendRSVP(
+        let response = await sendRSVP(
           {
             email,
             link: `${process.env.LSA_APPS_ADMIN_URL}/rsvp/${attendee.id}/${token}`,
@@ -391,18 +392,25 @@ exports.send = async (req, res, next) => {
           },
           user
         );
-        return res.status(200).json({
-          message: "success",
-          response: response,
-        });
+        responseObj = { response, valid };
       } else {
-        return res.status(500).json({
-          message: "failure",
-          response: response,
-        });
+        responseObj = { response: null, valid };
+        nonValid.push(attendee.id);
       }
+      allResponses.push(responseObj);
     } catch (err) {
       return next(err);
     }
+  }
+  if (nonValid.length > 0) {
+    return res.status(500).json({
+      message: "failure",
+      response: allResponses,
+    });
+  } else {
+    return res.status(200).json({
+      message: "success",
+      response: allResponses,
+    });
   }
 };
