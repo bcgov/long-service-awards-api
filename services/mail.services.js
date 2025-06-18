@@ -13,6 +13,7 @@ const fs = require("fs");
 const Transaction = require("../models/transactions.model");
 const ServiceSelection = require("../models/service-selections.model");
 const AwardSelection = require("../models/award-selections.model");
+const QualifyingYears = require("../models/qualifying-years.model");
 const Awards = require("../models/awards.model");
 const { decodeError } = require("../error");
 const chesService = require("../services/ches.services");
@@ -462,10 +463,17 @@ module.exports.sendRSVPConfirmation = async (
 
   if (selection && selection.length > 0) {
 
-    // LSA-573 Loop through the selection array to find the award because there can be multiple selections
+    // LSA-573 Loop through the selection array to find the award for the current cycle because there can be multiple selections
     // and we need to find the one that corresponds to the award selection
+
+    const currentCycle = await QualifyingYears.findCurrent();
     
     for (let i = 0; i < selection.length; i++) {
+      const cycle = selection[i].cycle;
+      // Check if the cycle is the current cycle
+      if (cycle != currentCycle.name) {
+        continue; // Skip if the cycle is not the current cycle
+      }
       const selectionId = selection[i].id;
 
       // Fetch the award details using the selection ID
@@ -481,7 +489,7 @@ module.exports.sendRSVPConfirmation = async (
       }
     }
 
-    attendee.award = attendee.award || "No award selected";
+    attendee.award = attendee.award || "No award selected for this cycle";
 
   } else {
     attendee.award = "No award selected";
