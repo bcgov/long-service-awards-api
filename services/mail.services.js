@@ -461,16 +461,28 @@ module.exports.sendRSVPConfirmation = async (
   );
 
   if (selection && selection.length > 0) {
-    const selectionId = selection[selection.length - 1].id;
 
-    // Fetch the award details using the selection ID
-    // LSA-568: Fixing issue where award selection was not being fetched correctly
-    const awardsel = await AwardSelection.findById(selectionId) || {};
+    // LSA-573 Loop through the selection array to find the award because there can be multiple selections
+    // and we need to find the one that corresponds to the award selection
+    
+    for (let i = 0; i < selection.length; i++) {
+      const selectionId = selection[i].id;
 
-    const award = await Awards.findById(awardsel.award);
+      // Fetch the award details using the selection ID
+      // LSA-568: Fixing issue where award selection was not being fetched correctly
+      const awardsel = await AwardSelection.findById(selectionId) || {};
 
-    // Add the award name to the attendee object
-    attendee.award = award ? award.label : "No award selected";
+      const award = await Awards.findById(awardsel.award);
+
+      if ( award && award.label ) { 
+        // If the award has a label, add it to the attendee object
+        attendee.award = award.label;
+        break; // Exit the loop once the award is found
+      }
+    }
+
+    attendee.award = attendee.award || "No award selected";
+
   } else {
     attendee.award = "No award selected";
   }
