@@ -416,8 +416,9 @@ const recipientQueries = {
 
     // get column filters
     const [filterStatements, filterValues] = getFilters(filter);
+    // LSA-574 Added DISTINCT to count only unique recipients, because the join with service_selections can return multiple rows for each recipient
     return {
-      sql: `SELECT COUNT(*) as total_filtered_records
+      sql: `SELECT COUNT(DISTINCT(recipients.id)) as total_filtered_records
                   FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
