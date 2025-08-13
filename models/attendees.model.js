@@ -202,7 +202,9 @@ module.exports = {
     const isAdmin = ["super-administrator", "administrator"].includes(
       role.name
     );
-    if (isAdmin) {
+    const isOrg = ["org-contact"].includes(role.name);
+    console.log("Filter ", filter);
+    if (isAdmin || isOrg) {
       return await db.attendees.report(
         filter,
         ["created_at"],
