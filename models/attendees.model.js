@@ -202,7 +202,9 @@ module.exports = {
     const isAdmin = ["super-administrator", "administrator"].includes(
       role.name
     );
-    if (isAdmin) {
+    const isOrg = ["org-contact"].includes(role.name);
+    console.log("Filter ", filter);
+    if (isAdmin ) {
       return await db.attendees.report(
         filter,
         ["created_at"],
@@ -210,32 +212,37 @@ module.exports = {
         schema
       );
     }
+    else if (isOrg) {
 
-    // // restrict available orgs to user assignment
-    // // - check filter overlap with user-assigned orgs
-    // const { organizations = [] } = user || {};
-    // const userFilter = (organizations || []).map(
-    //   ({ organization }) => organization.id
-    // );
-    // // if org-contact has no assigned organizations, return empty results
-    // if (["org-contact"].includes(role.name) && organizations.length > 0) {
-    //   // explode existing organization filter params
-    //   const orgFilter =
-    //     filter.hasOwnProperty("organization") &&
-    //     filter.organization.split(",").map((id) => parseInt(id));
-    //   // filter org params to be contained in user filter
-    //   const intersection = userFilter.filter((id) =>
-    //     (orgFilter || []).includes(parseInt(id))
-    //   );
-    //   // ensure org filter is not empty
-    //   filter.organization =
-    //     intersection.length === 0
-    //       ? userFilter.join(",")
-    //       : intersection.join(",");
-    //   return await db.recipients.report(filter, ["created_at"], schema);
-    // }
-    // return [];
+      // LSA-585 Filter report by organization for org-contacts
 
-    //return await db.recipients.report(filter, ["created_at"], schema);
+      // // restrict available orgs to user assignment
+      // // - check filter overlap with user-assigned orgs
+       const { organizations = [] } = user || {};
+       const userFilter = (organizations || []).map(
+         ({ organization }) => organization.id
+       );
+      // // if org-contact has no assigned organizations, return empty results
+      if (["org-contact"].includes(role.name) && organizations.length > 0) {
+        //   // explode existing organization filter params
+        const orgFilter =
+          filter.hasOwnProperty("organization") &&
+          filter.organization.split(",").map((id) => parseInt(id));
+        //   // filter org params to be contained in user filter
+        const intersection = userFilter.filter((id) =>
+          (orgFilter || []).includes(parseInt(id))
+        );
+        //   // ensure org filter is not empty
+        filter.organization =
+          intersection.length === 0
+            ? userFilter.join(",")
+            : intersection.join(",");
+        return await db.attendees.report(filter, ["created_at"], currentCycle && currentCycle.name, schema);
+      }
+    }
+    return [];
+
+      //return await db.recipients.report(filter, ["created_at"], schema);
+    
   },
 };

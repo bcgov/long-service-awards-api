@@ -131,6 +131,7 @@ exports.attendees = async (req, res, next) => {
 
     // apply query filter to results
     const attendees = await Attendee.report(filter, res.locals.user, cycle);
+    //console.log(attendees);
     const filename = `attendees-report-${cycle}.csv`;
     // convert json results to csv format
     const csvData = Papa.unparse(attendees, { newline: "\n" });
