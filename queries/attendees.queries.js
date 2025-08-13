@@ -418,7 +418,7 @@ const getFilters = (filter) => {
     const orgs = filter.organization.split(",");
     const orgFilters = [];
     orgs.forEach((element) => {
-      orgFilters.push(`recipients.organization = '${element}'`);
+      orgFilters.push(`outer_recipients.organization = '${element}'`); // LSA-585 Changed table to outer_recipients from recipients due to SQL aliasing
     });
     const organizationClause =
       orgFilters.length > 0 ? `(${orgFilters.join(" OR ")})` : "";

@@ -214,6 +214,8 @@ module.exports = {
     }
     else if (isOrg) {
 
+      // LSA-585 Filter report by organization for org-contacts
+
       // // restrict available orgs to user assignment
       // // - check filter overlap with user-assigned orgs
        const { organizations = [] } = user || {};
@@ -235,8 +237,7 @@ module.exports = {
           intersection.length === 0
             ? userFilter.join(",")
             : intersection.join(",");
-        console.log("Filter ", filter);
-        return await db.recipients.report(filter, ["created_at"], schema);
+        return await db.attendees.report(filter, ["created_at"], currentCycle && currentCycle.name, schema);
       }
     }
     return [];
