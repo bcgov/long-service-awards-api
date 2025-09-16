@@ -346,6 +346,7 @@ const attendeesQueries = {
           organizations.name AS "ministry",
           outer_recipients.branch,
           attendees.status,
+          outer_recipients.bcgeu,
           CASE WHEN (SELECT COUNT(*) FROM attendees AS inner_attendees WHERE inner_attendees.recipient = outer_recipients.id) > 1 THEN 2
             WHEN (SELECT COUNT(*) FROM attendees AS inner_attendees WHERE inner_attendees.recipient = outer_recipients.id AND inner_attendees.status = 'attending') = 1 THEN 1
             WHEN (SELECT COUNT(*) FROM attendees AS inner_attendees WHERE inner_attendees.recipient = outer_recipients.id AND inner_attendees.status != 'attending') = 1 THEN 0 END "total_attending",
