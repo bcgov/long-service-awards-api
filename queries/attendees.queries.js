@@ -64,19 +64,20 @@ const attendeesQueries = {
     // get query results
     return {
       sql: `WITH attendees_query AS(
-        SELECT attendees.*, organizations.abbreviation
+        SELECT attendees.*, organizations.abbreviation, service_selections.cycle
                       FROM attendees
                       LEFT JOIN  
                       ceremonies ON ceremonies.id = attendees.ceremony
                       LEFT JOIN recipients ON recipients.id = attendees.recipient
                       LEFT JOIN contacts ON contacts.id = recipients.contact
                       LEFT JOIN organizations ON organizations.id = recipients.organization
+					            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                       ${filterStatement} 
               ${orderClause} ${limitClause}
               OFFSET ${offset}
         )
         ---------------------------------
-        SELECT attendees.id,recipient.first_name,recipient.last_name,attendees.guest,attendees.status,attendees.ceremony_noshow,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations
+        SELECT attendees.id,recipient.first_name,recipient.last_name,attendees.guest,attendees.status,attendees.ceremony_noshow,attendees.created_at,attendees.updated_at,ceremony.ceremony,recipient.recipient, accommodations.accommodations, attendees.cycle
         FROM attendees_query as attendees
         
         LEFT JOIN (
@@ -125,7 +126,6 @@ const attendeesQueries = {
           ) AS "accommodations"
           FROM accommodation_selections AS "accomms" GROUP BY accom_attendee
         ) AS "accommodations" ON accommodations.accom_attendee = attendees.id
-
 
         ORDER BY ${orderby} ${order};`,
       data: [],
@@ -354,7 +354,8 @@ const attendeesQueries = {
           CASE WHEN accessibility_query.accessibility = 'accessibility' THEN 'Yes' ELSE 'No' END "accessibility",
           CASE WHEN accessibility_guest_query.accessibility = 'accessibility' THEN 'Yes' ELSE 'No' END "guest_accessibility",
           dietary_query.accommodations AS dietary,
-          dietary_guest_query.accommodations AS dietary_guest
+          dietary_guest_query.accommodations AS dietary_guest,
+          service_selections.cycle
         FROM attendees
         LEFT JOIN recipients AS outer_recipients ON attendees.recipient = outer_recipients.id
         LEFT JOIN contacts ON outer_recipients.contact = contacts.id
@@ -365,6 +366,7 @@ const attendeesQueries = {
         LEFT JOIN accessibility_guest_query ON attendees.recipient = accessibility_guest_query.recipient
         LEFT JOIN dietary_query ON attendees.recipient = dietary_query.recipient
         LEFT JOIN dietary_guest_query ON attendees.recipient = dietary_guest_query.recipient
+        LEFT JOIN service_selections ON outer_recipients.id = service_selections.recipient
         --WHERE Statement:
         ${
           filterStatement === ""
@@ -373,7 +375,7 @@ const attendeesQueries = {
         }
         GROUP BY attendees.recipient, attendee_id, employee_number, first_name, last_name, milestones, 
         ceremony_date, ministry, branch, attendees.status, accessibility_query.recipient, outer_recipients.id, 
-        dietary_query.accommodations, dietary_guest_query.accommodations, accessibility_query.accessibility, accessibility_guest_query.accessibility`,
+        dietary_query.accommodations, dietary_guest_query.accommodations, accessibility_query.accessibility, accessibility_guest_query.accessibility, service_selections.cycle`,
     };
   },
 };
@@ -396,9 +398,7 @@ const getFilters = (filter) => {
     const cycles = filter.cycle.split(/,/);
     const cycleFilters = [];
     cycles.forEach((cycle) => {
-      cycleFilters.push(
-        `(ceremonies.datetime >= '${cycle}-01-01' AND ceremonies.datetime <= '${cycle}-12-31')`
-      );
+      cycleFilters.push(`service_selections.cycle = ${cycle}`);
     });
 
     filters.push(`( ${cycleFilters.join(" OR ")} )`);
