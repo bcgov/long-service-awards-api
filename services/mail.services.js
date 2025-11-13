@@ -462,12 +462,11 @@ module.exports.sendRSVPConfirmation = async (
   );
 
   if (selection && selection.length > 0) {
-
     // LSA-573 Loop through the selection array to find the award for the current cycle because there can be multiple selections
     // and we need to find the one that corresponds to the award selection
 
     const currentCycle = await QualifyingYears.findCurrent();
-    
+
     for (let i = 0; i < selection.length; i++) {
       const cycle = selection[i].cycle;
       // Check if the cycle is the current cycle
@@ -478,11 +477,11 @@ module.exports.sendRSVPConfirmation = async (
 
       // Fetch the award details using the selection ID
       // LSA-568: Fixing issue where award selection was not being fetched correctly
-      const awardsel = await AwardSelection.findById(selectionId) || {};
+      const awardsel = (await AwardSelection.findById(selectionId)) || {};
 
       const award = await Awards.findById(awardsel.award);
 
-      if ( award && award.label ) { 
+      if (award && award.label) {
         // If the award has a label, add it to the attendee object
         attendee.award = award.label;
         break; // Exit the loop once the award is found
@@ -490,10 +489,11 @@ module.exports.sendRSVPConfirmation = async (
     }
 
     attendee.award = attendee.award || "No award selected for this cycle";
-
   } else {
     attendee.award = "No award selected";
   }
+
+  attendee.currentCycle = await QualifyingYears.findCurrent();
 
   // //format ceremony date for email
   // Object.assign(attendee.ceremony, {

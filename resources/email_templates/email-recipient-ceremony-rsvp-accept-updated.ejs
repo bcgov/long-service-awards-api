@@ -279,8 +279,7 @@
                                   </p>
                                   <p>
                                     Thank you for confirming your attendance for your ceremony on <%=
-                                      ceremony.datetime_formatted %> at the <%if (!ceremony.venue && !ceremony.address)
-                                        {%>
+                                      ceremony.datetime_formatted %> at <%if (!ceremony.venue && !ceremony.address) {%>
                                         (TBD). <% } else { %>
                                           <%= ceremony.venue %>, <%= ceremony.address.street1 %>, <% if
                                                 (ceremony.address.street2) {%>
