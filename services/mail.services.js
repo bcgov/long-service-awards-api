@@ -511,7 +511,7 @@ module.exports.sendRSVPConfirmation = async (
     [error, response] = await sendMail(
       [email],
       "Confirmation to Attend the Long Service Awards Ceremony",
-      "email-recipient-ceremony-rsvp-accept-updated.ejs",
+      "email-recipient-ceremony-rsvp-accept.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
@@ -522,7 +522,7 @@ module.exports.sendRSVPConfirmation = async (
     [error, response] = await sendMail(
       [email],
       "Confirmation to Not Attend the Long Service Awards Ceremony",
-      "email-recipient-ceremony-rsvp-decline-updated.ejs",
+      "email-recipient-ceremony-rsvp-decline.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
       process.env.MAIL_FROM_NAME,
