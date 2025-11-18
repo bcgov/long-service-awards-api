@@ -68,10 +68,10 @@ const attendeesQueries = {
                       FROM attendees
                       LEFT JOIN  
                       ceremonies ON ceremonies.id = attendees.ceremony
-                      LEFT JOIN recipients ON recipients.id = attendees.recipient
-                      LEFT JOIN contacts ON contacts.id = recipients.contact
-                      LEFT JOIN organizations ON organizations.id = recipients.organization
-					            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                      LEFT JOIN recipients AS outer_recipients ON outer_recipients.id = attendees.recipient
+                      LEFT JOIN contacts ON contacts.id = outer_recipients.contact
+                      LEFT JOIN organizations ON organizations.id = outer_recipients.organization
+					            LEFT JOIN service_selections ON service_selections.recipient = outer_recipients.id
                       ${filterStatement} 
               ${orderClause} ${limitClause}
               OFFSET ${offset}
@@ -148,9 +148,9 @@ const attendeesQueries = {
       sql: `SELECT COUNT(*) as total_filtered_records
                   FROM attendees
                   LEFT JOIN ceremonies ON ceremonies.id = attendees.ceremony
-                  LEFT JOIN recipients ON recipients.id = attendees.recipient
-                  LEFT JOIN contacts ON contacts.id = recipients.contact
-                  LEFT JOIN service_selections ON service_selections.recipient = recipients.id
+                  LEFT JOIN recipients AS outer_recipients ON outer_recipients.id = attendees.recipient
+                  LEFT JOIN contacts ON contacts.id = outer_recipients.contact
+                  LEFT JOIN service_selections ON service_selections.recipient = outer_recipients.id
                   ${filterStatement};`,
     };
   },
