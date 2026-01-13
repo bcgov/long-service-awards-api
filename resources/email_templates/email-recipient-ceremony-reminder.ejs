@@ -1,86 +1,91 @@
 <%- await include('email-doctype') %>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <%- await include('email-head', {title: title}) %>
 
-  <body class="body">
-    <div class="container" style="width: 600px">
-      <%- await include('email-banner'); %>
+    <body class="body">
+      <div class="container" style="width: 600px">
+        <%- await include('email-banner'); %>
 
-      <h3>Important ceremony information</h3>
+          <h3>Your Long Service Award Ceremony is coming up soon.</h3>
+          <h3>Please review this important ceremony information</h3>
 
-      <h2>
-        <%= attendee.recipient.contact.first_name %> <%=
-        attendee.recipient.contact.last_name %>
-      </h2>
+          <h2>
+            <%= attendee.recipient.contact.first_name %>
+              <%= attendee.recipient.contact.last_name %>
+          </h2>
 
-      
 
-      <table
-        cellpadding="5"
-        cellspacing="5"
-        width="100%"
-        bgcolor="#eeeeee"
-        style="margin-left: 0"
-      >
-        <tbody>
-          <tr>
-            <th>Location</th>
-            <th></th>
-            <td>
-              <% if(!!(attendee.ceremony.venue) &&
-              !!(attendee.ceremony.address.street1) &&
-              !!(attendee.ceremony.address.community) &&
-              !!(attendee.ceremony.address.province)) { %> <%=
-              attendee.ceremony.venue %><br />
-              <%= attendee.ceremony.address.street1 %><br />
-              <% if (attendee.ceremony.address.street2) { %><%=
-              attendee.ceremony.address.street2 %><br /><% } %> <%=
-              attendee.ceremony.address.community %>, <%=
-              attendee.ceremony.address.province %> <% } else { %> TBD <% } %>
-            </td>
-          </tr>
-          <tr>
-            <th>Date</th>
-            <th></th>
-            <td><%= attendee.ceremony.datetime_formatted %></td>
-          </tr>
-          <tr>
-            <th>Organization</th>
-            <th></th>
-            <td><%= attendee.recipient.organization.name %></td>
-          </tr>
-        </tbody>
-      </table>
 
-      
+          <table cellpadding="5" cellspacing="5" width="100%" bgcolor="#eeeeee" style="margin-left: 0">
+            <tbody>
+              <tr>
+                <th>Location</th>
+                <th></th>
+                <td>
+                  <% if(!!(attendee.ceremony.venue) && !!(attendee.ceremony.address.street1) &&
+                    !!(attendee.ceremony.address.community) && !!(attendee.ceremony.address.province)) { %>
+                    <%= attendee.ceremony.venue %><br />
+                      <%= attendee.ceremony.address.street1 %><br />
+                        <% if (attendee.ceremony.address.street2) { %>
+                          <%= attendee.ceremony.address.street2 %><br />
+                            <% } %>
+                              <%= attendee.ceremony.address.community %>, <%= attendee.ceremony.address.province %>
+                                  <% } else { %> TBD <% } %>
+                </td>
+              </tr>
+              <tr>
+                <th>Date</th>
+                <th></th>
+                <td>
+                  <%= attendee.ceremony.datetime_formatted %>
+                </td>
+              </tr>
+              <tr>
+                <th>Organization</th>
+                <th></th>
+                <td>
+                  <%= attendee.recipient.organization.name %>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-      <p>Dress: Business attire</p>
 
-      <p>Doors open at <%= attendee.ceremony.ceremony_time %></p>
 
-      <p>
+          <p>Dress: Business attire</p>
 
-        <b>Important information </b>
-      </p>
+          <p>Doors open at <%= attendee.ceremony.ceremony_time %>
+          </p>
 
-      <p>
+          <p>
 
-        If you're are unable to attend, please email the Long Service Awards Team at <a href="mailto:LongServiceAwards@gov.bc.ca">LongServiceAwards@gov.bc.ca</a> and notify your ministry contact prior to your ceremony. 
-        <br /><br />
-        Please be advised that if you fail to notify us in advance of your ceremony, your attendance cannot be deferred to the <%= ((+cycleYear)+1) %> ceremonies. 
-        <br /><br />
-        If you're traveling to Victoria and have chosen a larger award, please account for this when planning your trip home. 
-            
-      </p>
+            <b>Important information </b>
+          </p>
 
-      <p>
-        Thank you, 
-        <br /><br />
-        The Long Service Awards Team 
-      </p>
-      <!-- Removing the closing DIV so that iPhone renders the email in fullscreen and then shows PDF attachment underneath -->
-    <!--[if mso]>
+          <p>
+
+            If you are unable to attend, please email the Long Service Awards Team at <a
+              href="mailto:LongServiceAwards@gov.bc.ca">LongServiceAwards@gov.bc.ca</a> and notify your <a
+              href="https://longserviceawards.gww.gov.bc.ca/contacts/">ministry contact</a>
+            prior to your ceremony.
+            <br /><br />
+            Please be advised that if you fail to notify us in advance of your ceremony, your attendance cannot be
+            deferred to the <%= ((+cycleYear)+1) %> ceremonies.
+              <br /><br />
+              If you're traveling to Victoria and have chosen a larger award, please account for this when planning your
+              trip home.
+
+          </p>
+
+          <p>
+            Thank you,
+            <br /><br />
+            The Long Service Awards Team
+          </p>
+          <!-- Removing the closing DIV so that iPhone renders the email in fullscreen and then shows PDF attachment underneath -->
+          <!--[if mso]>
       </div>
     <![endif]-->
-  </body>
-</html>
+    </body>
+
+  </html>
