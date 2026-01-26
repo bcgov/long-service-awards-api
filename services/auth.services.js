@@ -115,7 +115,9 @@ exports.authenticateSMS = async (req, res, next) => {
       return next();
 
     // [dev] skip authentication on test/local environments
-    if (nodeEnv === "development" || nodeEnv === "test") {
+    //if (nodeEnv === "development" || nodeEnv === "test") {
+    // LSA-591 - temporarily disable to allow testing
+    if (false) {
       // check for impersonate query parameters
       // - use guid/idir parameters to test users other than initialized super-administrator
       const url = urlParse.parse(req.url, true);
