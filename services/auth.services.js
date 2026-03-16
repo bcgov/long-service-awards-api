@@ -114,10 +114,7 @@ exports.authenticateSMS = async (req, res, next) => {
     )
       return next();
 
-    // [dev] skip authentication on test/local environments
-    //if (nodeEnv === "development" || nodeEnv === "test") {
-    // LSA-591 - temporarily disable to allow testing
-    if (false) {
+    if (nodeEnv === "development" || nodeEnv === "test") {
       // check for impersonate query parameters
       // - use guid/idir parameters to test users other than initialized super-administrator
       const url = urlParse.parse(req.url, true);
@@ -174,7 +171,9 @@ exports.authenticateSMS = async (req, res, next) => {
 
     const { data = {} } = response || {};
     const { SMGOV_GUID = [null], username = [null] } = data || {};
-
+    console.log(`response only: ${response}`);
+    console.log(`response data: ${data}`);
+    console.log(`User GUID: ${SMGOV_GUID[0]}, User IDIR: ${username[0]}`);
     // test that tokens exist
     if (!data || !SMGOV_GUID[0] || !username[0])
       return next(new Error("noAuth"));
