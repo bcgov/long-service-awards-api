@@ -26,57 +26,55 @@
                         in <%= service.cycle %>.
                 </p>
                 <p>
-                  Long Service Awards registration is open to any full-time,
-                  part-time or seasonal employees who have reached a 25, 30, 35, 40,
-                  45 or 50 year milestone with the BC Public Service by December 31,
+                  The Long Service Awards program is open to any full-time,
+                  part-time and seasonal employees who have reached a 25, 30, 35, 40,
+                  45 or 50-year milestone with the BC Public Service by December 31,
                   <%= service.cycle %>. Employees who have achieved one of these
-                    milestones before <%= service.cycle %>, but have not been
+                    milestones before <%= service.cycle %>, but have not yet been
                       recognized, can also register.
                 </p>
                 <p>
-                  Registration for the Long Service Awards may include a service pin.
-                  If applicable, your employee's pin will be sent to you, the supervisor,
-                  in early June for presentation during Public Service Week.
-
+                  Some recipients may receive a service pin. If applicable, we will send your
+                  employee's pin to you in early June so you can present it during Public Service
+                  Week.
                 </p>
                 <h2>Ceremony</h2>
                 <p>
-                  The ceremonies will be held in Victoria this fall.
+                  The <%= service.cycle %> ceremonies will be held in Victoria this fall.
                 </p>
                 <% let nextCycle=service.cycle + 1 %>
                   <p>
                     If your employee has registered but cannot attend their ceremony, they may be eligible to
-                    defer for one year and attend a ceremony in <%= nextCycle %>. Their award will be couriered to them
-                      in the fall.
-                      If they declined their last invitation, this is their final opportunity to attend.
-                      If your employee contacts you to cancel their registration, please notify us at
-                      <a href="mailto:LongServiceAwards@gov.bc.ca">LongServiceAwards@gov.bc.ca</a> or inform
-                      your <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">ministry contact</a> as soon as
-                      possible.
-                      Failure to provide a cancellation notice may affect their eligibility to defer to the following
-                      year.
+                    defer for one year and attend a ceremony in <%= nextCycle %>. In that case, we
+                      will courier their award to them in the fall. If they declined their last invitation,
+                      this is their final opportunity to attend a ceremony.</p>
+                  <p>
+                    If your employee contacts you to cancel their registration, please notify us right away at
+                    <a href="mailto:LongServiceAwards@gov.bc.ca">LongServiceAwards@gov.bc.ca</a> and inform
+                    your <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">ministry contact</a> as soon as
+                    possible.
+                    Failure to provide a cancellation notice may affect their eligibility to defer to the following
+                    year.
                   </p>
                   <h2>Travel and Time Off</h2>
                   <p>
                     Long Service Awards recipients from outside Greater Victoria must
-                    be approved to take time off to attend their ceremony. Travel
-                    costs, including transportation, hotel and meal expenses for the
-                    recipient and one guest, are covered by the employee’s
-                    organization.
+                    be approved to take time off to attend their ceremony. The employee’s organization covers
+                    travel costs for the recipient and one guest, including transportation, hotel and
+                    meals.
                   </p>
                   <p>
-                    For Victoria-based recipients, taxi expenses to and from their
-                    ceremony are covered by their organization. In addition,
-                    Victoria-based recipients must be provided a reasonable amount of
-                    time to prepare for their ceremony. It is recommended recipients
-                    are allowed to leave their workplace by 2 pm on the day of their
-                    event without any negative impact to their pay. In cases where the
-                    recipient is a front-line worker, arrangements for coverage should
-                    be made in advance.
+                    For Victoria-based employees, their organization covers taxi costs to and from
+                    the ceremony. Victoria-based recipients should be released from work by 2:00
+                    pm on their ceremony day with no loss of pay. For front-line workers, please
+                    ensure coverage is arranged in advance.
                   </p>
                   <p>
-                    If you have additional questions, contact your
+                    If you have any questions, please contact your
                     <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">Long Service Award contact</a>.
+                  </p>
+                  <p>
+                    Your Long Service Awards team
                   </p>
                   <%- await include('email-footer'); %>
               </td>

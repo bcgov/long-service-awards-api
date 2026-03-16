@@ -25,31 +25,34 @@
                 <% if (!service.previous_award && typeof service.awards !=='undefined' && typeof service.awards.award
                   !=='undefined' ){ %>
                   <p>
-                    You chose <%= service.awards.award.label %> as your award option.
+                    You selected the <%= service.awards.award.label %> as your award. You can review your
+                      award choice in the 2026 Long Service Awards <a
+                        href="https://longserviceawards.gww.gov.bc.ca/register/awards/">catalog</a>.
                   </p>
                   <% } %>
                     <h2>Ceremony</h2>
                     <p>
-                      The <%= service.cycle %> ceremonies will be held in Victoria this fall.
-                        Your invitation will be emailed to you by the end of June and will include your ceremony
-                        details.
-                        Because each ceremony is tailored to host specific ministries and
-                        organizations, it is not possible to change your ceremony date.
+                      The <%= service.cycle %> ceremonies will be held in Victoria this fall.</p>
+                    <p>
+                      We will email your formal invitation by the end of June. It will include your
+                      ceremony date, location and event details. As each ceremony is tailored to host
+                      specific ministries and organizations, you cannot change your assigned
+                      ceremony date.
                     </p>
                     <p>
-                      An email has also been sent to your supervisor confirming your registration.
+                      We have also emailed your supervisor a confirmation of your registration.
                     </p>
                     <h2>Deferred attendance</h2>
-                    <p>
-                      If you have registered and opted out or are unable to attend the ceremony, the Long Service Awards
-                      team will courier your award to you in the fall.
-                    </p>
                     <% let nextCycle=service.cycle + 1 %>
                       <p>
-                        Please note: you may defer your attendance for one year. You can register for next year's
-                        ceremony in spring <%= nextCycle %>.
-                          If you deferred your last invitation, this is your final opportunity to attend the Long
-                          Service Awards.
+                        If you have registered but have opted out or are unable to attend the ceremony
+                        this year, we will courier your award to you after the fall ceremonies. You may
+                        defer your attendance for one year and register again for next year's ceremony
+                        in spring <%= nextCycle %>.
+                      </p>
+                      <p>
+                        If you deferred your last invitation to the ceremonies, this is your final
+                        opportunity to attend the Long Service Awards.
                       </p>
                       <h2>Travel</h2>
                       <p>
@@ -67,8 +70,8 @@
                         <a href="https://longserviceawards.gww.gov.bc.ca/contacts/">
                           organization’s contact</a>.
                       </p>
-                      <p>We hope to celebrate you at a ceremony this fall.</p>
-                      <p>Long Service Awards team</p>
+                      <p>We look forward to celebrating you this fall.</p>
+                      <p>Your Long Service Awards team</p>
                       <%- await include('email-footer'); %>
               </td>
             </tr>
