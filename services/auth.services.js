@@ -166,14 +166,9 @@ exports.authenticateSMS = async (req, res, next) => {
       },
     });
 
-    // LSA-561 Debug to check SSO information being returned
-    console.log(`User authenticated via SiteMinder: `, response);
-
     const { data = {} } = response || {};
     const { SMGOV_GUID = [null], username = [null] } = data || {};
-    console.log(`response only: ${response}`);
-    console.log(`response data: ${data}`);
-    console.log(`User GUID: ${SMGOV_GUID[0]}, User IDIR: ${username[0]}`);
+
     // test that tokens exist
     if (!data || !SMGOV_GUID[0] || !username[0])
       return next(new Error("noAuth"));
