@@ -50,12 +50,12 @@ const attendeesQueries = {
         orderby === "first_name" || orderby === "last_name"
           ? "contacts"
           : orderby === "abbreviation"
-          ? "organizations"
-          : orderby === "status" ||
-            orderby === "guest" ||
-            orderby === "ceremony_noshow"
-          ? "attendees"
-          : "ceremonies";
+            ? "organizations"
+            : orderby === "status" ||
+                orderby === "guest" ||
+                orderby === "ceremony_noshow"
+              ? "attendees"
+              : "ceremonies";
       orderClause = `ORDER BY ${table}.${orderby} ${order}`;
     }
     const limitClause = limit ? `LIMIT ${limit}` : "";
@@ -192,7 +192,7 @@ const attendeesQueries = {
     // filter ignored columns:
     const ignore = ["id", "created_at"];
     const cols = Object.keys(schema.attributes).filter(
-      (key) => !ignore.includes(key)
+      (key) => !ignore.includes(key),
     );
 
     // generate prepared statement value placeholders
@@ -223,7 +223,7 @@ const attendeesQueries = {
         .filter((key) => !ignore.includes(key) && !timestamps.includes(key))
         .map((key) => {
           return data[key];
-        })
+        }),
     );
 
     // DEBUG SQL
@@ -341,6 +341,7 @@ const attendeesQueries = {
           outer_recipients.employee_number as "employee_number",
           contacts.first_name,
           contacts.last_name,
+          contacts.office_email AS "email",
           milestones_query.milestones,
           CAST(DATE(ceremonies.datetime at time zone 'America/Vancouver') as TEXT) AS "ceremony_date",
           organizations.name AS "ministry",
@@ -373,12 +374,37 @@ const attendeesQueries = {
             ? "WHERE guest = 0"
             : filterStatement + " AND guest = 0"
         }
-        GROUP BY attendees.recipient, attendee_id, employee_number, first_name, last_name, milestones, 
+        GROUP BY attendees.recipient, attendee_id, employee_number, first_name, last_name, contacts.office_email, milestones, 
         ceremony_date, ministry, branch, attendees.status, accessibility_query.recipient, outer_recipients.id, 
         dietary_query.accommodations, dietary_guest_query.accommodations, accessibility_query.accessibility, accessibility_guest_query.accessibility, service_selections.cycle`,
     };
   },
+  reportStats: (filter, ignore = [], currentCycle, schema) => {
+    /**
+     * Generate query: Report recipients data
+     *
+     * @param schema
+     * @param {Object} filter
+     * @param {Array} ignore
+     * @return {Promise} results
+     * @public
+     */
+    const filterStatement = getFilters(filter);
+
+    return {
+      sql: `SELECT COUNT(*) FILTER (WHERE attendees.status = 'attending') AS attending_count,
+         COUNT(*) FILTER (WHERE attendees.status = 'declined') AS declined_count,
+         COUNT(*) FILTER (WHERE attendees.status = 'invited') AS invited_count
+        FROM attendees
+        LEFT JOIN recipients AS outer_recipients ON attendees.recipient = outer_recipients.id
+        LEFT JOIN service_selections ON outer_recipients.id = service_selections.recipient
+        --WHERE Statement:
+        ${filterStatement}
+      `,
+    };
+  },
 };
+
 exports.queries = attendeesQueries;
 
 const getFilters = (filter) => {
@@ -462,7 +488,7 @@ exports.findRecipient = async (id, type, schema) => {
 
 exports.findCeremonyByAttendee = async (id, type, schema) => {
   const result = await queryOne(
-    attendeesQueries.findCeremonyByAttendee(id, type)
+    attendeesQueries.findCeremonyByAttendee(id, type),
   );
   return await attachReferences(result, schema);
 };
@@ -489,20 +515,20 @@ exports.insertGuest = async (
   recipientID,
   ceremony,
   status,
-  ceremony_noshow
+  ceremony_noshow,
 ) => {
   return await transactionOne([
     attendeesQueries.insertGuest(
       recipientID,
       ceremony,
       status,
-      ceremony_noshow
+      ceremony_noshow,
     ),
   ]);
 };
 
 /**
- * Generate query: Report recipients data
+ * Generate query: Report attendees data
  *
  * @param {Object} data
  * @param {Object} schema
@@ -514,9 +540,25 @@ exports.report = async (filter, ignore, currentCycle, schema) => {
   // DEBUG SQL
   // console.log(attendeesQueries.report(filter, ignore, currentCycle, schema));
   return await query(
-    attendeesQueries.report(filter, ignore, currentCycle, schema)
+    attendeesQueries.report(filter, ignore, currentCycle, schema),
   );
 };
+
+/**
+ * Generate query: Report attendees statistics
+ *
+ * @param {Object} data
+ * @param {Object} schema
+ * @return {Promise} results
+ * @public
+ */
+
+exports.reportStats = async (filter, ignore, currentCycle, schema) => {
+  return await query(
+    attendeesQueries.reportStats(filter, ignore, currentCycle, schema),
+  );
+};
+
 /**
  * Default transactions
  * @public

@@ -12,6 +12,7 @@ const Contact = require("./contacts.model");
 const Ceremony = require("./ceremonies.model");
 const Accommodations = require("./accommodation-selection.model");
 const organizationsModel = require("./organizations.model");
+const { reportStats } = require("../queries/attendees.queries");
 
 ("use strict");
 
@@ -63,11 +64,11 @@ const schema = {
         const recipient = await Recipient.findAttachment(
           id,
           "recipient",
-          schema
+          schema,
         );
         const contact = await Contact.findByRecipient(recipient.id, "contact");
         const organization = await organizationsModel.findById(
-          recipient.data.organization
+          recipient.data.organization,
         );
         const data = {
           ...recipient.data,
@@ -157,8 +158,8 @@ module.exports = {
         parentID,
         parentField,
         parentSchema,
-        schema
-      )
+        schema,
+      ),
     );
   },
   // create: async (data) => {
@@ -192,36 +193,34 @@ module.exports = {
         data.recipient.id,
         data.ceremony.id,
         data.status,
-        data.ceremony_noshow
-      )
+        data.ceremony_noshow,
+      ),
     );
   },
   report: async (filter, user, currentCycle) => {
     // check if user is administrator (skip user-org filtering)
     const { role } = user || {};
     const isAdmin = ["super-administrator", "administrator"].includes(
-      role.name
+      role.name,
     );
     const isOrg = ["org-contact"].includes(role.name);
     console.log("Filter ", filter);
-    if (isAdmin ) {
+    if (isAdmin) {
       return await db.attendees.report(
         filter,
         ["created_at"],
         currentCycle && currentCycle.name,
-        schema
+        schema,
       );
-    }
-    else if (isOrg) {
-
+    } else if (isOrg) {
       // LSA-585 Filter report by organization for org-contacts
 
       // // restrict available orgs to user assignment
       // // - check filter overlap with user-assigned orgs
-       const { organizations = [] } = user || {};
-       const userFilter = (organizations || []).map(
-         ({ organization }) => organization.id
-       );
+      const { organizations = [] } = user || {};
+      const userFilter = (organizations || []).map(
+        ({ organization }) => organization.id,
+      );
       // // if org-contact has no assigned organizations, return empty results
       if (["org-contact"].includes(role.name) && organizations.length > 0) {
         //   // explode existing organization filter params
@@ -230,19 +229,41 @@ module.exports = {
           filter.organization.split(",").map((id) => parseInt(id));
         //   // filter org params to be contained in user filter
         const intersection = userFilter.filter((id) =>
-          (orgFilter || []).includes(parseInt(id))
+          (orgFilter || []).includes(parseInt(id)),
         );
         //   // ensure org filter is not empty
         filter.organization =
           intersection.length === 0
             ? userFilter.join(",")
             : intersection.join(",");
-        return await db.attendees.report(filter, ["created_at"], currentCycle && currentCycle.name, schema);
+        return await db.attendees.report(
+          filter,
+          ["created_at"],
+          currentCycle && currentCycle.name,
+          schema,
+        );
       }
     }
     return [];
 
-      //return await db.recipients.report(filter, ["created_at"], schema);
-    
+    //return await db.recipients.report(filter, ["created_at"], schema);
+  },
+  reportStats: async (filter, user, currentCycle) => {
+    // check if user is administrator (skip user-org filtering)
+    const { role } = user || {};
+    const isAdmin = ["super-administrator", "administrator"].includes(
+      role.name,
+    );
+    if (isAdmin) {
+      return await db.attendees.reportStats(
+        filter,
+        ["created_at"],
+        currentCycle && currentCycle.name,
+        schema,
+      );
+    }
+    return [];
+
+    //return await db.recipients.report(filter, ["created_at"], schema);
   },
 };

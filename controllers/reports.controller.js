@@ -142,6 +142,42 @@ exports.attendees = async (req, res, next) => {
 };
 
 /**
+ * Generate attendees stats report
+ *
+ * @param req
+ * @param res
+ * @param {Function} next
+ * @method get
+ * @src public
+ */
+
+exports.attendeesStats = async (req, res, next) => {
+  try {
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+    const cycleName = String(cycle.name);
+    // define filter
+    const filter = { cycle: cycleName };
+
+    // apply query filter to results
+    const attendees = await Attendee.reportStats(
+      filter,
+      res.locals.user,
+      cycle,
+    );
+    const filename = `attendees-report-${cycle}.csv`;
+    // convert json results to csv format
+    const csvData = Papa.unparse(attendees, { newline: "\n" });
+    pipeCSV(res, csvData, filename);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
  * Generate transactions report
  *
  * @param req
@@ -239,24 +275,24 @@ exports.duplicatesInCycle = async (req, res, next) => {
   try {
     // get requested LSA cycle
     const queryYear = req.query.year !== null ? req.query.year : null;
-   
+
     const filename = `duplicates-per-cycle-${queryYear}.csv`;
 
     const duplicates = await Recipient.duplicatesInCycle(queryYear);
 
     const test = !true;
 
-    const csvData = Papa.unparse(duplicates || [ ['Duplicates'], ['None for Cycle'] ], { newline: test ? "<br />" : "\n" });
+    const csvData = Papa.unparse(
+      duplicates || [["Duplicates"], ["None for Cycle"]],
+      { newline: test ? "<br />" : "\n" },
+    );
 
-    if ( test ) {
-
-      return res.status(200).send(csvData)
+    if (test) {
+      return res.status(200).send(csvData);
     }
 
     pipeCSV(res, csvData, filename);
-    
   } catch (err) {
     return next(err);
   }
-
-}
+};
