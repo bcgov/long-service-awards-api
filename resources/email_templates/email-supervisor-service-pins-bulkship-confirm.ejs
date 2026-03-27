@@ -9,11 +9,13 @@
       background: #ffffff;
       -webkit-text-size-adjust: none;
     ">
+
       <div class="container">
-        <%- await include('email-banner-pins'); %>
-          <table>
-            <tr>
-              <td style="border-bottom: 1px solid #e7e7e7">
+
+        <table>
+          <tr>
+            <td style="border-bottom: 1px solid #e7e7e7">
+              <%- await include('email-banner-pins'); %>
                 <p style="text-align: center">
                   <strong>This is an automated email. No response is required.</strong>
                 </p>
@@ -40,9 +42,9 @@
                     contact</a> if you have any questions, or do not
                   receive their pin.</p>
                 <%- await include('email-footer'); %>
-              </td>
-            </tr>
-          </table>
+            </td>
+          </tr>
+        </table>
       </div>
     </body>
 
