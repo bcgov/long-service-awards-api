@@ -23,6 +23,7 @@ const controller = require("../controllers/reports.controller");
 router.get("/lsa", authorizeOrgContact, controller.lsa);
 router.get("/service-pins", authorizeAdmin, controller.servicePins);
 router.get("/attendees", authorizeOrgContact, controller.attendees);
+router.get("/attendees-stats", authorizeAdmin, controller.attendeesStats);
 router.get("/transactions", authorizeAdmin, controller.transactions);
 router.get("/pecsf-certificates", authorizeAdmin, controller.pecsf);
 router.get("/lsa-count", authorizeAdmin, controller.count);

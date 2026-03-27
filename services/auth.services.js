@@ -73,7 +73,7 @@ exports.initPassport = (passport) => {
               if (err) {
                 return done(
                   { message: err, code: "invalidCredentials" },
-                  false
+                  false,
                 );
               }
               if (!isValid) {
@@ -87,8 +87,8 @@ exports.initPassport = (passport) => {
             });
           })
           .catch(done);
-      }
-    )
+      },
+    ),
   );
   return passport;
 };
@@ -114,7 +114,6 @@ exports.authenticateSMS = async (req, res, next) => {
     )
       return next();
 
-    // [dev] skip authentication on test/local environments
     if (nodeEnv === "development" || nodeEnv === "test") {
       // check for impersonate query parameters
       // - use guid/idir parameters to test users other than initialized super-administrator
@@ -166,9 +165,6 @@ exports.authenticateSMS = async (req, res, next) => {
         Cookie: `${SessionCookie} ${SMSCookie}`,
       },
     });
-
-    // LSA-561 Debug to check SSO information being returned
-    // console.log(`User authenticated via SiteMinder: `, response)
 
     const { data = {} } = response || {};
     const { SMGOV_GUID = [null], username = [null] } = data || {};
@@ -306,11 +302,11 @@ exports.initAuth = async () => {
         role: "super-administrator",
       });
       console.log(
-        `[${nodeEnv}] Default super-administrator '${superadminIDIR}' created.`
+        `[${nodeEnv}] Default super-administrator '${superadminIDIR}' created.`,
       );
     } else {
       console.log(
-        `[${nodeEnv}] Default super-administrator '${superadminIDIR}' initialized.`
+        `[${nodeEnv}] Default super-administrator '${superadminIDIR}' initialized.`,
       );
     }
   } catch (err) {
