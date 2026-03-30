@@ -7,6 +7,9 @@
 
 const Recipient = require("../models/recipients.model.js");
 const User = require("../models/users.model");
+const {
+  sendDelegateRegistrationConfirmation,
+} = require("../services/mail.services.js");
 
 /**
  * Retrieve delegated recipient records by user ID.
@@ -20,16 +23,16 @@ const User = require("../models/users.model");
 
 exports.get = async (req, res, next) => {
   try {
-    const {id=null} = res.locals.user || {};
+    const { id = null } = res.locals.user || {};
     // for delegated users / self-registrations
     const results = await Recipient.findByUser(id);
     // no records found
-    if (!results) return next(Error('noRecord'));
+    if (!results) return next(Error("noRecord"));
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Delegated Recipient Record(s) Found',
-        detail: 'Recipient records found.'
+        severity: "success",
+        summary: "Delegated Recipient Record(s) Found",
+        detail: "Recipient records found.",
       },
       result: results,
     });
@@ -83,26 +86,27 @@ exports.get = async (req, res, next) => {
 
 exports.save = async (req, res, next) => {
   try {
-
     // create delegated user if one does not exist
-    let { id=null, guid=null, idir=null} = res.locals.user || {};
-    if (!id) await User.register({guid: guid, idir: idir, role: 'delegate'});
+    let { id = null, guid = null, idir = null } = res.locals.user || {};
+    if (!id) await User.register({ guid: guid, idir: idir, role: "delegate" });
 
     // confirm user exists
     const user = await User.findByGUID(guid);
-    if (!user && user.hasOwnProperty(id)) return next(Error('noRecord'));
+    if (!user && user.hasOwnProperty(id)) return next(Error("noRecord"));
 
     // create delegated recipient records
     const result = await Recipient.delegate(req.body, user);
 
     // check result is valid
-    if (!result) return next(Error('invalidInput'));
+    if (!result) return next(Error("invalidInput"));
+
+    await sendDelegateRegistrationConfirmation(req.body, user);
 
     res.status(200).json({
       message: {
-        severity: 'success',
-        summary: 'Delegated Recipients Saved Successfully!',
-        detail: 'Delegated recipient records saved.'
+        severity: "success",
+        summary: "Delegated Recipients Saved Successfully!",
+        detail: "Delegated recipient records saved.",
       },
       result: await Recipient.findByUser(user.id),
     });

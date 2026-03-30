@@ -1,0 +1,48 @@
+<%- await include('email-doctype'); %>
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <%- await include('email-head', {title: title}); %>
+
+        <body class="body" style="
+      padding: 0;
+      margin: 0;
+      display: block;
+      background: #ffffff;
+      -webkit-text-size-adjust: none;
+    ">
+
+            <div class="container">
+
+                <table>
+                    <tr>
+                        <td style="border-bottom: 1px solid #e7e7e7">
+                            <%- await include('email-banner-pins'); %>
+                                <p style="text-align: center">
+                                    <strong>This is an automated email. No response is required.</strong>
+                                </p>
+                                <p>
+                                    Thank you for registering your employee(s): <br>
+                                    <%= employeeshtml %> to receive a <a
+                                            href="https://longserviceawards.gww.gov.bc.ca/service-pins/">Corporate
+                                            Service Pin</a> in <%= cycleYear %>.
+                                </p>
+                                <p>Pins will be delivered to you or your <a
+                                        href="https://compass.gww.gov.bc.ca/employee-recognition/ministry-recognition-contacts/">ministry
+                                        recognition
+                                        contact</a> in early June. Please plan to present them during P<a
+                                        href="https://compass.gww.gov.bc.ca/employee-recognition/public-service-week/">Public
+                                        Service
+                                        Week</a> in a way that suits your employee’s recognition preferences.</p>
+                                <p>To ensure your employee is recognized and receives their pin, please check
+                                    in with your <a
+                                        href="https://compass.gww.gov.bc.ca/employee-recognition/ministry-recognition-contacts/">ministry
+                                        recognition
+                                        contact</a> if you have any questions, or do not
+                                    receive their pin.</p>
+                                <%- await include('email-footer'); %>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+
+    </html>
