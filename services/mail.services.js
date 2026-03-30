@@ -350,14 +350,16 @@ module.exports.sendDelegateRegistrationConfirmation = async (
   const employeeshtml = employees
     .map(
       (employee) =>
-        `${employee.contact.first_name} ${employee.contact.last_name}<br>`,
+        `${employee.contact.first_name} ${employee.contact.last_name}`,
     )
-    .join("");
+    .join(", ");
+
+  const cycleYear = await QualifyingYears.findCurrent();
 
   const data = {
     ...recipients,
     employeeshtml: employeeshtml,
-    cycleYear: await QualifyingYears.findCurrent(),
+    cycleYear: cycleYear,
   };
 
   // send confirmation mail to supervisor
