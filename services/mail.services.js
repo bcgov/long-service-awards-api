@@ -18,6 +18,7 @@ const Awards = require("../models/awards.model");
 const { decodeError } = require("../error");
 const chesService = require("../services/ches.services");
 const { isEmpty } = require("../services/validation.services");
+const Settings = require("../models/settings.model.js");
 
 const exp = require("constants");
 const { generatePDFCertificate } = require("./pdf.services");
@@ -354,7 +355,10 @@ module.exports.sendDelegateRegistrationConfirmation = async (
     )
     .join(", ");
 
-  const cycleYear = await QualifyingYears.findCurrent();
+  const settings = await Settings.findAll();
+  const currentYear = new Date().getFullYear();
+  const cycleYear =
+    settings.find((s) => s?.name === "cycle")?.value || currentYear;
 
   const data = {
     ...recipients,
