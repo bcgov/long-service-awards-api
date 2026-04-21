@@ -232,7 +232,7 @@ module.exports.sendRegistrationConfirmation = async (recipient, user) => {
   // LSA-522 Passing user object from res for development email sending. Confirmed that invoking functions send user param
   const { service, supervisor, contact, organization } = recipient || {};
   const { confirmed, milestone } = service || {};
-  const isLSA = milestone >= 25;
+  const isLSA = service.awards ? true : false;
 
   // check if registration is confirmed
   if (!confirmed) return;
