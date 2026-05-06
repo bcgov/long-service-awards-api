@@ -42,7 +42,7 @@ const awardsQueries = {
       filterClauses.push("active = true");
       // quantity filter
       filterClauses.push(
-        "(quantity < 0 OR quantity > selected OR selected IS NULL)"
+        "(quantity < 0 OR quantity > selected OR selected IS NULL)",
       );
     }
     // milestone filter
@@ -87,6 +87,18 @@ const awardsQueries = {
       data: milestone ? [milestone] : [],
     };
   },
+  report: (currentCycle) => {
+    const cycle = currentCycle || new Date().getFullYear();
+    return {
+      sql: `SELECT awards.label AS award_name, awards.milestone, COUNT(award_selections.award) AS award_count from award_selections
+            LEFT JOIN awards ON award_selections.award = awards.id
+            LEFT JOIN service_selections ON award_selections.id = service_selections.id
+            WHERE service_selections.cycle = ${cycle}
+            GROUP BY awards.label, awards.id
+            ORDER BY awards.milestone`,
+      data: [],
+    };
+  },
 };
 exports.queries = awardsQueries;
 
@@ -100,4 +112,16 @@ exports.queries = awardsQueries;
 
 exports.findAll = async (filter) => {
   return await query(awardsQueries.findAll(filter));
+};
+
+/**
+ * Generate query: Find filtered results
+ *
+ * @param {Object} filter
+ * @return {Promise} results
+ * @public
+ */
+
+exports.report = async (cycleYear) => {
+  return await query(awardsQueries.report(cycleYear));
 };

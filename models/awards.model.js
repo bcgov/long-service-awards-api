@@ -5,10 +5,10 @@
  * MIT Licensed
  */
 
-const db = require('../queries/index.queries');
+const db = require("../queries/index.queries");
 const AwardOption = require("./award-options.model");
 
-'use strict';
+("use strict");
 
 /**
  * Model schema
@@ -18,67 +18,71 @@ const AwardOption = require("./award-options.model");
  */
 
 const schema = {
-    modelName: 'awards',
-    attributes: {
-        id: {
-            dataType: 'integer',
-            required: true,
-            serial: true,
-            editable: false
-        },
-        short_code: {
-            dataType: 'varchar'
-        },
-        type: {
-            dataType: 'varchar',
-            required: true
-        },
-        milestone: {
-            dataType: 'integer',
-            required: true
-        },
-        label: {
-            dataType: 'varchar',
-            required: true
-        },
-        description: {
-            dataType: 'text'
-        },
-        image_url: {
-            dataType: 'varchar'
-        },
-        quantity: {
-            dataType: 'integer'
-        },
-        active: {
-            dataType: 'boolean'
-        }
+  modelName: "awards",
+  attributes: {
+    id: {
+      dataType: "integer",
+      required: true,
+      serial: true,
+      editable: false,
     },
-    attachments: {
-        options: {
-            model: AwardOption,
-            get: AwardOption.findByAward,
-            attach: AwardOption.attach
-        }
-    }
+    short_code: {
+      dataType: "varchar",
+    },
+    type: {
+      dataType: "varchar",
+      required: true,
+    },
+    milestone: {
+      dataType: "integer",
+      required: true,
+    },
+    label: {
+      dataType: "varchar",
+      required: true,
+    },
+    description: {
+      dataType: "text",
+    },
+    image_url: {
+      dataType: "varchar",
+    },
+    quantity: {
+      dataType: "integer",
+    },
+    active: {
+      dataType: "boolean",
+    },
+  },
+  attachments: {
+    options: {
+      model: AwardOption,
+      get: AwardOption.findByAward,
+      attach: AwardOption.attach,
+    },
+  },
 };
 
 const methods = db.generate(schema);
 
 // overload default methods
 methods.findAll = async (filter) => {
-    filter.active = null;
-    return await db.awards.findAll(filter);
+  filter.active = null;
+  return await db.awards.findAll(filter);
 };
 
-methods.findByField = async(field, value, active=true) => {
-    // returns multiple
-    // - default filter for active record
-    const filter= {
-        [field]: value,
-        active: active
-    }
-    return await db.awards.findAll(filter);
+methods.findByField = async (field, value, active = true) => {
+  // returns multiple
+  // - default filter for active record
+  const filter = {
+    [field]: value,
+    active: active,
+  };
+  return await db.awards.findAll(filter);
+};
+
+methods.report = async (cycleYear) => {
+  return await db.awards.report(cycleYear);
 };
 
 module.exports = methods;
