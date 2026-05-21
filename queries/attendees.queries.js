@@ -424,7 +424,13 @@ const getFilters = (filter) => {
     const cycles = filter.cycle.split(/,/);
     const cycleFilters = [];
     cycles.forEach((cycle) => {
-      cycleFilters.push(`service_selections.cycle = ${cycle}`);
+      if (cycle === "2026") {
+        cycleFilters.push(
+          `service_selections.cycle = ${cycle} AND ceremonies.datetime > '2026-05-01'`,
+        );
+      } else {
+        cycleFilters.push(`service_selections.cycle = ${cycle}`);
+      }
     });
 
     filters.push(`( ${cycleFilters.join(" OR ")} )`);

@@ -6,12 +6,14 @@
  */
 
 const Recipient = require("../models/recipients.model.js");
+const Awards = require("../models/awards.model.js");
 const Attendee = require("../models/attendees.model.js");
 const Ceremony = require("../models/ceremonies.model.js");
 const Transactions = require("../models/transactions.model.js");
 const QualifyingYear = require("../models/qualifying-years.model.js");
 const { Readable } = require("stream");
 const Papa = require("papaparse");
+const { awards } = require("../queries/index.queries.js");
 
 /**
  * Create CSV data stream and pipe to response
@@ -291,6 +293,28 @@ exports.duplicatesInCycle = async (req, res, next) => {
       return res.status(200).send(csvData);
     }
 
+    pipeCSV(res, csvData, filename);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.awardsCount = async (req, res, next) => {
+  try {
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+
+    const cycleName = String(cycle.name);
+
+    // apply query filter to results
+    const awardsCount = await Awards.report(cycleName);
+    const filename = `award-counts-per-award-${cycle}.csv`;
+
+    // convert json results to csv format
+    const csvData = Papa.unparse(awardsCount, { newline: "\n" });
     pipeCSV(res, csvData, filename);
   } catch (err) {
     return next(err);
