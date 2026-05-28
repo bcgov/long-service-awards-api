@@ -394,10 +394,12 @@ const attendeesQueries = {
     return {
       sql: `SELECT COUNT(*) FILTER (WHERE attendees.status = 'attending') AS attending_count,
          COUNT(*) FILTER (WHERE attendees.status = 'declined') AS declined_count,
-         COUNT(*) FILTER (WHERE attendees.status = 'invited') AS invited_count
+         COUNT(*) FILTER (WHERE attendees.status = 'invited') AS invited_count,
+         COUNT(*) FILTER (WHERE attendees.status = 'assigned') AS invited_count
         FROM attendees
         LEFT JOIN recipients AS outer_recipients ON attendees.recipient = outer_recipients.id
         LEFT JOIN service_selections ON outer_recipients.id = service_selections.recipient
+        LEFT JOIN ceremonies ON attendees.ceremony = ceremonies.id
         --WHERE Statement:
         ${filterStatement}
       `,
