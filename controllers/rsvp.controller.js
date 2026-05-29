@@ -61,7 +61,7 @@ exports.update = async (req, res, next) => {
     const token = req.params.token;
     const valid = await validateToken(id, token);
     const accept = req.body.attendance_confirmed;
-    
+
     if (!valid) throw (err = "Not Valid");
 
     const recipient_attendee = await Attendees.findById(data.id);
@@ -76,8 +76,8 @@ exports.update = async (req, res, next) => {
         if (data.recipient_accommodations[key] === true) {
           accommodationsArr.push(
             JSON.parse(
-              '{"accommodation": "' + key + '", "attendee": "' + data.id + '"}'
-            )
+              '{"accommodation": "' + key + '", "attendee": "' + data.id + '"}',
+            ),
           );
         }
       });
@@ -104,8 +104,8 @@ exports.update = async (req, res, next) => {
         if (data.guest_accommodations[key] === true) {
           guestAccommodationsArr.push(
             JSON.parse(
-              '{"accommodation": "' + key + '", "attendee": "' + guestID + '"}'
-            )
+              '{"accommodation": "' + key + '", "attendee": "' + guestID + '"}',
+            ),
           );
         }
       });
@@ -133,7 +133,6 @@ exports.update = async (req, res, next) => {
         email = recipient_attendee.data.recipient.contact.personal_email;
     }
 
-   
     // Send RSVP confirmation
     const user = req.user;
     await sendRSVPConfirmation(data, email, accept, user);
@@ -152,7 +151,8 @@ exports.update = async (req, res, next) => {
 exports.getAccommodations = async (req, res, next) => {
   try {
     const results = await Accommodations.findAll();
-    return res.status(200).json(results);
+    const activeAccommodations = results.filter((item) => item.active);
+    return res.status(200).json(activeAccommodations);
   } catch (err) {
     console.error(err);
     return next(err);
