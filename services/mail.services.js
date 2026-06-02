@@ -614,7 +614,7 @@ module.exports.sendRSVPConfirmation = async (
   if (accept) {
     [error, response] = await sendMail(
       [email],
-      "Confirmation to Attend the Long Service Awards Ceremony",
+      "RSVP Confirmation - YES, I will be attending the Long Service Awards Ceremony",
       "email-recipient-ceremony-rsvp-accept.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
@@ -625,7 +625,7 @@ module.exports.sendRSVPConfirmation = async (
   } else {
     [error, response] = await sendMail(
       [email],
-      "Confirmation to Not Attend the Long Service Awards Ceremony",
+      "RSVP Confirmation - NO, I will not be attending the Long Service Awards Ceremony",
       "email-recipient-ceremony-rsvp-decline.ejs",
       attendee,
       process.env.MAIL_FROM_ADDRESS,
