@@ -90,12 +90,21 @@ const awardsQueries = {
   report: (currentCycle) => {
     const cycle = currentCycle || new Date().getFullYear();
     return {
-      sql: `SELECT awards.label AS award_name, awards.milestone, COUNT(award_selections.award) AS award_count from award_selections
+      sql: `(SELECT awards.label AS award_name, award_options AS option_name, awards.milestone, COUNT(award_option_selections.award_option) AS award_count from award_option_selections
+            LEFT JOIN award_options ON award_option_selections.award_option = award_options.id
+			      LEFT JOIN awards ON award_options.award = awards.id
+            LEFT JOIN service_selections ON award_option_selections.service = service_selections.id
+            WHERE service_selections.cycle = ${cycle}
+            GROUP BY award_options.label, awards.id, option_name
+            ORDER BY awards.milestone, award_name)
+            UNION ALL 
+            (SELECT awards.label AS award_name, NULL as option_name, awards.milestone, COUNT(award_selections.award) AS award_count from award_selections
             LEFT JOIN awards ON award_selections.award = awards.id
             LEFT JOIN service_selections ON award_selections.id = service_selections.id
             WHERE service_selections.cycle = ${cycle}
             GROUP BY awards.label, awards.id
-            ORDER BY awards.milestone`,
+            ORDER BY awards.milestone, award_name)
+			      ORDER BY award_name, option_name DESC`,
       data: [],
     };
   },
