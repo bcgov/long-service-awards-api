@@ -244,6 +244,29 @@ exports.pecsf = async (req, res, next) => {
   }
 };
 
+exports._count = async (req, res, next) => {
+  try {
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+
+    const cycleName = String(cycle.name);
+
+    // apply query filter to results
+    const recipients = await Ceremony.report(res.locals.user, cycleName);
+    const filename = `award-counts-per-ceremony-${cycle}.csv`;
+
+   
+    // convert json results to csv format
+    const csvData = Papa.unparse(recipients, { newline: "\n" } );
+    pipeCSV(res, csvData, filename);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 exports.count = async (req, res, next) => {
   try {
     // get requested LSA cycle
@@ -254,18 +277,101 @@ exports.count = async (req, res, next) => {
 
     const cycleName = String(cycle.name);
 
-    // define filter
-    const filter = {
-      cycle: cycleName,
-      milestones: "25,30,35,40,45,50,55",
-    };
+    // apply query filter to results
+    const recipients = await Ceremony.report(res.locals.user, cycleName);
+    const filename = `award-counts-per-ceremony-${cycle}.csv`;
+    const columns = new Set();
+    //console.log(recipients)
+    const awards = {};
+    const formatDate = (d) => {
+
+      return [d.getFullYear(), String(d.getMonth()+1).valueOf().padStart(2, 0), d.getDate()].join("-");
+    }
+    
+    recipients.forEach(r => {
+
+      const key = r.award_name+ (r.custom_description != '' ? (' | ' +r.custom_description) : '');
+      const a = awards[key] || {
+        nights: {},
+        award: key,
+      };
+      a.nights[formatDate(r.night)] = r.award_count;
+      columns.add(formatDate(r.night));
+
+      awards[key] = a;
+      
+    });
+
+    //console.log(awards)
+    
+    const unwrapped = Object.values(awards).map(award => {
+
+      const counts = {};
+      Array.from(columns).map(n => {
+        counts[n] = award.nights[n] || '-';
+      });
+
+      return {
+        award: award.award,
+        ...counts
+        
+      }
+    });
+
+    //console.log(unwrapped)
+    
+   
+    // convert json results to csv format
+    const csvData = Papa.unparse(unwrapped, { newline: "\n", columns: ['award', ...Array.from(columns)] });
+    pipeCSV(res, csvData, filename);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.countV2 = async (req, res, next) => {
+  try {
+    // get requested LSA cycle
+    const queryYear = req.query.year !== null ? req.query.year : null;
+    const cycle = queryYear
+      ? await QualifyingYear.findYear(queryYear)
+      : await QualifyingYear.findCurrent();
+
+    const cycleName = String(cycle.name);
 
     // apply query filter to results
     const recipients = await Ceremony.report(res.locals.user, cycleName);
     const filename = `award-counts-per-ceremony-${cycle}.csv`;
+    const columns = new Set();
+    
 
+    const unwrapped = recipients.map(r => {
+
+      const awards = {};
+      
+      r.awards_per_ceremony.split(/; /).forEach((a, i) => {
+        const c = `award_${i}`;
+        awards[c] = a.trim();
+        columns.add(c);
+      });
+
+      return {
+        ceremony_date: r.ceremony_date,
+        ...awards
+      }
+    });
+
+    /*
+    unwrapped.forEach(r => {
+
+      Array.from(columns).forEach(c => {
+        if ( !r[c] ) r[c] = '';
+      });
+    });
+    */
+   
     // convert json results to csv format
-    const csvData = Papa.unparse(recipients, { newline: "\n" });
+    const csvData = Papa.unparse(unwrapped, { newline: "\n", columns: ['ceremony_date', ...Array.from(columns)] });
     pipeCSV(res, csvData, filename);
   } catch (err) {
     return next(err);

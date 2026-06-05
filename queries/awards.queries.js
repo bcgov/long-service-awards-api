@@ -87,7 +87,7 @@ const awardsQueries = {
       data: milestone ? [milestone] : [],
     };
   },
-  report: (currentCycle) => {
+  _report: (currentCycle) => {
     const cycle = currentCycle || new Date().getFullYear();
     return {
       sql: `(SELECT awards.label AS award_name, award_options AS option_name, awards.milestone, COUNT(award_option_selections.award_option) AS award_count from award_option_selections
@@ -107,6 +107,61 @@ const awardsQueries = {
 			      ORDER BY award_name, option_name DESC`,
       data: [],
     };
+  },
+  report: (cycle) => {
+    
+    const sql = `
+      WITH award_data AS (
+              SELECT
+                  CONCAT(service_selections.milestone, ' - ', awards.label) AS award_name,
+            CASE
+              WHEN award_options.type = 'pecsf-charity'
+              THEN 'Donation'
+              ELSE
+                CASE
+                  WHEN award_option_selections.custom_value IS null
+                  THEN ''
+                  ELSE CONCAT(award_options.label, ' | ', award_options.description)
+                END
+            END
+            AS custom_description,
+            service_selections.milestone
+              FROM attendees
+              LEFT JOIN recipients
+                  ON recipients.id = attendees.recipient
+              LEFT JOIN service_selections
+                  ON service_selections.recipient = attendees.recipient
+              LEFT JOIN award_selections
+                  ON award_selections.id = service_selections.id
+              LEFT JOIN awards
+                  ON awards.id = award_selections.award
+              LEFT JOIN award_option_selections
+                  ON award_option_selections.service = service_selections.id
+          LEFT JOIN award_options
+                  ON award_options.id = award_option_selections.award_option
+              INNER JOIN ceremonies
+                  ON ceremonies.id = attendees.ceremony
+                  AND datetime >= $1::timestamp
+                  AND datetime <= $2::timestamp
+              WHERE service_selections.cycle = $3::integer
+                  AND attendees.guest = 0
+                  AND attendees.ceremony IN (
+                      SELECT id
+                      FROM ceremonies
+                  )
+                  AND award_selections.award IS NOT NULL
+            )
+
+            SELECT
+                *,
+            COUNT(*) AS award_count
+            FROM award_data
+          GROUP BY award_name, custom_description, milestone
+          ORDER BY award_name, milestone
+            
+    `;
+
+    return { sql: sql, data: [`'${cycle}-01-01'`, `'${cycle}-12-31'`, cycle-1] };
   },
 };
 exports.queries = awardsQueries;
@@ -134,3 +189,4 @@ exports.findAll = async (filter) => {
 exports.report = async (cycleYear) => {
   return await query(awardsQueries.report(cycleYear));
 };
+
