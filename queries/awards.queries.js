@@ -87,6 +87,7 @@ const awardsQueries = {
       data: milestone ? [milestone] : [],
     };
   },
+  /*
   _report: (currentCycle) => {
     const cycle = currentCycle || new Date().getFullYear();
     return {
@@ -108,6 +109,7 @@ const awardsQueries = {
       data: [],
     };
   },
+  */
   report: (cycle) => {
     
     const sql = `

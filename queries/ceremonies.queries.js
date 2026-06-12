@@ -160,7 +160,7 @@ const ceremoniesQueries = {
 
     return { sql: sql, data: [`'${cycle}-01-01'`, `'${cycle}-12-31'`, cycle] };
   },
-  
+  /*
   reportV2: (cycle) => {
     
     const sql = `
@@ -214,6 +214,7 @@ const ceremoniesQueries = {
 
     return { sql: sql, data: [`'${cycle}-01-01'`, `'${cycle}-12-31'`, cycle] };
   }
+  */
 };
 exports.queries = ceremoniesQueries;
 

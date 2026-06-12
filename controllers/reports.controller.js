@@ -244,6 +244,7 @@ exports.pecsf = async (req, res, next) => {
   }
 };
 
+/*
 exports._count = async (req, res, next) => {
   try {
     // get requested LSA cycle
@@ -266,6 +267,7 @@ exports._count = async (req, res, next) => {
     return next(err);
   }
 };
+*/
 
 exports.count = async (req, res, next) => {
   try {
@@ -306,7 +308,7 @@ exports.count = async (req, res, next) => {
 
       This allow report to have an award as a the first column in a row, and then each ceremony nights as column headers with each
       column containing the number of awards for that specific night.
-       
+
     */
     const awards = {};
     const formatDate = (d) => {
@@ -314,7 +316,7 @@ exports.count = async (req, res, next) => {
       return [d.getFullYear(), String(d.getMonth()+1).valueOf().padStart(2, 0), d.getDate()].join("-");
     }
     
-    recipients.forEach(r => {
+    (recipients || []).forEach(r => {
 
       const key = r.award_name+ (r.custom_description != '' ? (' | ' +r.custom_description) : '');
       const a = awards[key] || {
@@ -355,6 +357,7 @@ exports.count = async (req, res, next) => {
   }
 };
 
+/*
 exports.countV2 = async (req, res, next) => {
   try {
     // get requested LSA cycle
@@ -387,14 +390,13 @@ exports.countV2 = async (req, res, next) => {
       }
     });
 
-    /*
-    unwrapped.forEach(r => {
-
-      Array.from(columns).forEach(c => {
-        if ( !r[c] ) r[c] = '';
-      });
-    });
-    */
+    
+    //unwrapped.forEach(r => {
+    //
+    //  Array.from(columns).forEach(c => {
+    //    if ( !r[c] ) r[c] = '';
+    //  });
+    //});
    
     // convert json results to csv format
     const csvData = Papa.unparse(unwrapped, { newline: "\n", columns: ['ceremony_date', ...Array.from(columns)] });
@@ -403,6 +405,7 @@ exports.countV2 = async (req, res, next) => {
     return next(err);
   }
 };
+*/
 
 // LSA-516 Create report that lists duplicate entries for selected cycle based on employee numbers
 exports.duplicatesInCycle = async (req, res, next) => {
