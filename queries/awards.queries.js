@@ -161,7 +161,7 @@ const awardsQueries = {
             
     `;
 
-    return { sql: sql, data: [`'${cycle}-01-01'`, `'${cycle}-12-31'`, cycle-1] };
+    return { sql: sql, data: [`'${cycle}-01-01'`, `'${cycle}-12-31'`, cycle] };
   },
 };
 exports.queries = awardsQueries;

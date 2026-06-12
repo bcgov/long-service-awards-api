@@ -158,7 +158,7 @@ const ceremoniesQueries = {
           ORDER BY night, award_name      
     `;
 
-    return { sql: sql, data: [`'${cycle}-01-01'`, `'${cycle}-12-31'`, cycle-1] };
+    return { sql: sql, data: [`'${cycle}-01-01'`, `'${cycle}-12-31'`, cycle] };
   },
   
   reportV2: (cycle) => {

@@ -282,6 +282,32 @@ exports.count = async (req, res, next) => {
     const filename = `award-counts-per-ceremony-${cycle}.csv`;
     const columns = new Set();
     //console.log(recipients)
+    /*
+
+      Pivots results from:
+
+      {
+        night: Tue Feb 24 2026 00:00:00 GMT-0800 (Pacific Standard Time), 
+        award_name: '25 - Ocean Charcurterie Board', 
+        custom_description: '', 
+        award_count: '7'
+      }
+
+      To:
+
+      {
+                
+        award: '25 - Ocean Charcurterie Board',
+        nights: {
+          2026-02-24: 7
+        }
+
+      }
+
+      This allow report to have an award as a the first column in a row, and then each ceremony nights as column headers with each
+      column containing the number of awards for that specific night.
+       
+    */
     const awards = {};
     const formatDate = (d) => {
 
