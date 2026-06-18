@@ -86,6 +86,13 @@ const getFilters = (data) => {
           ? "award_option_selections.pecsf_charity IS NOT NULL"
           : ""
       }`,
+    service_pin: (value) => `(
+        service_selections.service_pin = $${index++}::boolean 
+        ${
+          value[0] === "false"
+            ? "OR service_selections.service_pin IS NULL"
+            : ""
+        } )`,
   };
   // match filter with input data
   let statements = "";
@@ -173,7 +180,7 @@ const recipientQueries = {
       filter.orderby = filter.orderby.split(".")[1];
     }
     // destructure filter for sort/order/offset/limit
-    const {
+    let {
       orderby = "last_name",
       order = "DESC",
       offset = 0,
@@ -186,11 +193,18 @@ const recipientQueries = {
         orderby === "first_name" || orderby === "last_name"
           ? "contacts"
           : orderby === "abbreviation"
-          ? "organization"
-          : orderby === "ceremony"
-          ? "attendees"
-          : "recipients";
-      orderClause = `ORDER BY ${table}.${orderby} ${order}`;
+            ? "organization"
+            : orderby === "ceremony"
+              ? "attendees"
+              : orderby === "status"
+                ? "srv"
+                : "recipients";
+      if (orderby === "status") {
+        orderby = "srvs.confirmed";
+        orderClause = `ORDER BY confirmed ${order}`;
+      } else {
+        orderClause = `ORDER BY ${table}.${orderby} ${order}`;
+      }
     }
     const limitClause = limit ? `LIMIT ${limit}` : "";
 
@@ -213,16 +227,17 @@ const recipientQueries = {
       .filter((field) => !ignore.includes(field))
       .map((field) => "r." + field)
       .join(", ");
+    // DON'T PUSH INCOMPLETE: Update query to sort by confirmed status (LSA-605)
     return {
       sql: `WITH rcps AS (
-                SELECT recipients.*, contacts.first_name as first_name, contacts.last_name as last_name, organizations.abbreviation FROM recipients
+                SELECT recipients.*, contacts.first_name as first_name, contacts.last_name as last_name, organizations.abbreviation, service_selections.confirmed, service_selections.service_pin FROM recipients
                            LEFT JOIN contacts ON contacts.id = recipients.contact
                            LEFT JOIN organizations ON organizations.id = recipients.organization
                            LEFT JOIN organizations AS "attending_organization" ON "attending_organization".id = recipients.attending_with_organization
                            LEFT JOIN service_selections ON service_selections.recipient = recipients.id
                            LEFT JOIN attendees ON attendees.recipient = recipients.id
                       ${filterStatements && " WHERE " + filterStatements}
-                  GROUP BY recipients.id, contacts.first_name, contacts.last_name, organizations.abbreviation
+                  GROUP BY recipients.id, contacts.first_name, contacts.last_name, organizations.abbreviation, confirmed, service_pin
                                ${orderClause} ${limitClause}
                   OFFSET ${offset}
                   )
@@ -326,7 +341,7 @@ const recipientQueries = {
                       
                     -- services details
                            LEFT JOIN (
-                      SELECT srv.recipient as recipient_id, 
+                      SELECT srv.recipient as recipient_id, srv.confirmed,
                              JSON_AGG(
                               json_build_object(
                                       'id', srv.id,
@@ -396,7 +411,7 @@ const recipientQueries = {
                                   ) AS "aopts" ON aopt_service_id = "srv"."id"
                            -- end award options 
                           -- ${serviceFilter}
-                      GROUP BY recipient_id
+                      GROUP BY recipient_id, confirmed
                   ) AS "srvs" ON recipient_id = "r"."id"
                   ORDER BY ${orderby} ${order}
             ;`,
@@ -439,25 +454,23 @@ const recipientQueries = {
     };
   },
   findFromEmployeeNumber: (employeeNumber) => {
-
     return {
       sql: `SELECT recipients.* FROM recipients
                   WHERE recipients.employee_number = $1::varchar`,
-      data: [employeeNumber]
-    }
+      data: [employeeNumber],
+    };
   },
   checkForRecipientInCycle: (employeeNumber, cycle) => {
-
     return {
-      sql:  `SELECT COUNT(recipients.id) AS total_filtered_records 
+      sql: `SELECT COUNT(recipients.id) AS total_filtered_records 
               FROM recipients, service_selections
               WHERE 
                 recipients.employee_number = $1::varchar AND
                 service_selections.recipient = recipients.id AND
                 service_selections.cycle = $2::integer AND
                 service_selections.confirmed = True`,
-      data: [employeeNumber, cycle]
-    }
+      data: [employeeNumber, cycle],
+    };
   },
   updateContact: (recipientID, contactID, type) => {
     return {
@@ -493,7 +506,7 @@ const recipientQueries = {
       attending_with_organization = null,
       contact = null,
       supervisor = null,
-      notes = ""
+      notes = "",
     } = data || {};
     return {
       sql: `INSERT INTO recipients (
@@ -525,7 +538,7 @@ const recipientQueries = {
         contact,
         supervisor,
         attending_with_organization,
-        notes
+        notes,
       ],
     };
   },
@@ -538,7 +551,7 @@ const recipientQueries = {
     // filter ignored columns:
     const ignore = ["id", "guid", "idir", "user", "created_at"];
     const cols = Object.keys(schema.attributes).filter(
-      (key) => !ignore.includes(key)
+      (key) => !ignore.includes(key),
     );
 
     // generate prepared statement value placeholders
@@ -569,7 +582,7 @@ const recipientQueries = {
         .filter((key) => !ignore.includes(key) && !timestamps.includes(key))
         .map((key) => {
           return data[key];
-        })
+        }),
     );
 
     // DEBUG SQL
@@ -707,6 +720,7 @@ const recipientQueries = {
                              srv.previous_award AS previous_award,
                              srv.delegated AS delegated,
                              srv.confirmed AS confirmed,
+                             srv.service_pin AS service_pin,
                              srv.ceremony_opt_out AS ceremony_opt_out,
                              srv.survey_opt_in AS survey_opt_in,
                              awd.short_code AS award_shortcode,
@@ -815,11 +829,9 @@ const recipientQueries = {
     ];
   },
   duplicatesInCycle: (cycle) => {
-
     // LSA-516 Create query that lists duplicate entries for selected cycle based on employee numbers
 
     return {
-
       sql: `
         WITH duplicates AS (
           SELECT 
@@ -860,19 +872,17 @@ const recipientQueries = {
         ORDER BY
           recipients.employee_number
       `,
-      data: [cycle]
-    }
+      data: [cycle],
+    };
   },
   // LSA-540 Update a Recipient's user. Used by new Recipient migration
   // Changes user column in recipients table for id=recipientID to user=userID
   updateUser: (recipientID, userID) => {
-
-    return { 
-      
+    return {
       sql: `UPDATE recipients SET "user" = $1::uuid WHERE id = $2::uuid RETURNING *;`,
-      data: [userID, recipientID]
+      data: [userID, recipientID],
     };
-  }
+  },
 };
 exports.queries = recipientQueries;
 
@@ -913,27 +923,29 @@ exports.findContact = async (id, type, schema) => {
 
 /**
  * Generate query: Find recipient based on employee number
- * 
+ *
  * @param {String} employeeNumber
  * @return {Promise} results
  */
 
-exports.findFromEmployeeNumber = async(employeeNumber/*, schema*/) => {
-
-  const result = await query(recipientQueries.findFromEmployeeNumber(employeeNumber));
+exports.findFromEmployeeNumber = async (employeeNumber /*, schema*/) => {
+  const result = await query(
+    recipientQueries.findFromEmployeeNumber(employeeNumber),
+  );
   return result;
 };
 
 /**
  * Generate query: Check if employee number + current cycle is empty
- * 
+ *
  * @param {String} employeeNumber
  * @return {Promise} results
  */
 
-exports.checkForRecipientInCycle = async(employeeNumber, cycle) => {
-
-  const result = await queryOne(recipientQueries.checkForRecipientInCycle(employeeNumber, cycle));
+exports.checkForRecipientInCycle = async (employeeNumber, cycle) => {
+  const result = await queryOne(
+    recipientQueries.checkForRecipientInCycle(employeeNumber, cycle),
+  );
   return result;
 };
 
@@ -998,7 +1010,7 @@ exports.report = async (filter, ignore, currentCycle, schema) => {
   // DEBUG SQL
   //var query = recipientQueries.report(filter, ignore, currentCycle, schema);
   return await query(
-    recipientQueries.report(filter, ignore, currentCycle, schema)
+    recipientQueries.report(filter, ignore, currentCycle, schema),
   );
 };
 
@@ -1042,7 +1054,7 @@ exports.delegate = async (data, user, cycle, schema) => {
       contact,
       service,
       prior_milestones = [],
-      notes
+      notes,
     } = recipientData || {};
 
     // generate UUID for recipient
@@ -1067,8 +1079,8 @@ exports.delegate = async (data, user, cycle, schema) => {
           province: office_address.province,
           country: office_address.country,
         },
-        addressModel.schema
-      )
+        addressModel.schema,
+      ),
     );
 
     // save recipient contact data
@@ -1080,8 +1092,8 @@ exports.delegate = async (data, user, cycle, schema) => {
           last_name: contact.last_name,
           office_email: contact.office_email,
         },
-        attachments.contact.model.schema
-      )
+        attachments.contact.model.schema,
+      ),
     );
 
     // save supervisor contact data
@@ -1093,8 +1105,8 @@ exports.delegate = async (data, user, cycle, schema) => {
           last_name: supervisor.last_name,
           office_email: supervisor.office_email,
         },
-        attachments.supervisor.model.schema
-      )
+        attachments.supervisor.model.schema,
+      ),
     );
 
     // save contact office address data
@@ -1103,8 +1115,8 @@ exports.delegate = async (data, user, cycle, schema) => {
         contactID,
         addressID,
         "office_address",
-        attachments.contact.model.schema
-      )
+        attachments.contact.model.schema,
+      ),
     );
 
     // save supervisor address data
@@ -1113,8 +1125,8 @@ exports.delegate = async (data, user, cycle, schema) => {
         supervisorID,
         addressID,
         "office_address",
-        attachments.contact.model.schema
-      )
+        attachments.contact.model.schema,
+      ),
     );
 
     // create new recipient record (NOTE: generate UUID for GUID)
@@ -1128,8 +1140,8 @@ exports.delegate = async (data, user, cycle, schema) => {
         organization: organization.id,
         contact: contactID,
         supervisor: supervisorID,
-        notes: notes
-      })
+        notes: notes,
+      }),
     );
 
     // include current service selection
@@ -1150,8 +1162,8 @@ exports.delegate = async (data, user, cycle, schema) => {
           survey_opt_in: false,
           awards: null,
         },
-        attachments.service.model.schema
-      )
+        attachments.service.model.schema,
+      ),
     );
 
     // include prior services selections (prior milestones)
@@ -1180,8 +1192,8 @@ exports.delegate = async (data, user, cycle, schema) => {
               survey_opt_in: false,
               awards: null,
             },
-            attachments.service.model.schema
-          )
+            attachments.service.model.schema,
+          ),
         );
       });
   });
@@ -1220,7 +1232,7 @@ exports.stats = async (schema, cycle) => {
       const item = res.length > 0 ? res[0] : null;
       result = { ...result, ...item };
       return item;
-    })
+    }),
   );
   return result;
 };
@@ -1240,22 +1252,22 @@ exports.remove = async (id, schema) => {
 
 /**
  * LSA-516 Create report that lists duplicate entries for selected cycle based on employee numbers
- * 
- * @param {int} cycle 
- * @return {Promise} results 
+ *
+ * @param {int} cycle
+ * @return {Promise} results
  */
 
-exports.duplicatesInCycle = async(cycle) => {
-
+exports.duplicatesInCycle = async (cycle) => {
   return await query(recipientQueries.duplicatesInCycle(cycle));
 };
 
 /**
- * 
+ *
  * LSA-540 Migrate recipient to other user
  */
 
-exports.updateUser = async(recipientID, userID) => {
-
-  return await transactionOne([recipientQueries.updateUser(recipientID, userID)]);
+exports.updateUser = async (recipientID, userID) => {
+  return await transactionOne([
+    recipientQueries.updateUser(recipientID, userID),
+  ]);
 };

@@ -5,15 +5,15 @@
  * MIT Licensed
  */
 
-const db = require('../queries/index.queries');
-const {ModelConstructor} = require("./constructor.model");
+const db = require("../queries/index.queries");
+const { ModelConstructor } = require("./constructor.model");
 const AwardSelection = require("./award-selections.model");
 const defaults = require("../queries/default.queries");
 const uuid = require("uuid");
-const {isEmpty} = require("../services/validation.services");
+const { isEmpty } = require("../services/validation.services");
 const QualifyingYear = require("./qualifying-years.model");
 
-'use strict';
+("use strict");
 
 /**
  * Model schema
@@ -23,68 +23,71 @@ const QualifyingYear = require("./qualifying-years.model");
  */
 
 const schema = {
-  modelName: 'service_selections',
+  modelName: "service_selections",
   attributes: {
     id: {
-      dataType: 'uuid',
+      dataType: "uuid",
       editable: false,
-      required: true
+      required: true,
     },
     recipient: {
-      dataType: 'uuid',
+      dataType: "uuid",
       editable: false,
-      required: true
+      required: true,
     },
     milestone: {
-      dataType: 'integer',
-      required: true
+      dataType: "integer",
+      required: true,
     },
     qualifying_year: {
-      dataType: 'integer',
-      required: true
+      dataType: "integer",
+      required: true,
     },
     service_years: {
-      dataType: 'integer',
-      required: true
+      dataType: "integer",
+      required: true,
     },
     cycle: {
-      dataType: 'integer',
-      required: true
+      dataType: "integer",
+      required: true,
     },
     previous_registration: {
-      dataType: 'boolean',
+      dataType: "boolean",
     },
     previous_award: {
-      dataType: 'boolean',
+      dataType: "boolean",
     },
     confirmed: {
-      dataType: 'boolean',
+      dataType: "boolean",
     },
     ceremony_opt_out: {
-      dataType: 'boolean',
+      dataType: "boolean",
     },
     survey_opt_in: {
-      dataType: 'boolean'
+      dataType: "boolean",
+    },
+    service_pin: {
+      dataType: "boolean",
     },
     delegated: {
-      dataType: 'boolean'
+      dataType: "boolean",
     },
     created_at: {
-      dataType: 'timestamp',
-      editable: false
+      dataType: "timestamp",
+      editable: false,
     },
     updated_at: {
-      dataType: 'timestamp'
-    }
+      dataType: "timestamp",
+    },
   },
   attachments: {
     awards: {
       model: AwardSelection,
       required: false,
       get: AwardSelection.findById,
-      attach: AwardSelection.attach
-    }
-  }
+      attach: AwardSelection.attach,
+    },
+  },
 };
 
 /**
@@ -96,20 +99,19 @@ const schema = {
  * @public
  */
 
-const construct = (init, attach=null) => {
+const construct = (init, attach = null) => {
   return ModelConstructor({
     init: init,
     schema: schema,
     db: db.defaults,
-    attach: attach
+    attach: attach,
   });
-}
+};
 
-module.exports =  {
+module.exports = {
   schema: schema,
   create: construct,
-  attach: async(serviceSelection, recipient) => {
-
+  attach: async (serviceSelection, recipient) => {
     /**
      * Attach service selection to recipient for LSAs
      * @public
@@ -126,19 +128,25 @@ module.exports =  {
 
     // Find active service record for current LSA cycle year (e.g., 2023)
     const current = await db.defaults.findOneByFields(
-        ['recipient', 'cycle'], [recipient.id, serviceSelection.cycle], schema);
+      ["recipient", "cycle"],
+      [recipient.id, serviceSelection.cycle],
+      schema,
+    );
 
     // check for milestone changes
     // - if different, delete service record from db (deletes any attached awards)
-    if (current && current.milestone !== serviceSelection.milestone) await serviceSelection.delete();
+    if (current && current.milestone !== serviceSelection.milestone)
+      await serviceSelection.delete();
 
     // use existing service record ID / or generate new ID
     serviceSelection.id = current ? current.id : uuid.v4();
     // upsert record
-    return await defaults.upsert(serviceSelection.data, serviceSelection.schema);
+    return await defaults.upsert(
+      serviceSelection.data,
+      serviceSelection.schema,
+    );
   },
-  attachPrevious: async(serviceSelection, recipient) => {
-
+  attachPrevious: async (serviceSelection, recipient) => {
     /**
      * Attach service selection to recipient
      * @public
@@ -157,46 +165,56 @@ module.exports =  {
 
     // Find previous service record for LSA cycle year (if exists)
     const current = await db.defaults.findOneByFields(
-        ['recipient', 'cycle'],
-        [recipient.id, serviceSelection.cycle], schema
+      ["recipient", "cycle"],
+      [recipient.id, serviceSelection.cycle],
+      schema,
     );
 
     // check for milestone changes
     // - if different, delete service record from db (deletes any attached awards)
-    if (current && current.milestone !== serviceSelection.milestone) await serviceSelection.delete();
+    if (current && current.milestone !== serviceSelection.milestone)
+      await serviceSelection.delete();
 
     // use existing service record ID / or generate new ID
     serviceSelection.id = current ? current.id : uuid.v4();
     // upsert record
-    return await defaults.upsert(serviceSelection.data, serviceSelection.schema);
+    return await defaults.upsert(
+      serviceSelection.data,
+      serviceSelection.schema,
+    );
   },
-  findActiveByRecipient: async(recipientID) => {
-
+  findActiveByRecipient: async (recipientID) => {
     /**
      * Finds active service record for current LSA cycle (e.g., 2023)
      */
 
     const cycle = await QualifyingYear.findCurrent();
     const serviceSelection = await db.defaults.findOneByFields(
-        ['recipient', 'cycle'], [recipientID, cycle && cycle.name], schema);
-    return construct(serviceSelection)
+      ["recipient", "cycle"],
+      [recipientID, cycle && cycle.name],
+      schema,
+    );
+    return construct(serviceSelection);
   },
-  findByRecipient: async(recipientID) => {
-
+  findByRecipient: async (recipientID) => {
     /**
      * Finds all service records for recipient
      */
 
     const services = await db.defaults.findByField(
-        'recipient', recipientID, schema, {orderby: 'milestone', order: 'DESC'});
-    return (services || []).map(service => {
-      return construct(service)
+      "recipient",
+      recipientID,
+      schema,
+      { orderby: "milestone", order: "DESC" },
+    );
+    return (services || []).map((service) => {
+      return construct(service);
     });
   },
-  findById: async(id) => {
+  findById: async (id) => {
     return construct(await db.defaults.findById(id, schema));
   },
-  remove: async(id) => {
-    await db.defaults.removeByFields(['id'], id, schema);
-  }
-}
+  remove: async (id) => {
+    await db.defaults.removeByFields(["id"], id, schema);
+  },
+};
