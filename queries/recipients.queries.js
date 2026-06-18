@@ -720,6 +720,7 @@ const recipientQueries = {
                              srv.previous_award AS previous_award,
                              srv.delegated AS delegated,
                              srv.confirmed AS confirmed,
+                             srv.service_pin AS service_pin,
                              srv.ceremony_opt_out AS ceremony_opt_out,
                              srv.survey_opt_in AS survey_opt_in,
                              awd.short_code AS award_shortcode,
