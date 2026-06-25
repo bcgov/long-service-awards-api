@@ -341,7 +341,7 @@ const recipientQueries = {
                       
                     -- services details
                            LEFT JOIN (
-                      SELECT srv.recipient as recipient_id, srv.confirmed,
+                      SELECT srv.recipient as recipient_id, BOOL_OR(srv.confirmed) AS confirmed,
                              JSON_AGG(
                               json_build_object(
                                       'id', srv.id,
@@ -411,7 +411,7 @@ const recipientQueries = {
                                   ) AS "aopts" ON aopt_service_id = "srv"."id"
                            -- end award options 
                           -- ${serviceFilter}
-                      GROUP BY recipient_id, confirmed
+                      GROUP BY recipient_id
                   ) AS "srvs" ON recipient_id = "r"."id"
                   ORDER BY ${orderby} ${order}
             ;`,
